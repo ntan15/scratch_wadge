@@ -1,0 +1,24 @@
+#!/bin/sh 
+SRC_DIR=$(pwd)
+WORK_DIR=$(mktemp -d)
+
+cleanup() {
+  rm -rf "$WORK_DIR"
+  echo ""
+  echo "Deleted working directory $WORK_DIR"
+}
+trap cleanup EXIT
+
+echo "Building occa tarball in $WORK_DIR"
+echo ""
+
+cd "$WORK_DIR"
+git clone https://github.com/libocca/occa
+cd occa
+
+occa_version=$(git describe)
+
+echo "Building version $occa_version"
+git archive -o occa-"$occa_version".tar.gz --prefix=occa-"$occa_version"/ HEAD
+
+cp occa-"$occa_version".tar.gz "$SRC_DIR"/vendor
