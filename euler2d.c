@@ -24,34 +24,36 @@
 // {{{ Number Types
 typedef uint32_t uintloc_t;
 #define occaUIntloc(x) occaUInt((uintloc_t)(x))
-#define UINTLOC(x) ASD_APPEND(x, u)
 #define occa_uintlong_name "unsigned int"
-#define UINTLOC_SCN SCNu32
-#define UINTLOC_PRI PRIu32
+#define UINTLOC(x) ASD_APPEND(x, u)
 #define UINTLOC_MAX UINT32_MAX
 #define UINTLOC_MAX_DIGITS INT32_MAX_DIGITS
+#define UINTLOC_PRI PRIu32
+#define UINTLOC_SCN SCNu32
 
 typedef uint64_t uintglo_t;
 #define occaUIntglo(x) occaULong((uintglo_t)(x))
-#define UINTGLO(x) ASD_APPEND(x, ull)
 #define occa_uintglo_name "unsigned long"
-#define UINTGLO_SCN SCNu64
-#define UINTGLO_PRI PRIu64
+#define UINTGLO(x) ASD_APPEND(x, ull)
 #define UINTGLO_MAX UINT64_MAX
 #define UINTGLO_MAX_DIGITS INT64_MAX_DIGITS
+#define UINTGLO_PRI PRIu64
+#define UINTGLO_SCN SCNu64
 
 #ifdef USE_DFLOAT_DOUBLE
 typedef double dfloat_t;
 #define occaDfloat occaDouble
-#define DFLOAT_MAX DBL_MAX
+#define DFLOAT(x) (x)
 #define DFLOAT_FMTe "24.16e"
+#define DFLOAT_MAX DBL_MAX
 #define DFLOAT_MPI MPI_DOUBLE
 #define DFLOAT_SQRT sqrt
 #else
 typedef float dfloat_t;
 #define occaDfloat occaFloat
-#define DFLOAT_MAX FLT_MAX
+#define DFLOAT(x) ASD_APPEND(x, f)
 #define DFLOAT_FMTe "24.16e"
+#define DFLOAT_MAX FLT_MAX
 #define DFLOAT_MPI MPI_FLOAT
 #define DFLOAT_SQRT sqrtf
 #endif
