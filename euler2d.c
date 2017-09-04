@@ -63,6 +63,35 @@ typedef float dfloat_t;
 #endif
 // }}}
 
+// {{{ OCCA
+/* OCCA modes */
+#define SERIAL 0
+#define OPENMP 1
+#define OPENCL 2
+#define CUDA 3
+const char *const occa_modes[] = {"SERIAL", "OpenMP", "OpenCL", "CUDA", NULL};
+
+/* OCCA language */
+#define OKL_LANG (1 << 0)
+#define OFL_LANG (1 << 1)
+#define NATIVE_LANG (1 << 2)
+
+static int get_occa_mode(const char *info)
+{
+  int mode = -1;
+  if (strstr(info, "Serial"))
+    mode = SERIAL;
+  else if (strstr(info, "OpenMP"))
+    mode = OPENMP;
+  else if (strstr(info, "OpenCL"))
+    mode = OPENCL;
+  else if (strstr(info, "CUDA"))
+    mode = CUDA;
+
+  return mode;
+}
+// }}}
+
 // {{{ Solver Info
 #define APP_NAME "euler2d"
 // }}}
