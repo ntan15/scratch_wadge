@@ -26,7 +26,6 @@ typedef uint32_t uintloc_t;
 #define occaUIntloc(x) occaUInt((uintloc_t)(x))
 #define UINTLOC(x) ASD_APPEND(x, u)
 #define occa_uintlong_name "unsigned int"
-#define UINTLOC_VTK "UInt32"
 #define UINTLOC_SCN SCNu32
 #define UINTLOC_PRI PRIu32
 #define UINTLOC_MAX UINT32_MAX
@@ -36,7 +35,6 @@ typedef uint64_t uintglo_t;
 #define occaUIntglo(x) occaULong((uintglo_t)(x))
 #define UINTGLO(x) ASD_APPEND(x, ull)
 #define occa_uintglo_name "unsigned long"
-#define UINTGLO_VTK "UInt64"
 #define UINTGLO_SCN SCNu64
 #define UINTGLO_PRI PRIu64
 #define UINTGLO_MAX UINT64_MAX
@@ -48,7 +46,6 @@ typedef double dfloat_t;
 #define DFLOAT_MAX DBL_MAX
 #define DFLOAT_FMTe "24.16e"
 #define DFLOAT_MPI MPI_DOUBLE
-#define DFLOAT_VTK "Float64"
 #define DFLOAT_SQRT sqrt
 #else
 typedef float dfloat_t;
@@ -56,7 +53,6 @@ typedef float dfloat_t;
 #define DFLOAT_MAX FLT_MAX
 #define DFLOAT_FMTe "24.16e"
 #define DFLOAT_MPI MPI_FLOAT
-#define DFLOAT_VTK "Float32"
 #define DFLOAT_SQRT sqrtf
 #endif
 // }}}
