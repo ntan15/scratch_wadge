@@ -21,6 +21,10 @@
 #include "asd.h"
 // }}}
 
+// {{{ Unit Macros
+#define GiB (1024 * 1024 * 1024)
+// }}}
+
 // {{{ Number Types
 typedef uint32_t uintloc_t;
 #define occaUIntloc(x) occaUInt((uintloc_t)(x))
