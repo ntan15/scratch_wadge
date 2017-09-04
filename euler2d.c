@@ -157,6 +157,170 @@ static void print_precision()
 }
 // }}}
 
+// {{{ Preferences
+typedef struct prefs
+{
+  lua_State *L;
+
+  MPI_Comm comm;
+  int size;     // MPI comm size
+  int rank;     // MPI comm rank
+  int hostrank; // rank of process on a given host
+
+  char *occa_info;
+  char *occa_flags;
+  int occa_mode;
+
+  int mesh_N;
+  char *mesh_filename;
+
+  char *output_datadir; // directory for output data files
+  char *output_prefix;  // prefix for output files
+} prefs_t;
+
+static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
+{
+  prefs_t *prefs = asd_malloc(sizeof(prefs_t));
+
+  lua_State *L = luaL_newstate();
+  luaL_openlibs(L);
+
+  ASD_ASSERT(lua_gettop(L) == 0);
+
+  int rank, size;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
+  int hostrank = asd_get_host_rank(comm);
+
+  // set constants for config file
+  lua_pushnumber(L, (lua_Number)rank);
+  lua_setglobal(L, "MPI_RANK");
+  lua_pushnumber(L, (lua_Number)size);
+  lua_setglobal(L, "MPI_SIZE");
+  lua_pushnumber(L, (lua_Number)hostrank);
+  lua_setglobal(L, "HOST_RANK");
+
+  ASD_ASSERT(lua_gettop(L) == 0);
+
+  // evaluate config file
+  if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0))
+    ASD_LERROR("cannot run configuration file: `%s'", lua_tostring(L, -1));
+
+  // occa
+  prefs->occa_info = asd_lua_expr_string(L, "app.occa.info", "mode = Serial");
+
+  int have_occa_flags = asd_lua_expr_boolean(L, "app.occa.flags ~= nil", 0);
+  prefs->occa_flags =
+      (have_occa_flags) ? asd_lua_expr_string(L, "app.occa.flags", "") : NULL;
+
+  prefs->occa_mode = get_occa_mode(prefs->occa_info);
+
+  prefs->mesh_filename =
+      asd_lua_expr_string(L, "app.mesh.filename", "mesh.gmsh");
+  prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
+
+  // output
+  prefs->output_datadir = asd_lua_expr_string(L, "app.output.datadir", ".");
+  {
+    struct stat sb;
+    if (stat(prefs->output_datadir, &sb) != 0 &&
+        mkdir(prefs->output_datadir, 0755) != 0 && errno != EEXIST)
+      perror("making datadir");
+  }
+
+  prefs->output_prefix = asd_lua_expr_string(L, "app.output.prefix", APP_NAME);
+
+  ASD_ASSERT(lua_gettop(L) == 0);
+
+  prefs->comm = comm;
+  prefs->size = size;
+  prefs->rank = rank;
+  prefs->hostrank = hostrank;
+
+  prefs->L = L;
+
+  return prefs;
+}
+
+static void prefs_free(prefs_t *prefs)
+{
+  lua_close(prefs->L);
+  asd_free(prefs->occa_info);
+  asd_free(prefs->occa_flags);
+  asd_free(prefs->mesh_filename);
+  asd_free(prefs->output_datadir);
+  asd_free(prefs->output_prefix);
+}
+
+static void prefs_print(prefs_t *prefs)
+{
+  ASD_ROOT_INFO("");
+  ASD_ROOT_INFO("----- Preferences Read -----------------------------------");
+  ASD_ROOT_INFO("  occa_info  = \"%s\"", prefs->occa_info);
+  if (prefs->occa_flags)
+    ASD_ROOT_INFO("  occa_flags = \"%s\"", prefs->occa_flags);
+  ASD_ROOT_INFO("  occa_mode  = \"%s\"", occa_modes[prefs->occa_mode]);
+  ASD_ROOT_INFO("");
+  ASD_ROOT_INFO("  mesh_filename = \"%s\"", prefs->mesh_filename);
+  ASD_ROOT_INFO("  mesh_N        = %d", prefs->mesh_N);
+  ASD_ROOT_INFO("");
+  ASD_ROOT_INFO("  output_datadir = %s", prefs->output_datadir);
+  ASD_ROOT_INFO("  output_prefix  = %s", prefs->output_prefix);
+  ASD_ROOT_INFO("----------------------------------------------------------");
+}
+// }}}
+
+// {{{ App
+typedef struct app
+{
+  prefs_t *prefs;
+  occaDevice device;
+  occaStream copy;
+  occaStream cmdx;
+} app_t;
+
+static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
+{
+  app_t *app = asd_malloc(sizeof(app_t));
+
+  //
+  // Preferences
+  //
+  app->prefs = prefs_new(prefs_filename, comm);
+  prefs_print(app->prefs);
+
+  //
+  // OCCA
+  //
+  app->device = occaCreateDevice(app->prefs->occa_info);
+  if (app->prefs->occa_flags)
+    occaDeviceSetCompilerFlags(app->device, app->prefs->occa_flags);
+
+  app->copy = occaDeviceCreateStream(app->device);
+  app->cmdx = occaDeviceCreateStream(app->device);
+  occaDeviceSetStream(app->device, app->cmdx);
+
+  return app;
+}
+
+static void app_free(app_t *app)
+{
+  prefs_free(app->prefs);
+  asd_free(app->prefs);
+
+  occaStreamFree(app->copy);
+  occaStreamFree(app->cmdx);
+
+  uintmax_t bytes = occaDeviceBytesAllocated(app->device);
+  uintmax_t total_bytes = occaDeviceMemorySize(app->device);
+  ASD_INFO("");
+  ASD_INFO("Device bytes allocated %ju (%.2f GiB) out of %ju (%.2f GiB)", bytes,
+           ((double)bytes) / GiB, total_bytes, ((double)total_bytes) / GiB);
+
+  occaDeviceFree(app->device);
+}
+// }}}
+
 // {{{ Main
 static void usage()
 {
@@ -229,15 +393,18 @@ int main(int argc, char *argv[])
   // initialize
   //
   init_libs(comm, verbosity);
+  app_t *app = app_new(argv[1], comm);
   print_precision();
 
-//
-// run
-//
+  //
+  // run
+  //
 
-//
-// cleanup
-//
+  //
+  // cleanup
+  //
+  app_free(app);
+  asd_free(app);
 finalize:
   ASD_MPI_CHECK(MPI_Finalize());
   asd_gopt_free(options);
