@@ -22,25 +22,25 @@
 // }}}
 
 // {{{ Number Types
-typedef int iint_t;
-#define occaIint(x) occaInt(x)
-#define IINT(x) (x)
-#define occa_iint_name "int"
-#define IINT_VTK "Int32"
-#define IINT_SCN SCNd32
-#define IINT_PRI PRId32
-#define IINT_MAX INT32_MAX
-#define IINT_MAX_DIGITS INT32_MAX_DIGITS
+typedef uint32_t uintloc_t;
+#define occaUIntloc(x) occaUInt((uintloc_t)(x))
+#define UINTLOC(x) ASD_APPEND(x, u)
+#define occa_uintlong_name "unsigned int"
+#define UINTLOC_VTK "UInt32"
+#define UINTLOC_SCN SCNu32
+#define UINTLOC_PRI PRIu32
+#define UINTLOC_MAX UINT32_MAX
+#define UINTLOC_MAX_DIGITS INT32_MAX_DIGITS
 
-typedef unsigned int uiint_t;
-#define occaUIint(x) occaUInt((iint_t)(x))
-#define UIINT(x) ASD_APPEND(x, u)
-#define occa_uiint_name "unsigned int"
-#define UIINT_VTK "UInt32"
-#define UIINT_SCN SCNu32
-#define UIINT_PRI PRIu32
-#define UIINT_MAX UINT32_MAX
-#define UIINT_MAX_DIGITS INT32_MAX_DIGITS
+typedef uint64_t uintglo_t;
+#define occaUIntglo(x) occaULong((uintglo_t)(x))
+#define UINTGLO(x) ASD_APPEND(x, ull)
+#define occa_uintglo_name "unsigned long"
+#define UINTGLO_VTK "UInt64"
+#define UINTGLO_SCN SCNu64
+#define UINTGLO_PRI PRIu64
+#define UINTGLO_MAX UINT64_MAX
+#define UINTGLO_MAX_DIGITS INT64_MAX_DIGITS
 
 #ifdef USE_DFLOAT_DOUBLE
 typedef double dfloat_t;
