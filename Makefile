@@ -11,6 +11,9 @@ CFLAGS += -Wconversion -Wno-sign-conversion \
           -Wpointer-arith -Wwrite-strings -Wformat-security -pedantic \
           -Wextra -Wno-unused-parameter
 
+# CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
+# CFLAGS += -fsanitize=address,undefined,integer
+
 # asd flags
 DEPS_HEADERS += asd.h
 DEPS_SOURCE  += asd.c
