@@ -65,11 +65,13 @@ typedef float dfloat_t;
 
 // {{{ OCCA
 /* OCCA modes */
-#define SERIAL 0
-#define OPENMP 1
-#define OPENCL 2
-#define CUDA 3
-const char *const occa_modes[] = {"SERIAL", "OpenMP", "OpenCL", "CUDA", NULL};
+#define UNKNOWN 0
+#define SERIAL 1
+#define OPENMP 2
+#define OPENCL 3
+#define CUDA 4
+const char *const occa_modes[] = {"UNKNOWN", "SERIAL", "OpenMP",
+                                  "OpenCL",  "CUDA",   NULL};
 
 /* OCCA language */
 #define OKL_LANG (1 << 0)
@@ -78,7 +80,7 @@ const char *const occa_modes[] = {"SERIAL", "OpenMP", "OpenCL", "CUDA", NULL};
 
 static int get_occa_mode(const char *info)
 {
-  int mode = -1;
+  int mode = UNKNOWN;
   if (strstr(info, "Serial"))
     mode = SERIAL;
   else if (strstr(info, "OpenMP"))
