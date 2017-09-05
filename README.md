@@ -8,7 +8,7 @@ make -j
 ```
 The code can be run in parallel simply with
 ```sh
-mpirun -np 2 ./plumadg3d
+mpirun -np 2 ./euler2d prefs/euler2d_default.lua
 ```
 
 ## Third party code
