@@ -792,6 +792,10 @@ uint32_t asd_pcg32_boundedrand_r(asd_pcg32_random_t *rng, uint32_t bound);
 /** Read the contents of a file into a string.
  */
 char *asd_read_file(const char *filename, size_t *len);
+
+/** Read a line from a file.
+ */
+char *asd_getline(FILE *stream);
 // }}}
 
 // {{{ endian

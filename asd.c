@@ -1494,6 +1494,55 @@ char *asd_read_file(const char *filename, size_t *len)
 
   return buffer;
 }
+
+/*
+ * Read a line from a file. Obtained from:
+ * http://stackoverflow.com/questions/314401/how-to-read-a-line-from-the-console-in-c/314422#314422
+ *
+ * Using this avoids a dependence on IEEE Std 1003.1-2008 (``POSIX.1'') for the
+ * getline function.
+ */
+char *asd_getline(FILE *stream)
+{
+  char *line = asd_malloc(sizeof(char) * 1024), *linep = line;
+  size_t lenmax = 1024, len = lenmax;
+  int c;
+
+  if (line == NULL)
+    return NULL;
+
+  for (;;)
+  {
+    c = fgetc(stream);
+    if (c == EOF && linep == line)
+    {
+      asd_free(linep);
+      return NULL;
+    }
+
+    if (--len == 0)
+    {
+      char *linen;
+
+      len = lenmax;
+      lenmax *= 2;
+
+      linen = asd_realloc(linep, sizeof(char) * lenmax);
+      if (linen == NULL)
+      {
+        asd_free(linep);
+        return NULL;
+      }
+
+      line = linen + (line - linep);
+      linep = linen;
+    }
+    if ((*line++ = (char)c) == '\n')
+      break;
+  }
+  *line = '\0';
+  return linep;
+}
 // }}}
 
 // {{{ endian
