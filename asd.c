@@ -255,9 +255,12 @@ void *asd_malloc_aligned(size_t size)
 
 void asd_free_aligned(void *ptr)
 {
-  ptr = (void *)((intptr_t *)ptr)[-1];
-  ASD_ASSERT(ptr != NULL);
-  free(ptr);
+  if (ptr != NULL)
+  {
+    ptr = (void *)((intptr_t *)ptr)[-1];
+    ASD_ASSERT(ptr != NULL);
+    free(ptr);
+  }
 }
 // }}}
 
