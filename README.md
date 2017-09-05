@@ -1,4 +1,4 @@
-# Weight Adjusted Discontinuous Galerkin with Energy Stability (WADGES)
+# Weight Adjusted Discontinuous Galerkin with Entropy Stability (WADGES)
 
 ## Building and running
 This build assumes you have [GNU Make](https://www.gnu.org/software/make/).
