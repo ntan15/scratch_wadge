@@ -1538,7 +1538,10 @@ char *asd_getline(FILE *stream)
       linep = linen;
     }
     if ((*line++ = (char)c) == '\n')
+    {
+      line[-1] = '\0';
       break;
+    }
   }
   *line = '\0';
   return linep;
