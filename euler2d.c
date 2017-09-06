@@ -347,6 +347,8 @@ static void prefs_print(prefs_t *prefs)
 #define NFACES 3
 #define MSH_ELEM_TYPE 2
 
+// Note that the mesh duplicates the vertices for each element (like DG dofs).
+// This is done to make partitioning the mesh simple.
 typedef struct
 {
   uintloc_t E;      // number of elements
