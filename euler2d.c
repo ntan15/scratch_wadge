@@ -52,6 +52,7 @@ typedef double dfloat_t;
 #define DFLOAT_MAX DBL_MAX
 #define DFLOAT_MPI MPI_DOUBLE
 #define DFLOAT_SQRT sqrt
+#define DFLOAT_STRTOD strtod
 #else
 typedef float dfloat_t;
 #define occaDfloat occaFloat
@@ -60,7 +61,44 @@ typedef float dfloat_t;
 #define DFLOAT_MAX FLT_MAX
 #define DFLOAT_MPI MPI_FLOAT
 #define DFLOAT_SQRT sqrtf
+#define DFLOAT_STRTOD strtof
 #endif
+
+static uintglo_t strtouglo_or_abort(const char *str)
+{
+  char *end;
+  errno = 0;
+  uintmax_t u = strtoumax(str, &end, 10);
+
+  // Error check from
+  //   https://www.securecoding.cert.org/confluence/display/c/ERR34-C.+Detect+errors+when+converting+a+string+to+a+number
+  if (end == str)
+    ASD_ABORT("%s: not a decimal number", str);
+  else if ('\0' != *end)
+    ASD_ABORT("%s: extra characters at end of input: %s", str, end);
+  else if (UINTMAX_MAX == u && ERANGE == errno)
+    ASD_ABORT("%s out of range of type uintmax_t", str);
+  else if (u > UINTGLO_MAX)
+    ASD_ABORT("%ju greater than UINTGLO_MAX", u);
+
+  return u;
+}
+
+static dfloat_t strtodfloat_or_abort(const char *str)
+{
+  char *end;
+  errno = 0;
+  dfloat_t x = DFLOAT_STRTOD(str, &end);
+
+  if (end == str)
+    ASD_ABORT("%s: not a floating point number", str);
+  else if ('\0' != *end)
+    ASD_ABORT("%s: extra characters at end of input: %s", str, end);
+  else if (ERANGE == errno)
+    ASD_ABORT("%s out of range of type dfloat_t", str);
+
+  return x;
+}
 // }}}
 
 // {{{ OCCA
