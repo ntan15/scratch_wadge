@@ -6,6 +6,10 @@ To build the code you can run something like:
 ```sh
 make -j
 ```
+To build a version with debug checks and output use:
+```sh
+make -j DEBUG=1
+```
 The code can be run in parallel simply with
 ```sh
 mpirun -np 2 ./euler2d prefs/euler2d_default.lua

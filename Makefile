@@ -1,23 +1,31 @@
+
 CC = mpicc
 CXX = mpicxx
 F77 = mpif77
 FC = mpif90
-CFLAGS = --std=gnu11 -g -O2
+CFLAGS = --std=gnu11 -g
 
-CFLAGS +=-fno-common -fomit-frame-pointer
-
+# below are flags that work with clang and gcc
 CFLAGS += -Wconversion -Wno-sign-conversion \
           -Wcast-align -Wchar-subscripts -Wall -W \
           -Wpointer-arith -Wwrite-strings -Wformat-security -pedantic \
           -Wextra -Wno-unused-parameter
 
-# CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
-# CFLAGS += -fsanitize=address,undefined,integer
+DEBUG = 0
+ifeq (${DEBUG},1)
+  CFLAGS += -O1
+  CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
+  CFLAGS += -fsanitize=address,undefined
+  CFLAGS +=-DASD_DEBUG
+  OCCA_MAKE_FLAGS = OCCA_DEVELOPER=1 DEBUG=1
+else
+  CFLAGS += -O2
+  CFLAGS += -fno-common -fno-omit-frame-pointer
+endif
 
 # asd flags
 DEPS_HEADERS += asd.h
 DEPS_SOURCE  += asd.c
-CFLAGS +=-DASD_DEBUG
 CFLAGS +=-DASD_USE_LUA
 
 # list of libraries to build
@@ -46,7 +54,7 @@ lua:
 
 occa:
 	tar xzf vendor/occa-*.tar.gz && mv occa-* occa
-	cd occa && $(MAKE) OCCA_DEVELOPER=1 DEBUG=1 CC=$(CC) CXX=$(CXX) FC=$(FC)
+	cd occa && $(MAKE) $(OCCA_MAKE_FLAGS) CC=$(CC) CXX=$(CXX) FC=$(FC)
 
 # Dependencies
 euler2d: euler2d.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
