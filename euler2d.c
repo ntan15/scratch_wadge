@@ -340,6 +340,181 @@ static void prefs_print(prefs_t *prefs)
 }
 // }}}
 
+// {{{ Mesh
+// Assume triangles
+#define VDIM 2
+#define NVERTS 3
+#define NFACES 3
+#define MSH_ELEM_TYPE 2
+
+typedef struct
+{
+  uintloc_t E;      // number of elements
+  uintglo_t *EToVG; // element to global vetex numbers
+  dfloat_t *EToVX;  // element to vetex coordinates
+} host_mesh_t;
+
+static void host_mesh_free(host_mesh_t *mesh)
+{
+  asd_free_aligned(mesh->EToVG);
+  asd_free_aligned(mesh->EToVX);
+}
+
+static host_mesh_t *host_mesh_read_msh_tri(const prefs_t *prefs)
+{
+  ASD_ROOT_INFO("Reading mesh from '%s'", prefs->mesh_filename);
+
+  host_mesh_t *mesh = asd_malloc(sizeof(host_mesh_t));
+
+  uintglo_t Nvglo = 0;
+  dfloat_t *VXglo = NULL;
+  uintglo_t Eall = 0, Eglo = 0, e = 0;
+  uintglo_t *EToVglo = NULL;
+
+  FILE *fid = fopen(prefs->mesh_filename, "rb");
+  ASD_ABORT_IF_NOT(fid != NULL, "Failed to open %s", prefs->mesh_filename);
+
+  int reading_nodes = 0, reading_elements = 0;
+
+  // Currelty we are reading the whole mesh into memory and only keeping a part
+  // if it.  If this becomes a bottle neck we can thing about other ways of
+  // getting a mesh.
+
+  for (;;)
+  {
+    char *line = asd_getline(fid);
+
+    if (line == NULL)
+      break;
+
+    if (line[0] == '$')
+    {
+      reading_elements = reading_nodes = 0;
+
+      if (strstr(line, "$Nodes"))
+      {
+        reading_nodes = 1;
+        asd_free(line);
+        line = asd_getline(fid);
+        Nvglo = strtouglo_or_abort(line);
+        VXglo = asd_malloc_aligned(sizeof(dfloat_t) * VDIM * Nvglo);
+      }
+      else if (strstr(line, "$Elements"))
+      {
+        reading_elements = 1;
+        asd_free(line);
+        line = asd_getline(fid);
+        Eall = strtouglo_or_abort(line);
+        EToVglo = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * Eall);
+      }
+
+      if (reading_nodes || reading_elements)
+      {
+        asd_free(line);
+        continue;
+      }
+    }
+
+    if (reading_nodes)
+    {
+      char *word = strtok(line, " ");
+      uintglo_t v = strtouglo_or_abort(word);
+      for (int d = 0; d < VDIM; ++d)
+      {
+        word = strtok(NULL, " ");
+        dfloat_t x = strtodfloat_or_abort(word);
+        VXglo[VDIM * (v - 1) + d] = x;
+      }
+    }
+    else if (reading_elements)
+    {
+      ASD_TRACE("reading_elements from '%s'", line);
+      strtok(line, " ");
+      char *word = word = strtok(NULL, " ");
+      uintglo_t elemtype = strtouglo_or_abort(word);
+
+      if (MSH_ELEM_TYPE == elemtype)
+      {
+        ASD_TRACE("Reading tri", line);
+        ASD_ABORT_IF_NOT(e < Eall, "Too many elements");
+        word = strtok(NULL, " ");
+        uintglo_t numtags = strtouglo_or_abort(word);
+
+        ASD_TRACE("Reading %ju tags", numtags);
+        // skip tags for now
+        for (uintglo_t t = 0; t < numtags; ++t)
+          strtok(NULL, " ");
+
+        for (int n = 0; n < NVERTS; ++n)
+        {
+          word = strtok(NULL, " ");
+          uintglo_t v = strtouglo_or_abort(word);
+          EToVglo[NVERTS * e + n] = v - 1;
+        }
+        ++e;
+      }
+    }
+
+    asd_free(line);
+  }
+  fclose(fid);
+
+  Eglo = e;
+
+  ASD_ABORT_IF_NOT(VXglo, "Nodes section not found in %s",
+                   prefs->mesh_filename);
+  ASD_ABORT_IF_NOT(EToVglo, "Elements section not found in %s",
+                   prefs->mesh_filename);
+
+#ifdef ASD_DEBUG
+  ASD_TRACE("Dumping global mesh");
+  ASD_TRACE("  Num Vertices %ju", (intmax_t)Nvglo);
+  for (uintglo_t v = 0; v < Nvglo; ++v)
+    ASD_TRACE("%5" UINTGLO_PRI " %" DFLOAT_FMTe " %" DFLOAT_FMTe, v,
+              VXglo[VDIM * v + 0], VXglo[VDIM * v + 1]);
+
+  ASD_TRACE("  Num Elements %ju", (intmax_t)Eglo);
+  for (uintglo_t e = 0; e < Eglo; ++e)
+    ASD_TRACE("%5" UINTGLO_PRI " %5" UINTGLO_PRI " %5" UINTGLO_PRI
+              " %5" UINTGLO_PRI,
+              e, EToVglo[NVERTS * e + 0], EToVglo[NVERTS * e + 1],
+              EToVglo[NVERTS * e + 2]);
+#endif
+
+  // Compute partition
+  uintglo_t ethis = linpart_starting_row(prefs->rank, prefs->size, Eglo);
+  uintglo_t enext = linpart_starting_row(prefs->rank + 1, prefs->size, Eglo);
+  uintglo_t E = enext - ethis;
+  ASD_ABORT_IF_NOT(E <= UINTLOC_MAX,
+                   "Local number of elements %ju too big for uintloc_t max %ju",
+                   (uintmax_t)E, (uintmax_t)UINTLOC_MAX);
+
+  ASD_VERBOSE("Keeping %ju elements on rank %d", (intmax_t)E, prefs->rank);
+
+  mesh->E = (uintloc_t)E;
+  mesh->EToVG = asd_malloc_aligned(sizeof(uintloc_t) * NVERTS * E);
+  mesh->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * E);
+
+  for (e = ethis; e < enext; ++e)
+  {
+    for (int n = 0; n < NVERTS; ++n)
+    {
+      const uintglo_t v = EToVglo[NVERTS * e + n];
+      mesh->EToVG[NVERTS * (e - ethis) + n] = v;
+
+      for (int d = 0; d < VDIM; ++d)
+        mesh->EToVX[NVERTS * VDIM * (e - ethis) + VDIM * n + d] =
+            VXglo[VDIM * v + d];
+    }
+  }
+
+  asd_free_aligned(VXglo);
+  asd_free_aligned(EToVglo);
+
+  return mesh;
+}
+// }}}
+
 // {{{ App
 typedef struct app
 {
@@ -347,6 +522,8 @@ typedef struct app
   occaDevice device;
   occaStream copy;
   occaStream cmdx;
+
+  host_mesh_t *hm;
 } app_t;
 
 static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
@@ -370,6 +547,11 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->cmdx = occaDeviceCreateStream(app->device);
   occaDeviceSetStream(app->device, app->cmdx);
 
+  //
+  // Read mesh
+  //
+  app->hm = host_mesh_read_msh_tri(app->prefs);
+
   return app;
 }
 
@@ -388,6 +570,9 @@ static void app_free(app_t *app)
            ((double)bytes) / GiB, total_bytes, ((double)total_bytes) / GiB);
 
   occaDeviceFree(app->device);
+
+  host_mesh_free(app->hm);
+  asd_free(app->hm);
 }
 // }}}
 
