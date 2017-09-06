@@ -192,7 +192,7 @@ static void print_precision()
 {
   ASD_ROOT_INFO("");
   ASD_ROOT_INFO("----- Precision ------------------------------------------");
-  ASD_ROOT_INFO("compute precision = %d bytes", sizeof(double));
+  ASD_ROOT_INFO("compute precision = %d bytes", sizeof(dfloat_t));
   ASD_ROOT_INFO("----------------------------------------------------------");
 }
 // }}}
