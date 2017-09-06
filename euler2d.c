@@ -218,7 +218,7 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
   prefs->occa_mode = get_occa_mode(prefs->occa_info);
 
   prefs->mesh_filename =
-      asd_lua_expr_string(L, "app.mesh.filename", "mesh.gmsh");
+      asd_lua_expr_string(L, "app.mesh.filename", "mesh.msh");
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
 
   // output

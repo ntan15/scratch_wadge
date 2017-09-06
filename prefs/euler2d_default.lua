@@ -24,7 +24,7 @@ app = {
     -- flags = "-g",
   },
   mesh = {
-    filename = "meshes/hole_tri.gmsh",
+    filename = "meshes/hole_tri.msh",
     start_level = 1,
     N = 5
   },
