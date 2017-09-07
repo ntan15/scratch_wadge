@@ -12,9 +12,10 @@
 // Author: John Skilling 20 Apr 2001 to 11 Oct 2003
 // doi: https://dx.doi.org/10.1063/1.1751381
 //-----------------------------------------------------------------------------
+#include <inttypes.h>
 #include <stdio.h>
 
-typedef unsigned int coord_t; // char,short,int for up to 8,16,32 bits per word
+typedef uint64_t coord_t; // char,short,int for up to 8,16,32 bits per word
 void TransposetoAxes(coord_t *X, int b, int n) // position, #bits, dimension
 {
   coord_t N = 2 << (b - 1), P, Q, t;
@@ -73,7 +74,10 @@ int main()
 {
   coord_t X[3] = {5, 10, 20}; // any position in 32x32x32 cube
   AxestoTranspose(X, 5, 3);   // Hilbert transpose for 5 bits and 3 dimensions
-  printf("Hilbert integer = %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d = 7865 check\n",
+  printf("Hilbert integer = "
+         "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64
+         "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64
+         "%" PRIu64 "%" PRIu64 "%" PRIu64 " = 7865 check\n",
          X[0] >> 4 & 1, X[1] >> 4 & 1, X[2] >> 4 & 1, X[0] >> 3 & 1,
          X[1] >> 3 & 1, X[2] >> 3 & 1, X[0] >> 2 & 1, X[1] >> 2 & 1,
          X[2] >> 2 & 1, X[0] >> 1 & 1, X[1] >> 1 & 1, X[2] >> 1 & 1,
