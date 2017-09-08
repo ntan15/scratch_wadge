@@ -94,6 +94,14 @@ void TransposeToH(coord_t *X, coord_t *H, int b, int n)
   }
 }
 
+void printxtoh2d(coord_t *x, coord_t *h, int b)
+{
+  printf("x(0,1) = (%2" PRIu64 ",%2" PRIu64 ");   ", x[0], x[1]);
+  AxestoTranspose(x, b, 2);
+  TransposeToH(x, h, b, 2);
+  printf("h(0,1) = (%2" PRIu64 ",%2" PRIu64 ")\n", h[0], h[1]);
+}
+
 int main()
 {
   coord_t X[3] = {5, 10, 20}; // any position in 32x32x32 cube
@@ -118,6 +126,89 @@ int main()
          H[0] >> 0 & 1, H[1] >> 4 & 1, H[1] >> 3 & 1, H[1] >> 2 & 1,
          H[1] >> 1 & 1, H[1] >> 0 & 1, H[2] >> 4 & 1, H[2] >> 3 & 1,
          H[2] >> 2 & 1, H[2] >> 1 & 1, H[2] >> 0 & 1);
+
+  printf("Hilbert integers for b = 1:\n");
+  coord_t x[2] = {0, 0}, h[2];
+  int b = 1;
+  printxtoh2d(x, h, b);
+
+  x[0] = 0;
+  x[1] = 1;
+  printxtoh2d(x, h, b);
+
+  x[0] = 1;
+  x[1] = 1;
+  printxtoh2d(x, h, b);
+
+  x[0] = 1;
+  x[1] = 0;
+  printxtoh2d(x, h, b);
+
+  printf("Hilbert integers for b = 2:\n");
+  b = 2;
+  x[0] = 0;
+  x[1] = 0;
+  printxtoh2d(x, h, b);
+
+  x[0] = 1;
+  x[1] = 0;
+  printxtoh2d(x, h, b);
+
+  x[0] = 1;
+  x[1] = 1;
+  printxtoh2d(x, h, b);
+
+  x[0] = 0;
+  x[1] = 1;
+  printxtoh2d(x, h, b);
+
+  x[0] = 0;
+  x[1] = 2;
+  printxtoh2d(x, h, b);
+
+  x[0] = 0;
+  x[1] = 3;
+  printxtoh2d(x, h, b);
+
+  x[0] = 1;
+  x[1] = 3;
+  printxtoh2d(x, h, b);
+
+  x[0] = 1;
+  x[1] = 2;
+  printxtoh2d(x, h, b);
+
+  x[0] = 2;
+  x[1] = 2;
+  printxtoh2d(x, h, b);
+
+  x[0] = 2;
+  x[1] = 3;
+  printxtoh2d(x, h, b);
+
+  x[0] = 3;
+  x[1] = 3;
+  printxtoh2d(x, h, b);
+
+  x[0] = 3;
+  x[1] = 2;
+  printxtoh2d(x, h, b);
+
+  x[0] = 3;
+  x[1] = 1;
+  printxtoh2d(x, h, b);
+
+  x[0] = 2;
+  x[1] = 1;
+  printxtoh2d(x, h, b);
+
+  x[0] = 2;
+  x[1] = 0;
+  printxtoh2d(x, h, b);
+
+  x[0] = 3;
+  x[1] = 0;
+  printxtoh2d(x, h, b);
 
   return 0;
 }
