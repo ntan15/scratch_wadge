@@ -70,6 +70,30 @@ void AxestoTranspose(coord_t *X, int b, int n) // position, #bits, dimension
     X[i] ^= t;
 }
 
+//    The Transpose is stored as a Hilbert integer.  For example,
+//    if the 15-bit Hilbert integer = A B C D E F G H I J K L M N O is passed
+//    in in X as below the H gets set as below.
+//
+//        X[0] = A D G J M               H[0] = A B C D E
+//        X[1] = B E H K N   <------->   H[1] = F G H I J
+//        X[2] = C F I L O               H[2] = K L M N O
+void TransposeToH(coord_t *X, coord_t *H, int b, int n)
+{
+  int i, j;
+  for (i = 0; i < n; ++i)
+    H[i] = 0;
+
+  for (i = 0; i < n; ++i)
+  {
+    for (j = 0; j < b; ++j)
+    {
+      const int k = i * b + j;
+      const uint64_t bit = (X[n - 1 - (k % n)] >> (k / n)) & 1;
+      H[n - 1 - i] |= (bit << j);
+    }
+  }
+}
+
 int main()
 {
   coord_t X[3] = {5, 10, 20}; // any position in 32x32x32 cube
@@ -82,6 +106,18 @@ int main()
          X[1] >> 3 & 1, X[2] >> 3 & 1, X[0] >> 2 & 1, X[1] >> 2 & 1,
          X[2] >> 2 & 1, X[0] >> 1 & 1, X[1] >> 1 & 1, X[2] >> 1 & 1,
          X[0] >> 0 & 1, X[1] >> 0 & 1, X[2] >> 0 & 1);
+
+  coord_t H[3] = {0, 0, 0};
+  TransposeToH(X, H, 5, 3);
+
+  printf("Hilbert integer = "
+         "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64
+         "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64
+         "%" PRIu64 "%" PRIu64 "%" PRIu64 " = 7865 check\n",
+         H[0] >> 4 & 1, H[0] >> 3 & 1, H[0] >> 2 & 1, H[0] >> 1 & 1,
+         H[0] >> 0 & 1, H[1] >> 4 & 1, H[1] >> 3 & 1, H[1] >> 2 & 1,
+         H[1] >> 1 & 1, H[1] >> 0 & 1, H[2] >> 4 & 1, H[2] >> 3 & 1,
+         H[2] >> 2 & 1, H[2] >> 1 & 1, H[2] >> 0 & 1);
 
   return 0;
 }
