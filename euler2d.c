@@ -362,7 +362,7 @@ static void host_mesh_free(host_mesh_t *mesh)
   asd_free_aligned(mesh->EToVX);
 }
 
-static host_mesh_t *host_mesh_read_msh_tri(const prefs_t *prefs)
+static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
 {
   ASD_ROOT_INFO("Reading mesh from '%s'", prefs->mesh_filename);
 
@@ -552,7 +552,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   //
   // Read mesh
   //
-  app->hm = host_mesh_read_msh_tri(app->prefs);
+  app->hm = host_mesh_read_msh(app->prefs);
 
   return app;
 }
