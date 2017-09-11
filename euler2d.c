@@ -4,6 +4,7 @@
 
 // {{{ Headers
 #include <errno.h>
+#include <float.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
