@@ -809,6 +809,18 @@ char *asd_getline(FILE *stream);
 int asd_endian();
 // }}}
 
+// {{{ sorting
+/** multi-mergesort of nlst lists
+ *
+ * It is assumed that src contains all list if equal length nel with the first
+ * list appearing before the next.
+ *
+ */
+void asd_multimergesort(void *dst, const void *src, size_t nlst, size_t nel,
+                        size_t width,
+                        int (*compar)(const void *, const void *));
+// }}}
+
 // {{{ MPI
 /** Given a MPI Comm this returns the host rank.
  *

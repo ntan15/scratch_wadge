@@ -1566,6 +1566,47 @@ int asd_endian()
 }
 // }}}
 
+// {{{ sorting
+void asd_multimergesort(void *dst, const void *src, size_t nlst, size_t nel,
+                        size_t width, int (*compar)(const void *, const void *))
+{
+  size_t *j = asd_calloc(sizeof(size_t), nlst);
+  size_t k = 0;
+
+  for (;;)
+  {
+    int stillsorting = 0;
+    size_t q;
+    for (size_t l = 0; l < nlst; ++l)
+    {
+      if (j[l] < nel)
+      {
+        q = l;
+        stillsorting = 1;
+        break;
+      }
+    }
+
+    if (!stillsorting)
+      break;
+
+    for (size_t l = 0; l < nlst; ++l)
+      if (j[l] < nel &&
+          compar((char *)src + l * nel * width + j[l] * width,
+                 (char *)src + q * nel * width + j[q] * width) < 0)
+        q = l;
+
+    memcpy((char *)dst + k * width,
+           (char *)src + q * nel * width + j[q] * width, width);
+    ++j[q];
+    ++k;
+  }
+
+  asd_free(j);
+}
+
+// }}}
+
 // {{{ MPI
 int asd_get_host_rank(MPI_Comm comm)
 {
