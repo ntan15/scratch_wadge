@@ -1088,6 +1088,34 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
   asd_free_aligned(recv_requests);
   asd_free_aligned(send_requests);
 }
+
+static host_mesh_t *partition(MPI_Comm comm, host_mesh_t *om,
+                              uintloc_t *part_starts, uintloc_t *part_e)
+{
+  int rank, size;
+  ASD_MPI_CHECK(MPI_Comm_rank(comm, &rank));
+  ASD_MPI_CHECK(MPI_Comm_size(comm, &size));
+
+  host_mesh_t *nm = asd_malloc(sizeof(host_mesh_t));
+  nm->E = om->E;
+  nm->EToVG = asd_malloc_aligned(sizeof(uintloc_t) * NVERTS * nm->E);
+  nm->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * nm->E);
+
+  memcpy(nm->EToVG, om->EToVG, sizeof(uintloc_t) * NVERTS * nm->E);
+  memcpy(nm->EToVX, om->EToVX, sizeof(uintloc_t) * NVERTS * VDIM * nm->E);
+
+  ASD_INFO("Partition not implemented!!!!");
+
+  printf("part_starts:\n");
+  for (int r = 0; r <= size; ++r)
+    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", r, part_starts[r]);
+
+  printf("part_e:\n");
+  for (uintloc_t e = 0; e < om->E; ++e)
+    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", e, part_e[e]);
+
+  return nm;
+}
 // }}}
 
 // {{{ App
@@ -1123,16 +1151,20 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   occaDeviceSetStream(app->device, app->cmdx);
 
   //
-  // Read mesh
+  // Read and partition mesh
   //
-  app->hm = host_mesh_read_msh(app->prefs);
+  host_mesh_t *m, *n;
+  m = host_mesh_read_msh(app->prefs);
 
   uintloc_t *part_starts =
       asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
   uintloc_t *part_e = asd_malloc_aligned(sizeof(uintloc_t) * m->E);
   get_hilbert_partition(app->prefs->comm, m, part_starts, part_e);
+  n = partition(app->prefs->comm, m, part_starts, part_e);
   asd_free_aligned(part_starts);
   asd_free_aligned(part_e);
+  host_mesh_free(m);
+  app->hm = n;
 
   return app;
 }
