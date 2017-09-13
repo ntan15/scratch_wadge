@@ -520,6 +520,576 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
 }
 // }}}
 
+// {{{ Hilbert curve partitioning
+//+++++++++++++++++++++++++++ PUBLIC-DOMAIN SOFTWARE ++++++++++++++++++++++++++
+// Functions: TransposetoAxes AxestoTranspose
+// Purpose:   Transform in-place between Hilbert transpose and geometrical axes
+// Example:   b=5 bits for each of n=3 coordinates.
+//            15-bit Hilbert integer = A B C D E F G H I J K L M N O is stored
+//            as its Transpose
+//                   X[0] = A D G J M                X[2]|
+//                   X[1] = B E H K N    <------->       | /X[1]
+//                   X[2] = C F I L O               axes |/
+//                          high low                     0------ X[0]
+//            Axes are stored conventially as b-bit integers.
+// Author: John Skilling 20 Apr 2001 to 11 Oct 2003
+// doi: https://dx.doi.org/10.1063/1.1751381
+//-----------------------------------------------------------------------------
+#if 0
+static void hilbert_trans_to_axes(uintglo_t *X)
+{
+  uintglo_t N = UINTGLO(2) << (UINTGLO_BITS - 1), P, Q, t;
+  int i;
+  // Gray decode by H ^ (H/2)
+  t = X[VDIM - 1] >> 1;
+  for (i = VDIM - 1; i >= 0; i--)
+    X[i] ^= X[i - 1];
+  X[0] ^= t;
+  // Undo excess work
+  for (Q = 2; Q != N; Q <<= 1)
+  {
+    P = Q - 1;
+    for (i = VDIM - 1; i >= 0; i--)
+      if (X[i] & Q)
+        X[0] ^= P; // invert
+      else
+      {
+        t = (X[0] ^ X[i]) & P;
+        X[0] ^= t;
+        X[i] ^= t;
+      }
+  } // exchange
+}
+#endif
+
+static void hilbert_axes_to_trans(uintglo_t *X)
+{
+  uintglo_t M = UINTGLO(1) << (UINTGLO_BITS - 1), P, Q, t;
+  int i;
+  // Inverse undo
+  for (Q = M; Q > 1; Q >>= 1)
+  {
+    P = Q - 1;
+    for (i = 0; i < VDIM; i++)
+      if (X[i] & Q)
+        X[0] ^= P; // invert
+      else
+      {
+        t = (X[0] ^ X[i]) & P;
+        X[0] ^= t;
+        X[i] ^= t;
+      }
+  } // exchange
+  // Gray encode
+  for (i = 1; i < VDIM; i++)
+    X[i] ^= X[i - 1];
+  t = 0;
+  for (Q = M; Q > 1; Q >>= 1)
+    if (X[VDIM - 1] & Q)
+      t ^= Q - 1;
+  for (i = 0; i < VDIM; i++)
+    X[i] ^= t;
+}
+
+// The Transpose is stored as a Hilbert integer.  For example,
+// if the 15-bit Hilbert integer = A B C D E F G H I J K L M N O is passed
+// in in X as below the H gets set as below.
+//
+//     X[0] = A D G J M               H[0] = A B C D E
+//     X[1] = B E H K N   <------->   H[1] = F G H I J
+//     X[2] = C F I L O               H[2] = K L M N O
+//
+// TODO: replace with LUT if the code it too slow
+static void hilbert_trans_to_code(const uintglo_t *X, uintglo_t *H)
+{
+  int i, j;
+  for (i = 0; i < VDIM; ++i)
+    H[i] = 0;
+
+  for (i = 0; i < VDIM; ++i)
+  {
+    for (j = 0; j < UINTGLO_BITS; ++j)
+    {
+      const int k = i * UINTGLO_BITS + j;
+      const uint64_t bit = (X[VDIM - 1 - (k % VDIM)] >> (k / VDIM)) & 1;
+      H[VDIM - 1 - i] |= (bit << j);
+    }
+  }
+}
+
+#define ETOH_E (VDIM)
+#define ETOH_R (VDIM + 1)
+#define ETOH_S (VDIM + 2)
+#define NETOH (VDIM + 3)
+
+/* qsort int comparison function */
+int EToH_H_cmp(const void *a, const void *b)
+{
+  const uintglo_t *ia = (const uintglo_t *)a;
+  const uintglo_t *ib = (const uintglo_t *)b;
+  int retval = 0;
+
+  for (int d = 0; d < VDIM; ++d)
+  {
+    if (ia[d] > ib[d])
+      retval = 1;
+    else if (ia[d] < ib[d])
+      retval = -1;
+    if (retval != 0)
+      break;
+  }
+
+  return retval;
+}
+
+int EToH_rH_cmp(const void *a, const void *b)
+{
+  const uintglo_t *ia = (const uintglo_t *)a;
+  const uintglo_t *ib = (const uintglo_t *)b;
+  int retval = 0;
+
+  if (ia[ETOH_R] > ib[ETOH_R])
+    retval = 1;
+  else if (ia[ETOH_R] < ib[ETOH_R])
+    retval = -1;
+
+  if (retval == 0)
+  {
+    for (int d = 0; d < VDIM; ++d)
+    {
+      if (ia[d] > ib[d])
+        retval = 1;
+      else if (ia[d] < ib[d])
+        retval = -1;
+      if (retval != 0)
+        break;
+    }
+  }
+
+  return retval;
+}
+
+static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
+                                  uintloc_t *part_starts, uintloc_t *part_e)
+{
+  int rank, size;
+  ASD_MPI_CHECK(MPI_Comm_rank(comm, &rank));
+  ASD_MPI_CHECK(MPI_Comm_size(comm, &size));
+
+  MPI_Request *recv_requests = asd_malloc_aligned(sizeof(MPI_Request) * size);
+  MPI_Request *send_requests = asd_malloc_aligned(sizeof(MPI_Request) * size);
+
+  // {{{ compute centroid of each element
+  dfloat_t *EToC = asd_malloc_aligned(sizeof(dfloat_t) * VDIM * om->E);
+  dfloat_t cmaxloc[VDIM] = {-DFLOAT_MAX}, cminloc[VDIM] = {DFLOAT_MAX};
+  for (uintloc_t e = 0; e < om->E; ++e)
+  {
+    for (int d = 0; d < VDIM; ++d)
+      EToC[e * VDIM + d] = 0;
+
+    for (int n = 0; n < NVERTS; ++n)
+      for (int d = 0; d < VDIM; ++d)
+        EToC[e * VDIM + d] += om->EToVX[NVERTS * VDIM * e + VDIM * n + d];
+
+    for (int d = 0; d < VDIM; ++d)
+      EToC[e * VDIM + d] /= NVERTS;
+
+    for (int d = 0; d < VDIM; ++d)
+    {
+      cmaxloc[d] = ASD_MAX(cmaxloc[d], EToC[e * VDIM + d]);
+      cminloc[d] = ASD_MIN(cminloc[d], EToC[e * VDIM + d]);
+    }
+  }
+// }}}
+
+#if 0
+  printf("EToC:\n");
+  for (uintloc_t e = 0; e < om->E; ++e)
+  {
+    printf("%20" UINTLOC_PRI, e);
+    for (int d = 0; d < VDIM; ++d)
+      printf(" %" DFLOAT_FMTe, EToC[e * VDIM + d]);
+    printf("\n");
+  }
+#endif
+
+  // {{{ compute Hilbert integer centroids
+  dfloat_t cmaxglo[VDIM] = {-DFLOAT_MAX}, cminglo[VDIM] = {DFLOAT_MAX};
+  // These calls could be joined
+  ASD_MPI_CHECK(
+      MPI_Allreduce(cmaxloc, cmaxglo, VDIM, DFLOAT_MPI, MPI_MAX, comm));
+  ASD_MPI_CHECK(
+      MPI_Allreduce(cminloc, cminglo, VDIM, DFLOAT_MPI, MPI_MIN, comm));
+
+#if 0
+  printf("min:\n");
+  for (int d = 0; d < VDIM; ++d)
+    printf(" %" DFLOAT_FMTe, cminglo[d]);
+  printf("\n");
+
+  printf("max:\n");
+  for (int d = 0; d < VDIM; ++d)
+    printf(" %" DFLOAT_FMTe, cmaxglo[d]);
+  printf("\n");
+#endif
+
+  // convert the centroids to hilbert integer
+  uintglo_t *EToHloc = asd_malloc_aligned(sizeof(uintglo_t) * NETOH * om->E);
+
+#if 0
+  printf("uintglo_t max: %20" UINTGLO_PRI "\n", UINTGLO_MAX);
+  printf("EToCI:\n");
+#endif
+
+  for (uintloc_t e = 0; e < om->E; ++e)
+  {
+    uintglo_t X[VDIM], H[VDIM];
+
+    // TODO Is there a better way to get integer coordinates?
+    for (int d = 0; d < VDIM; ++d)
+    {
+      long double x =
+          (EToC[e * VDIM + d] - cminglo[d]) / (cmaxglo[d] - cminglo[d]);
+      X[d] = (uintglo_t)(x * UINTGLO_MAX);
+    }
+
+#if 0
+    printf("%20" UINTLOC_PRI, e);
+    for (int d = 0; d < VDIM; ++d)
+      printf(" %20" UINTGLO_PRI, X[d]);
+    printf("\n");
+#endif
+
+    hilbert_axes_to_trans(X);
+    hilbert_trans_to_code(X, H);
+
+    for (int d = 0; d < VDIM; ++d)
+      EToHloc[e * NETOH + d] = H[d];
+    EToHloc[e * NETOH + ETOH_E] = e;           // original element number
+    EToHloc[e * NETOH + ETOH_R] = rank;        // original rank
+    EToHloc[e * NETOH + ETOH_S] = UINTGLO_MAX; // new rank
+  }
+  asd_free_aligned(EToC);
+
+#if 0
+  printf("EToHloc before sort:\n");
+  for (uintloc_t e = 0; e < om->E; ++e)
+  {
+    for (int n = 0; n < NETOH; ++n)
+      printf(" %20" UINTGLO_PRI, EToHloc[e * NETOH + n]);
+    printf("\n");
+  }
+#endif
+  // }}}
+
+  qsort(EToHloc, om->E, sizeof(uintglo_t) * NETOH, EToH_H_cmp);
+
+#if 0
+  printf("EToHloc:\n");
+  for (uintloc_t e = 0; e < om->E; ++e)
+  {
+    for (int n = 0; n < NETOH; ++n)
+      printf(" %20" UINTGLO_PRI, EToHloc[e * NETOH + n]);
+    printf("\n");
+  }
+#endif
+
+  // {{{ select pivots
+  uintglo_t *pivotsloc, *pivotsglo;
+
+  pivotsloc = asd_malloc_aligned(sizeof(uintglo_t) * NETOH * size);
+  pivotsglo = (rank == 0)
+                  ? asd_malloc_aligned(sizeof(uintglo_t) * NETOH * size * size)
+                  : NULL;
+
+  for (int r = 0; r < size; ++r)
+    for (int d = 0; d < VDIM; ++d)
+      pivotsloc[r * NETOH + d] = EToHloc[((om->E * r) / size) * NETOH + d];
+
+#if 0
+  printf("pivotsloc\n");
+  for (int r = 0; r < size; ++r)
+  {
+    printf("%2d ", r);
+    for (int d = 0; d < VDIM; ++d)
+      printf(" %20" UINTGLO_PRI, pivotsloc[r * NETOH + d]);
+    printf("\n");
+  }
+#endif
+
+  ASD_MPI_CHECK(MPI_Gather(pivotsloc, size * NETOH, UINTGLO_MPI, pivotsglo,
+                           size * NETOH, UINTGLO_MPI, 0, comm));
+
+#if 0
+  if (rank == 0)
+  {
+    printf("pivotsglo\n");
+    for (int r = 0; r < size; ++r)
+      for (int s = 0; s < size; ++s)
+      {
+        printf("%2d %2d ", r, s);
+        for (int d = 0; d < VDIM; ++d)
+          printf(" %20" UINTGLO_PRI,
+                 pivotsglo[r * size * NETOH + s * NETOH + d]);
+        printf("\n");
+      }
+  }
+#endif
+
+  if (rank == 0)
+  {
+    uintglo_t *sorted_pivotsglo =
+        asd_malloc_aligned(sizeof(uintglo_t) * NETOH * size * size);
+    asd_multimergesort(sorted_pivotsglo, pivotsglo, size, size,
+                       sizeof(uintglo_t) * NETOH, EToH_H_cmp);
+
+#if 0
+    printf("sorted_pivotsglo\n");
+    for (int r = 0; r < size; ++r)
+      for (int s = 0; s < size; ++s)
+      {
+        printf("%2d %2d ", r, s);
+        for (int d = 0; d < VDIM; ++d)
+          printf(" %20" UINTGLO_PRI,
+                 sorted_pivotsglo[r * size * NETOH + s * NETOH + d]);
+        printf("\n");
+      }
+#endif
+
+    for (int r = 0; r < size; ++r)
+      for (int d = 0; d < VDIM; ++d)
+        pivotsloc[r * NETOH + d] =
+            sorted_pivotsglo[((size * size * r) / size) * NETOH + d];
+
+    asd_free_aligned(pivotsglo);
+    asd_free_aligned(sorted_pivotsglo);
+  }
+
+  ASD_MPI_CHECK(MPI_Bcast(pivotsloc, size * NETOH, UINTGLO_MPI, 0, comm));
+  // }}}
+
+  // {{{ compute communication map to globally sort EToH
+  uintloc_t *startsloc = asd_calloc(sizeof(uintloc_t), size + 1);
+  startsloc[size] = om->E;
+
+  // binary search for the starts of each rank in EToHloc
+  for (int r = 0; r < size; ++r)
+  {
+    uintloc_t start = 0;
+    uintloc_t end = om->E - 1;
+    uintloc_t offset;
+
+    while (end >= start)
+    {
+      offset = (start + end) / 2;
+
+      if (offset == 0)
+        break;
+
+      int c = EToH_H_cmp(EToHloc + offset * NETOH, pivotsloc + r * NETOH);
+
+      if (start == end)
+      {
+        if (c < 0)
+          ++offset;
+        break;
+      }
+
+      if (c < 0)
+        start = offset + 1;
+      else if (c > 0)
+        end = offset - 1;
+      else
+        break;
+    }
+
+    ASD_ABORT_IF_NOT(offset <= om->E, "Problem with binary search");
+
+    startsloc[r] = offset;
+  }
+  asd_free_aligned(pivotsloc);
+
+#if 0
+  printf("startsloc\n");
+  for (int r = 0; r <= size; ++r)
+  {
+    printf("%2d %20" UINTLOC_PRI, r, startsloc[r]);
+    if (startsloc[r] < om->E)
+      for (int d = 0; d < VDIM; ++d)
+        printf(" %20" UINTGLO_PRI, EToHloc[startsloc[r] * NETOH + d]);
+    printf("\n");
+  }
+  printf("\n\n");
+#endif
+
+  // get number of elements to receive
+  int *countsglo = asd_malloc(sizeof(int) * size);
+  for (int r = 0; r < size; ++r)
+  {
+    uintmax_t uic = startsloc[r + 1] - startsloc[r];
+    ASD_ABORT_IF_NOT(uic < INT_MAX, "Sending more than INT_MAX elements");
+    int c = (int)uic;
+    ASD_MPI_CHECK(MPI_Gather(&c, 1, MPI_INT, countsglo, 1, MPI_INT, r, comm));
+  }
+  uintloc_t *startsglo = asd_calloc(sizeof(uintloc_t), size + 1);
+  for (int r = 0; r < size; ++r)
+    startsglo[r + 1] = startsglo[r] + countsglo[r];
+  asd_free(countsglo);
+
+#if 0
+  printf("countsglo\n");
+  for (int r = 0; r < size; ++r)
+    printf("%2d %20ju\n", r, (uintmax_t)(startsglo[r + 1] - startsglo[r]));
+
+  printf("countsloc\n");
+  for (int r = 0; r < size; ++r)
+    printf("%2d %20ju\n", r, (uintmax_t)(startsloc[r + 1] - startsloc[r]));
+#endif
+  // }}}
+
+  // {{{ receive EToH for global sort
+  uintglo_t *EToHglo =
+      asd_malloc_aligned(sizeof(uintglo_t) * NETOH * startsglo[size]);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Irecv(EToHglo + NETOH * startsglo[r],
+              NETOH * (startsglo[r + 1] - startsglo[r]), UINTGLO_MPI, r, 333,
+              comm, recv_requests + r);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Isend(EToHloc + NETOH * startsloc[r],
+              NETOH * (startsloc[r + 1] - startsloc[r]), UINTGLO_MPI, r, 333,
+              comm, send_requests + r);
+
+  MPI_Waitall(size, recv_requests, MPI_STATUSES_IGNORE);
+  MPI_Waitall(size, send_requests, MPI_STATUSES_IGNORE);
+
+#if 0
+  printf("EToHglo received:\n");
+  for (uintloc_t e = 0; e < startsglo[size]; ++e)
+  {
+    for (int n = 0; n < NETOH; ++n)
+      printf(" %20" UINTGLO_PRI, EToHglo[e * NETOH + n]);
+    printf("\n");
+  }
+#endif
+  // }}}
+
+  // TODO Should we replace with multi-mergesort?
+  qsort(EToHglo, startsglo[size], sizeof(uintglo_t) * NETOH, EToH_H_cmp);
+
+  // {{{ compute destination rank for each element
+  uintglo_t *Eglo_first_index = asd_malloc(sizeof(uintglo_t) * (size + 1));
+  {
+    uintglo_t Eglo = startsglo[size];
+    uintglo_t *Eglo_in_proc = asd_malloc(sizeof(uintglo_t) * 2 * size);
+
+    ASD_MPI_CHECK(MPI_Allgather(&Eglo, 1, UINTGLO_MPI, Eglo_in_proc, 1,
+                                UINTGLO_MPI, comm));
+
+    ASD_ABORT_IF_NOT(size > 0, "We need at least one MPI rank");
+    Eglo_first_index[0] = 0;
+    for (int r = 0; r < size; ++r)
+      Eglo_first_index[r + 1] = Eglo_in_proc[r] + Eglo_first_index[r];
+
+    asd_free(Eglo_in_proc);
+  }
+
+  const uintglo_t ms = Eglo_first_index[rank];
+  const uintglo_t me = Eglo_first_index[rank + 1];
+
+  for (int r = 0; r < size; ++r)
+  {
+    const uintglo_t Etotal = Eglo_first_index[size];
+    const uintglo_t ns = linpart_starting_row(r, size, Etotal);
+    const uintglo_t ne = linpart_starting_row(r + 1, size, Etotal);
+
+    if (ns < me && ne > ms)
+    {
+      const uintglo_t start = ASD_MAX(ns, ms);
+      const uintglo_t end = ASD_MIN(ne, me);
+      for (uintglo_t e = start; e < end; ++e)
+        EToHglo[(e - ms) * NETOH + ETOH_S] = r;
+    }
+  }
+
+  asd_free(Eglo_first_index);
+// }}}
+
+#if 0
+  printf("EToHglo sorted:\n");
+  for (uintloc_t e = 0; e < startsglo[size]; ++e)
+  {
+    for (int n = 0; n < NETOH; ++n)
+      printf(" %20" UINTGLO_PRI, EToHglo[e * NETOH + n]);
+    printf("\n");
+  }
+#endif
+
+  qsort(EToHglo, startsglo[size], sizeof(uintglo_t) * NETOH, EToH_rH_cmp);
+
+#if 0
+  printf("EToHglo sorted to send:\n");
+  for (uintloc_t e = 0; e < startsglo[size]; ++e)
+  {
+    for (int n = 0; n < NETOH; ++n)
+      printf(" %20" UINTGLO_PRI, EToHglo[e * NETOH + n]);
+    printf("\n");
+  }
+#endif
+
+  // {{{ receive EToH with partition information
+  for (int r = 0; r < size; ++r)
+    MPI_Irecv(EToHloc + NETOH * startsloc[r],
+              NETOH * (startsloc[r + 1] - startsloc[r]), UINTGLO_MPI, r, 333,
+              comm, send_requests + r);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Isend(EToHglo + NETOH * startsglo[r],
+              NETOH * (startsglo[r + 1] - startsglo[r]), UINTGLO_MPI, r, 333,
+              comm, recv_requests + r);
+
+  MPI_Waitall(size, recv_requests, MPI_STATUSES_IGNORE);
+  MPI_Waitall(size, send_requests, MPI_STATUSES_IGNORE);
+
+#if 0
+  printf("EToHloc:\n");
+  for (uintloc_t e = 0; e < om->E; ++e)
+  {
+    for (int n = 0; n < NETOH; ++n)
+      printf(" %20" UINTGLO_PRI, EToHloc[e * NETOH + n]);
+    printf("\n");
+  }
+#endif
+  // }}}
+
+  uintloc_t *part_counts = asd_calloc(sizeof(uintloc_t), size);
+  for (uintloc_t e = 0; e < om->E; ++e)
+  {
+    ASD_ASSERT(EToHloc[e * NETOH + ETOH_E] < UINTLOC_MAX);
+
+    ASD_ABORT_IF_NOT(EToHloc[e * NETOH + ETOH_S] < UINTLOC_MAX,
+                     "Lost element %ju in Hilber partition",
+                     EToHloc[e * NETOH + ETOH_E]);
+
+    part_e[e] = (uintloc_t)EToHloc[e * NETOH + ETOH_E];
+    ++part_counts[EToHloc[e * NETOH + ETOH_S]];
+  }
+
+  part_starts[0] = 0;
+  for (int r = 0; r < size; ++r)
+    part_starts[r + 1] = part_starts[r] + part_counts[r];
+
+  asd_free(part_counts);
+  asd_free(startsglo);
+  asd_free(startsloc);
+  asd_free_aligned(EToHglo);
+  asd_free_aligned(EToHloc);
+  asd_free_aligned(recv_requests);
+  asd_free_aligned(send_requests);
+}
+// }}}
+
 // {{{ App
 typedef struct app
 {
@@ -556,6 +1126,13 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   // Read mesh
   //
   app->hm = host_mesh_read_msh(app->prefs);
+
+  uintloc_t *part_starts =
+      asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
+  uintloc_t *part_e = asd_malloc_aligned(sizeof(uintloc_t) * m->E);
+  get_hilbert_partition(app->prefs->comm, m, part_starts, part_e);
+  asd_free_aligned(part_starts);
+  asd_free_aligned(part_e);
 
   return app;
 }
