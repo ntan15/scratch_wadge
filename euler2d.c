@@ -499,7 +499,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   ASD_VERBOSE("Keeping %ju elements on rank %d", (intmax_t)E, prefs->rank);
 
   mesh->E = (uintloc_t)E;
-  mesh->EToVG = asd_malloc_aligned(sizeof(uintloc_t) * NVERTS * E);
+  mesh->EToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * E);
   mesh->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * E);
 
   for (e = ethis; e < enext; ++e)
