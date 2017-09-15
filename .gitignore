@@ -16,6 +16,7 @@
 /lua/
 /occa/
 
+/data
 /compile_commands.json
 /nohup.out
 /tags
