@@ -208,18 +208,18 @@ static uintmax_t linpart_starting_row(uintmax_t rank, uintmax_t num_procs,
   return (rank * num_rows) / num_procs;
 }
 
-#if 0
-static uintmax_t linpart_ending_row(uintmax_t rank, uintmax_t num_procs,
-                                    uintmax_t num_rows)
-{
-  return linpart_starting_row(rank + 1, num_procs, num_rows) - 1;
-}
-
 static uintmax_t linpart_local_num_rows(uintmax_t rank, uintmax_t num_procs,
                                         uintmax_t num_rows)
 {
   return linpart_starting_row(rank + 1, num_procs, num_rows) -
          linpart_starting_row(rank, num_procs, num_rows);
+}
+
+#if 0
+static uintmax_t linpart_ending_row(uintmax_t rank, uintmax_t num_procs,
+                                    uintmax_t num_rows)
+{
+  return linpart_starting_row(rank + 1, num_procs, num_rows) - 1;
 }
 
 static uintmax_t linpart_row_owner(uintmax_t row, uintmax_t num_procs,
