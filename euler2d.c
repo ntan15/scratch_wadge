@@ -550,7 +550,7 @@ static void host_mesh_write_mfem(const int rank, const char *directory,
   fprintf(file, "elements\n%" UINTLOC_PRI "\n", mesh->E);
   for (uintloc_t e = 0; e < mesh->E; ++e)
   {
-    fprintf(file, "%" UINTLOC_PRI " %d", rank + 1, MFEM_ELEM_TYPE);
+    fprintf(file, "%" UINTLOC_PRI " %" UINTLOC_PRI, e + 1, MFEM_ELEM_TYPE);
     for (int n = 0; n < NVERTS; ++n)
       fprintf(file, " %" UINTLOC_PRI, NVERTS * e + n);
 
