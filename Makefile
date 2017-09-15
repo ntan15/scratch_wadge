@@ -46,7 +46,12 @@ ifeq ($(UNAME_S),Linux)
  LDFLAGS += -Wl,-rpath=$(CURDIR)/occa/lib,--enable-new-dtags
 endif
 
+.PHONY: all clean debug realclean
+
 all: euler2d
+
+debug:
+	$(MAKE) DEBUG=1
 
 lua:
 	tar xzf vendor/lua-*.tar.gz && mv lua-* lua
@@ -56,16 +61,13 @@ occa:
 	tar xzf vendor/occa-*.tar.gz && mv occa-* occa
 	cd occa && $(MAKE) $(OCCA_MAKE_FLAGS) CC=$(CC) CXX=$(CXX) FC=$(FC)
 
-# Dependencies
-euler2d: euler2d.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) \
-        $< $(DEPS_SOURCE) $(LOADLIBES) $(LDLIBS) -o $@
-
-# Rules
-.PHONY: clean realclean
 clean:
 	rm -rf euler2d *.o
 
 realclean:
 	rm -rf $(TPLS)
 	git clean -X -d -f
+
+euler2d: euler2d.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) \
+        $< $(DEPS_SOURCE) $(LOADLIBES) $(LDLIBS) -o $@
