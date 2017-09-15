@@ -734,8 +734,19 @@ int EToH_rH_cmp(const void *a, const void *b)
   return retval;
 }
 
+// gets a partition of the mesh based on a Hilbert curve
+//
+// part_E - gives the number of elements per rank in the new mesh
+// part_recv_starts - give the starting location into part_send_e for receiving
+//                    the elements
+// part_send_starts - give the starting location into part_send_e for sending
+//                    the elements
+// part_send_e      - give element ordering for sending the elements
 static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
-                                  uintloc_t *part_starts, uintloc_t *part_e)
+                                  uintloc_t *part_E,
+                                  uintloc_t *part_recv_starts,
+                                  uintloc_t *part_send_starts,
+                                  uintloc_t *part_send_e)
 {
   int rank, size;
   ASD_MPI_CHECK(MPI_Comm_rank(comm, &rank));
@@ -1078,7 +1089,6 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
     }
   }
 
-  asd_free(Eglo_first_index);
 // }}}
 
 #if 0
@@ -1128,7 +1138,7 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
 #endif
   // }}}
 
-  uintloc_t *part_counts = asd_calloc(sizeof(uintloc_t), size);
+  uintloc_t *part_send_counts = asd_calloc(sizeof(uintloc_t), size);
   for (uintloc_t e = 0; e < om->E; ++e)
   {
     ASD_ASSERT(EToHloc[e * NETOH + ETOH_E] < UINTLOC_MAX);
@@ -1137,15 +1147,41 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
                      "Lost element %ju in Hilber partition",
                      EToHloc[e * NETOH + ETOH_E]);
 
-    part_e[e] = (uintloc_t)EToHloc[e * NETOH + ETOH_E];
-    ++part_counts[EToHloc[e * NETOH + ETOH_S]];
+    part_send_e[e] = (uintloc_t)EToHloc[e * NETOH + ETOH_E];
+    ++part_send_counts[EToHloc[e * NETOH + ETOH_S]];
   }
 
-  part_starts[0] = 0;
+  part_send_starts[0] = 0;
   for (int r = 0; r < size; ++r)
-    part_starts[r + 1] = part_starts[r] + part_counts[r];
+    part_send_starts[r + 1] = part_send_starts[r] + part_send_counts[r];
 
-  asd_free(part_counts);
+  uintloc_t *part_recv_counts = asd_calloc(sizeof(uintloc_t), size);
+  for (int r = 0; r < size; ++r)
+  {
+    uintmax_t uic = part_send_starts[r + 1] - part_send_starts[r];
+    ASD_ABORT_IF_NOT(uic < UINTLOC_MAX,
+                     "Sending more than UINTLOC_MAX elements");
+    uintloc_t c = (uintloc_t)uic;
+    ASD_MPI_CHECK(MPI_Gather(&c, 1, UINTLOC_MPI, part_recv_counts, 1,
+                             UINTLOC_MPI, r, comm));
+  }
+
+  part_recv_starts[0] = 0;
+  for (int r = 0; r < size; ++r)
+    part_recv_starts[r + 1] = part_recv_starts[r] + part_recv_counts[r];
+
+  for (int r = 0; r < size; ++r)
+  {
+    const uintmax_t Etotal = Eglo_first_index[size];
+    const uintmax_t Eloc = linpart_local_num_rows(r, size, Etotal);
+
+    ASD_ABORT_IF_NOT(Eloc < UINTLOC_MAX, "Too many local elements %ju", Eloc);
+    part_E[r] = (uintloc_t)Eloc;
+  }
+
+  asd_free(Eglo_first_index);
+  asd_free(part_send_counts);
+  asd_free(part_recv_counts);
   asd_free(startsglo);
   asd_free(startsloc);
   asd_free_aligned(EToHglo);
@@ -1154,30 +1190,103 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
   asd_free_aligned(send_requests);
 }
 
-static host_mesh_t *partition(MPI_Comm comm, host_mesh_t *om,
-                              uintloc_t *part_starts, uintloc_t *part_e)
+static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
+                              const uintloc_t *part_E,
+                              const uintloc_t *part_recv_starts,
+                              const uintloc_t *part_send_starts,
+                              const uintloc_t *part_send_e)
 {
   int rank, size;
   ASD_MPI_CHECK(MPI_Comm_rank(comm, &rank));
   ASD_MPI_CHECK(MPI_Comm_size(comm, &size));
 
+  MPI_Request *recv_requests =
+      asd_malloc_aligned(sizeof(MPI_Request) * 2 * size);
+  MPI_Request *send_requests =
+      asd_malloc_aligned(sizeof(MPI_Request) * 2 * size);
+
   host_mesh_t *nm = asd_malloc(sizeof(host_mesh_t));
-  nm->E = om->E;
-  nm->EToVG = asd_malloc_aligned(sizeof(uintloc_t) * NVERTS * nm->E);
+
+  uintglo_t *bufEToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * om->E);
+  dfloat_t *bufEToVX =
+      asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * om->E);
+
+  nm->E = part_E[rank];
+  nm->EToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * nm->E);
   nm->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * nm->E);
 
-  memcpy(nm->EToVG, om->EToVG, sizeof(uintloc_t) * NVERTS * nm->E);
-  memcpy(nm->EToVX, om->EToVX, sizeof(uintloc_t) * NVERTS * VDIM * nm->E);
+#if 0
+  printf("part_E:\n");
+  for (int r = 0; r < size; ++r)
+    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", r, part_E[r]);
 
-  ASD_INFO("Partition not implemented!!!!");
-
-  printf("part_starts:\n");
+  printf("part_recv_starts:\n");
   for (int r = 0; r <= size; ++r)
-    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", r, part_starts[r]);
+    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", r, part_recv_starts[r]);
 
-  printf("part_e:\n");
+  printf("part_send_starts:\n");
+  for (int r = 0; r <= size; ++r)
+    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", r, part_send_starts[r]);
+
+  printf("part_send_e:\n");
   for (uintloc_t e = 0; e < om->E; ++e)
-    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", e, part_e[e]);
+    printf("%20" UINTLOC_PRI " %20" UINTLOC_PRI "\n", e, part_send_e[e]);
+
+  for (int r = 0; r < size; ++r)
+    printf("%2d<-%2d : %20" UINTLOC_PRI "\n", rank, r,
+           part_recv_starts[r + 1] - part_recv_starts[r]);
+
+  for (int r = 0; r < size; ++r)
+    printf("%2d->%2d : %20" UINTLOC_PRI "\n", rank, r,
+           part_send_starts[r + 1] - part_send_starts[r]);
+
+#endif
+
+  for (uintloc_t e1 = 0; e1 < om->E; ++e1)
+  {
+    const uintloc_t e0 = part_send_e[e1];
+
+    for (int n = 0; n < NVERTS; ++n)
+      bufEToVG[NVERTS * e1 + n] = om->EToVG[NVERTS * e0 + n];
+  }
+
+  for (uintloc_t e1 = 0; e1 < om->E; ++e1)
+  {
+    const uintloc_t e0 = part_send_e[e1];
+
+    for (int n = 0; n < NVERTS; ++n)
+      for (int d = 0; d < VDIM; ++d)
+        bufEToVX[NVERTS * VDIM * e1 + VDIM * n + d] =
+            om->EToVX[NVERTS * VDIM * e0 + VDIM * n + d];
+  }
+
+  for (int r = 0; r < size; ++r)
+    MPI_Irecv(nm->EToVG + NVERTS * part_recv_starts[r],
+              NVERTS * (part_recv_starts[r + 1] - part_recv_starts[r]),
+              UINTGLO_MPI, r, 333, comm, recv_requests + r);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Irecv(nm->EToVX + NVERTS * VDIM * part_recv_starts[r],
+              NVERTS * VDIM * (part_recv_starts[r + 1] - part_recv_starts[r]),
+              DFLOAT_MPI, r, 333, comm, recv_requests + size + r);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Isend(bufEToVG + NVERTS * part_send_starts[r],
+              NVERTS * (part_send_starts[r + 1] - part_send_starts[r]),
+              UINTGLO_MPI, r, 333, comm, send_requests + r);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Isend(bufEToVX + NVERTS * VDIM * part_send_starts[r],
+              NVERTS * VDIM * (part_send_starts[r + 1] - part_send_starts[r]),
+              DFLOAT_MPI, r, 333, comm, send_requests + size + r);
+
+  MPI_Waitall(2 * size, recv_requests, MPI_STATUSES_IGNORE);
+  MPI_Waitall(2 * size, send_requests, MPI_STATUSES_IGNORE);
+
+  asd_free_aligned(bufEToVG);
+  asd_free_aligned(bufEToVX);
+  asd_free_aligned(recv_requests);
+  asd_free_aligned(send_requests);
 
   return nm;
 }
@@ -1221,15 +1330,29 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   host_mesh_t *m, *n;
   m = host_mesh_read_msh(app->prefs);
 
-  uintloc_t *part_starts =
+  host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh_pre",
+                       m);
+
+  uintloc_t *part_E =
       asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
-  uintloc_t *part_e = asd_malloc_aligned(sizeof(uintloc_t) * m->E);
-  get_hilbert_partition(app->prefs->comm, m, part_starts, part_e);
-  n = partition(app->prefs->comm, m, part_starts, part_e);
-  asd_free_aligned(part_starts);
-  asd_free_aligned(part_e);
+  uintloc_t *part_recv_starts =
+      asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
+  uintloc_t *part_send_starts =
+      asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
+  uintloc_t *part_send_e = asd_malloc_aligned(sizeof(uintloc_t) * m->E);
+  get_hilbert_partition(app->prefs->comm, m, part_E, part_recv_starts,
+                        part_send_starts, part_send_e);
+  n = partition(app->prefs->comm, m, part_E, part_recv_starts, part_send_starts,
+                part_send_e);
+  asd_free_aligned(part_E);
+  asd_free_aligned(part_recv_starts);
+  asd_free_aligned(part_send_starts);
+  asd_free_aligned(part_send_e);
   host_mesh_free(m);
   app->hm = n;
+
+  host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh",
+                       app->hm);
 
   return app;
 }
