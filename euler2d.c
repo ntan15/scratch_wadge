@@ -1107,12 +1107,12 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
   for (int r = 0; r < size; ++r)
     MPI_Irecv(EToHloc + NETOH * startsloc[r],
               NETOH * (startsloc[r + 1] - startsloc[r]), UINTGLO_MPI, r, 333,
-              comm, send_requests + r);
+              comm, recv_requests + r);
 
   for (int r = 0; r < size; ++r)
     MPI_Isend(EToHglo + NETOH * startsglo[r],
               NETOH * (startsglo[r + 1] - startsglo[r]), UINTGLO_MPI, r, 333,
-              comm, recv_requests + r);
+              comm, send_requests + r);
 
   MPI_Waitall(size, recv_requests, MPI_STATUSES_IGNORE);
   MPI_Waitall(size, send_requests, MPI_STATUSES_IGNORE);
