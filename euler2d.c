@@ -349,6 +349,7 @@ static void prefs_print(prefs_t *prefs)
 #define NVERTS 3
 #define NFACES 3
 #define MSH_ELEM_TYPE 2
+#define MFEM_ELEM_TYPE 2
 
 // Note that the mesh duplicates the vertices for each element (like DG dofs).
 // This is done to make partitioning the mesh simple.
@@ -517,6 +518,69 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   asd_free_aligned(EToVglo);
 
   return mesh;
+}
+
+static void host_mesh_write_mfem(const int rank, const char *directory,
+                                 const char *prefix, const host_mesh_t *mesh)
+{
+  char outdir[ASD_BUFSIZ];
+  struct stat sb;
+
+  // create directory for the timestep data
+  snprintf(outdir, ASD_BUFSIZ, "%s/%s", directory, prefix);
+  if (stat(outdir, &sb) != 0 && mkdir(outdir, 0755) != 0 && errno != EEXIST)
+    perror("making mfem directory");
+
+  char filename[ASD_BUFSIZ];
+  snprintf(filename, ASD_BUFSIZ, "%s/mesh.%06d", outdir, rank);
+  ASD_VERBOSE("Writing file: '%s'", filename);
+
+  FILE *file = fopen(filename, "w");
+
+  if (file == NULL)
+  {
+    ASD_LERROR("Could not open %s for output!\n", filename);
+    return;
+  }
+
+  fprintf(file, "MFEM mesh v1.0\n\n");
+  fprintf(file, "dimension\n%d\n\n", VDIM);
+
+  fprintf(file, "elements\n%" UINTLOC_PRI "\n", mesh->E);
+  for (uintloc_t e = 0; e < mesh->E; ++e)
+  {
+    fprintf(file, "%" UINTLOC_PRI " %d", rank + 1, MFEM_ELEM_TYPE);
+    for (int n = 0; n < NVERTS; ++n)
+      fprintf(file, " %" UINTLOC_PRI, NVERTS * e + n);
+
+    fprintf(file, "\n");
+  }
+  fprintf(file, "\n");
+
+  fprintf(file, "boundary\n0\n\n");
+  fprintf(file, "vertices\n%" UINTLOC_PRI "\n%d\n", NVERTS * mesh->E, VDIM);
+
+  for (uintloc_t e = 0; e < mesh->E; ++e)
+  {
+    for (int n = 0; n < NVERTS; ++n)
+    {
+      fprintf(file, "        ");
+      for (int d = 0; d < VDIM; ++d)
+        fprintf(file, " %" DFLOAT_FMTe,
+                mesh->EToVX[NVERTS * VDIM * e + VDIM * n + d]);
+      fprintf(file, "\n");
+    }
+  }
+
+  if (ferror(file))
+  {
+    ASD_LERROR("Error writing to %s\n", filename);
+  }
+
+  if (fclose(file))
+  {
+    ASD_LERROR("Error closing %s\n", filename);
+  }
 }
 // }}}
 
