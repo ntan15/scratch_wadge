@@ -33,6 +33,7 @@ typedef uint32_t uintloc_t;
 #define UINTLOC(x) ASD_APPEND(x, u)
 #define UINTLOC_MAX UINT32_MAX
 #define UINTLOC_MAX_DIGITS INT32_MAX_DIGITS
+#define UINTLOC_MPI MPI_UNSIGNED
 #define UINTLOC_PRI PRIu32
 #define UINTLOC_SCN SCNu32
 
