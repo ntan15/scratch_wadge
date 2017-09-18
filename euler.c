@@ -1365,6 +1365,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   asd_free_aligned(part_send_starts);
   asd_free_aligned(part_send_e);
   host_mesh_free(m);
+  asd_free(m);
   app->hm = n;
 
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh",
