@@ -33,7 +33,8 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 5
+    N = 5,
+    sfc_partition = true
   },
   output = {
     datadir = "data",

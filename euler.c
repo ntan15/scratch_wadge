@@ -247,6 +247,7 @@ typedef struct prefs
 
   int mesh_N;
   char *mesh_filename;
+  int mesh_sfc_partition;
 
   char *output_datadir; // directory for output data files
   char *output_prefix;  // prefix for output files
@@ -299,6 +300,8 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
   prefs->mesh_filename =
       asd_lua_expr_string(L, "app.mesh.filename", "mesh.msh");
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
+  prefs->mesh_sfc_partition =
+      asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
 
   // output
   prefs->output_datadir = asd_lua_expr_string(L, "app.output.datadir", ".");
@@ -1349,24 +1352,32 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh_pre",
                        m);
 
-  uintloc_t *part_E =
-      asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
-  uintloc_t *part_recv_starts =
-      asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
-  uintloc_t *part_send_starts =
-      asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
-  uintloc_t *part_send_e = asd_malloc_aligned(sizeof(uintloc_t) * m->E);
-  get_hilbert_partition(app->prefs->comm, m, part_E, part_recv_starts,
-                        part_send_starts, part_send_e);
-  n = partition(app->prefs->comm, m, part_E, part_recv_starts, part_send_starts,
-                part_send_e);
-  asd_free_aligned(part_E);
-  asd_free_aligned(part_recv_starts);
-  asd_free_aligned(part_send_starts);
-  asd_free_aligned(part_send_e);
-  host_mesh_free(m);
-  asd_free(m);
-  app->hm = n;
+  if (app->prefs->mesh_sfc_partition)
+  {
+    uintloc_t *part_E =
+        asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
+    uintloc_t *part_recv_starts =
+        asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
+    uintloc_t *part_send_starts =
+        asd_malloc_aligned(sizeof(uintloc_t) * (app->prefs->size + 1));
+    uintloc_t *part_send_e = asd_malloc_aligned(sizeof(uintloc_t) * m->E);
+
+    get_hilbert_partition(app->prefs->comm, m, part_E, part_recv_starts,
+                          part_send_starts, part_send_e);
+    n = partition(app->prefs->comm, m, part_E, part_recv_starts,
+                  part_send_starts, part_send_e);
+
+    asd_free_aligned(part_E);
+    asd_free_aligned(part_recv_starts);
+    asd_free_aligned(part_send_starts);
+    asd_free_aligned(part_send_e);
+    host_mesh_free(m);
+    asd_free(m);
+
+    m = n;
+  }
+
+  app->hm = m;
 
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh",
                        app->hm);
