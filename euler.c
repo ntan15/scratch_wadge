@@ -1,5 +1,5 @@
 //
-// euler2d
+// euler
 //
 
 // {{{ Headers
@@ -137,7 +137,7 @@ static int get_occa_mode(const char *info)
 // }}}
 
 // {{{ Solver Info
-#define APP_NAME "euler2d"
+#define APP_NAME "euler"
 // }}}
 
 // {{{ Utilities
@@ -274,6 +274,13 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
   lua_pushnumber(L, (lua_Number)hostrank);
   lua_setglobal(L, "HOST_RANK");
 
+#ifdef ELEM_TYPE
+  lua_pushnumber(L, (lua_Number)ELEM_TYPE);
+  lua_setglobal(L, "ELEM_TYPE");
+#else
+#error "Undefined element type"
+#endif
+
   ASD_ASSERT(lua_gettop(L) == 0);
 
   // evaluate config file
@@ -345,12 +352,21 @@ static void prefs_print(prefs_t *prefs)
 // }}}
 
 // {{{ Mesh
-// Assume triangles
+#if ELEM_TYPE == 0 // triangle
 #define VDIM 2
 #define NVERTS 3
 #define NFACES 3
 #define MSH_ELEM_TYPE 2
 #define MFEM_ELEM_TYPE 2
+#elif ELEM_TYPE == 1 // tetrahedron
+#define VDIM 3
+#define NVERTS 4
+#define NFACES 4
+#define MSH_ELEM_TYPE 4
+#define MFEM_ELEM_TYPE 4
+#else
+#error "Unknown/undefined element type"
+#endif
 
 // Note that the mesh duplicates the vertices for each element (like DG dofs).
 // This is done to make partitioning the mesh simple.

@@ -1,3 +1,10 @@
+
+if     ELEM_TYPE == 0 then meshname = "meshes/hole_tri.msh"
+elseif ELEM_TYPE == 1 then meshname = "meshes/hole_tet.msh"
+else
+  print("Unknown element type")
+end
+
 app = {
   occa = {
     -- OpenMP
@@ -24,7 +31,7 @@ app = {
     -- flags = "-g",
   },
   mesh = {
-    filename = "meshes/hole_tri.msh",
+    filename = meshname,
     start_level = 1,
     N = 5
   },

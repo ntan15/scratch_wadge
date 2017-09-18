@@ -48,7 +48,7 @@ endif
 
 .PHONY: all clean debug realclean
 
-all: euler2d
+all: eulertri eulertet
 
 debug:
 	$(MAKE) DEBUG=1
@@ -62,12 +62,18 @@ occa:
 	cd occa && $(MAKE) $(OCCA_MAKE_FLAGS) CC=$(CC) CXX=$(CXX) FC=$(FC)
 
 clean:
-	rm -rf euler2d *.o
+	rm -rf eulertri eulertet *.o
 
 realclean:
 	rm -rf $(TPLS)
 	git clean -X -d -f
 
-euler2d: euler2d.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
+eulertri: CPPFLAGS+=-DELEM_TYPE=0
+eulertri: euler.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) \
+        $< $(DEPS_SOURCE) $(LOADLIBES) $(LDLIBS) -o $@
+
+eulertet: CPPFLAGS+=-DELEM_TYPE=1
+eulertet: euler.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) \
         $< $(DEPS_SOURCE) $(LOADLIBES) $(LDLIBS) -o $@
