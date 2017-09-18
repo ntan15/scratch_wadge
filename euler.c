@@ -767,6 +767,8 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
                                   uintloc_t *part_send_starts,
                                   uintloc_t *part_send_e)
 {
+  ASD_ROOT_VERBOSE("Computing Hilbert partition");
+
   int rank, size;
   ASD_MPI_CHECK(MPI_Comm_rank(comm, &rank));
   ASD_MPI_CHECK(MPI_Comm_size(comm, &size));
@@ -1233,6 +1235,8 @@ static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
   nm->E = part_E[rank];
   nm->EToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * nm->E);
   nm->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * nm->E);
+
+  ASD_VERBOSE("Partition mesh and keep %ju elements.", (intmax_t)nm->E);
 
 #if 0
   printf("part_E:\n");
