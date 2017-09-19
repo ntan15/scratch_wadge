@@ -378,8 +378,9 @@ static void prefs_print(prefs_t *prefs)
 typedef struct
 {
   uintloc_t E;      // number of elements
-  uintglo_t *EToVG; // element to global vetex numbers
-  dfloat_t *EToVX;  // element to vetex coordinates
+  uintglo_t *EToVG; // element to global vertex numbers
+  dfloat_t *EToVX;  // element to vertex coordinates
+
 } host_mesh_t;
 
 static void host_mesh_free(host_mesh_t *mesh)
