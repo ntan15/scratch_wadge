@@ -1,7 +1,7 @@
 [
   {
     "directory" : "/Users/lucas/research/code/wadges",
-    "command" : "clang -I/opt/local/include/openmpi-gcc6 --std=gnu11 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o euler2d.o euler2d.c",
+    "command" : "clang -I/opt/local/include/openmpi-gcc6 --std=gnu11 -DELEM_TYPE=1 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o euler.o euler.c",
     "file" : "euler2d.c"
   },
   {
