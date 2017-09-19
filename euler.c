@@ -1168,7 +1168,7 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
     ASD_ASSERT(EToHloc[e * NETOH + ETOH_E] < UINTLOC_MAX);
 
     ASD_ABORT_IF_NOT(EToHloc[e * NETOH + ETOH_S] < UINTLOC_MAX,
-                     "Lost element %ju in Hilber partition",
+                     "Lost element %ju in Hilbert partition",
                      EToHloc[e * NETOH + ETOH_E]);
 
     part_send_e[e] = (uintloc_t)EToHloc[e * NETOH + ETOH_E];
