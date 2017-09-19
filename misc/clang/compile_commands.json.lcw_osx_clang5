@@ -1,0 +1,12 @@
+[
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang-mp-5.0 -I/opt/local/include/mpich-clang50 --std=gnu11 -DELEM_TYPE=1 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o euler.o euler.c",
+    "file" : "euler.c"
+  },
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang-mp-5.0 -I/opt/local/include/mpich-clang50 --std=gnu11 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o asd.o asd.c",
+    "file" : "asd.c"
+  }
+]
