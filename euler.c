@@ -405,7 +405,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
 
   int reading_nodes = 0, reading_elements = 0;
 
-  // Currelty we are reading the whole mesh into memory and only keeping a part
+  // Currently we are reading the whole mesh into memory and only keeping a part
   // if it.  If this becomes a bottle neck we can thing about other ways of
   // getting a mesh.
 
