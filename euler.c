@@ -22,6 +22,13 @@
 #include "asd.h"
 // }}}
 
+// {{{ Config Macros
+#ifndef ELEM_TYPE
+// Undefined element type using Tets
+#define ELEM_TYPE 1
+#endif
+// }}}
+
 // {{{ Unit Macros
 #define GiB (1024 * 1024 * 1024)
 // }}}
@@ -274,13 +281,8 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
   lua_setglobal(L, "MPI_SIZE");
   lua_pushnumber(L, (lua_Number)hostrank);
   lua_setglobal(L, "HOST_RANK");
-
-#ifdef ELEM_TYPE
   lua_pushnumber(L, (lua_Number)ELEM_TYPE);
   lua_setglobal(L, "ELEM_TYPE");
-#else
-#error "Undefined element type"
-#endif
 
   ASD_ASSERT(lua_gettop(L) == 0);
 
