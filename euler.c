@@ -361,14 +361,90 @@ static void prefs_print(prefs_t *prefs)
 #define VDIM 2
 #define NVERTS 3
 #define NFACES 3
+#define NFACEVERTS 2
+#define NFACEORIEN 2
 #define MSH_ELEM_TYPE 2
 #define MFEM_ELEM_TYPE 2
+#define MFEM_FACE_TYPE 1
+
+const uint8_t FToFV[NFACES * NFACEVERTS] = {
+    0, 1, // face 0
+    1, 2, // face 1
+    2, 0  // face 2
+};
+
+// Orientations for triangle faces:
+//
+//      0          1
+//   0-----1    1-----0
+//
+const uint8_t OToFV[NFACEORIEN * NFACEVERTS] = {
+    0, 1, // orientation 0
+    1, 0, // orientation 1
+};
+
+const uint8_t OToFV_inv[NFACEORIEN * NFACEVERTS] = {
+    0, 1, // orientation 0
+    1, 0, // orientation 1
+};
+
+const uint8_t OOToNO[NFACEORIEN][NFACEORIEN] = {
+    {0, 1}, //
+    {1, 0}  //
+};
+
 #elif ELEM_TYPE == 1 // tetrahedron
 #define VDIM 3
 #define NVERTS 4
 #define NFACES 4
+#define NFACEVERTS 3
+#define NFACEORIEN 6
 #define MSH_ELEM_TYPE 4
 #define MFEM_ELEM_TYPE 4
+#define MFEM_FACE_TYPE 2
+
+const uint8_t FToFV[NFACES * NFACEVERTS] = {
+    0, 1, 2, // face 0
+    0, 1, 3, // face 1
+    1, 2, 3, // face 2
+    0, 3, 2  // face 3
+};
+
+// Orientations for tetrahedron faces:
+//     0         1         2         3         4         5    //
+//    /2\       /1\       /0\       /2\       /0\       /1\   //
+//   /   \     /   \     /   \     /   \     /   \     /   \  //
+//  /0___1\   /2___0\   /1___2\   /1___0\   /2___1\   /0___2\ //
+//
+const uint8_t OToFV[NFACEORIEN * NFACEVERTS] = {
+    0, 1, 2, // orientation 0
+    2, 0, 1, // orientation 1
+    1, 2, 0, // orientation 2
+    1, 0, 2, // orientation 3
+    2, 1, 0, // orientation 4
+    0, 2, 1, // orientation 5
+};
+
+const uint8_t OToFV_inv[NFACEORIEN * NFACEVERTS] = {
+    0, 1, 2, // orientation 0
+    1, 2, 0, // orientation 1
+    2, 0, 1, // orientation 2
+    1, 0, 2, // orientation 3
+    2, 1, 0, // orientation 4
+    0, 2, 1, // orientation 5
+};
+
+// What permutation (OOToNO[o0][o1]) needs to be applied to convert orientation
+// o0 into orientation o1.
+const uint8_t OOToNO[NFACEORIEN][NFACEORIEN] = {
+    {0, 1, 2, 3, 4, 5}, //
+    {2, 0, 1, 4, 5, 3}, //
+    {1, 2, 0, 5, 3, 4}, //
+    {3, 4, 5, 0, 1, 2}, //
+    {4, 5, 3, 2, 0, 1}, //
+    {5, 3, 4, 1, 2, 0}  //
+};
+
 #else
 #error "Unknown/undefined element type"
 #endif
