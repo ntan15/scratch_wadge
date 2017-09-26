@@ -499,8 +499,10 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   ASD_ROOT_INFO("Reading mesh from '%s'", prefs->mesh_filename);
 
   host_mesh_t *mesh = asd_malloc(sizeof(host_mesh_t));
+  asd_dictionary_t periodic_vertices;
+  asd_dictionary_init(&periodic_vertices);
 
-  uintglo_t Nvglo = 0;
+  uintglo_t Nvglo = 0, Nperiodic = 0;
   dfloat_t *VXglo = NULL;
   uintglo_t Eall = 0, Eglo = 0, e = 0;
   uintglo_t *EToVglo = NULL;
@@ -508,7 +510,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   FILE *fid = fopen(prefs->mesh_filename, "rb");
   ASD_ABORT_IF_NOT(fid != NULL, "Failed to open %s", prefs->mesh_filename);
 
-  int reading_nodes = 0, reading_elements = 0;
+  int reading_nodes = 0, reading_elements = 0, reading_periodic = 0;
 
   // Currently we are reading the whole mesh into memory and only keeping a part
   // if it.  If this becomes a bottle neck we can thing about other ways of
@@ -523,7 +525,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
 
     if (line[0] == '$')
     {
-      reading_elements = reading_nodes = 0;
+      reading_periodic = reading_elements = reading_nodes = 0;
 
       if (strstr(line, "$Nodes"))
       {
@@ -541,8 +543,15 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
         Eall = strtouglo_or_abort(line);
         EToVglo = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * Eall);
       }
+      else if (strstr(line, "$Periodic"))
+      {
+        reading_periodic = 1;
+        asd_free(line);
+        line = asd_getline(fid);
+        Nperiodic = strtouglo_or_abort(line);
+      }
 
-      if (reading_nodes || reading_elements)
+      if (reading_nodes || reading_elements || reading_periodic)
       {
         asd_free(line);
         continue;
@@ -586,6 +595,36 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
           EToVglo[NVERTS * e + n] = v - 1;
         }
         ++e;
+      }
+    }
+    else if (reading_periodic)
+    {
+      for (uintglo_t p = 0; p < Nperiodic; ++p)
+      {
+        asd_free(line); // "dimension child-entity-tag motherr-entity-tag" line
+
+        line = asd_getline(fid);
+        if (strstr(line, "Affine"))
+        {
+          asd_free(line); // "Affine ..." line
+          line = asd_getline(fid);
+        }
+
+        uintglo_t Npoints = strtouglo_or_abort(line);
+        ASD_TRACE("Reading %ju periodic points", Npoints);
+
+        for (uintglo_t n = 0; n < Npoints; ++n)
+        {
+          asd_free(line);
+          line = asd_getline(fid);
+          char *child = strtok(line, " ");
+          char *mother = strtok(NULL, " ");
+
+          ASD_TRACE("Periodic %s -> %s", child, mother);
+          asd_dictionary_insert(&periodic_vertices, child, mother);
+        }
+        asd_free(line);
+        line = asd_getline(fid);
       }
     }
 
@@ -633,17 +672,55 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   {
     for (int n = 0; n < NVERTS; ++n)
     {
-      const uintglo_t v = EToVglo[NVERTS * e + n];
-      mesh->EToVG[NVERTS * (e - ethis) + n] = v;
+      uintglo_t v = EToVglo[NVERTS * e + n];
 
+      // Use the non-periodic vertex numbers to set the geometry
       for (int d = 0; d < VDIM; ++d)
         mesh->EToVX[NVERTS * VDIM * (e - ethis) + VDIM * n + d] =
             VXglo[VDIM * v + d];
+
+      // Store the periodic vertex numbers for the topology (i.e., connectivity)
+      char child[ASD_BUFSIZ];
+      snprintf(child, ASD_BUFSIZ, "%" UINTGLO_PRI, v + 1);
+      char *mother = asd_dictionary_get_value(&periodic_vertices, child);
+
+      if (mother)
+      {
+        const uintglo_t mv = strtouglo_or_abort(mother) - 1;
+        ASD_TRACE("Setting child %ju to mother %ju", v, mv);
+        v = mv;
+      }
+
+      mesh->EToVG[NVERTS * (e - ethis) + n] = v;
+    }
+
+    for (int n0 = 0; n0 < NVERTS; ++n0)
+    {
+      const uintglo_t v0 = mesh->EToVG[NVERTS * (e - ethis) + n0];
+
+      for (int n1 = 0; n1 < NVERTS; ++n1)
+      {
+        if (n0 != n1)
+        {
+          const uintglo_t v1 = mesh->EToVG[NVERTS * (e - ethis) + n1];
+
+          ASD_ABORT_IF_NOT(
+              v0 != v1,
+              "\n         Sometimes coarse periodic meshes end up with\n"
+              "         elements that have the same vertex number.  If\n"
+              "         this happens we don't know how to connect the element\n"
+              "         because we depend on unique vertex numbers to\n"
+              "         connect the faces.  So we just bomb out.  A\n"
+              "         workaround is to use a sufficiently refined mesh\n"
+              "         that doesn't have elements with the same vertex.");
+        }
+      }
     }
   }
 
   asd_free_aligned(VXglo);
   asd_free_aligned(EToVglo);
+  asd_dictionary_clear(&periodic_vertices);
 
   // Initialize an unconnected mesh
   mesh->EB = mesh->E;
@@ -858,7 +935,11 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
         else if (s0 == 1 && s1 == 0 && s2 == 0)
           o = 5;
         else
-          ASD_ABORT("This should never be reached; problem sorting tet face");
+          ASD_ABORT("This should never be reached; problem sorting tet face\n"
+                    "fv = %3ju %3ju %3ju\n"
+                    "s = %d %d %d\n",
+                    (uintmax_t)fv[0], (uintmax_t)fv[1], (uintmax_t)fv[2], s0,
+                    s1, s2);
       }
 
 #else
