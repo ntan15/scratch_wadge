@@ -564,7 +564,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
     {
       ASD_TRACE("reading_elements from '%s'", line);
       strtok(line, " ");
-      char *word = word = strtok(NULL, " ");
+      char *word = strtok(NULL, " ");
       uintglo_t elemtype = strtouglo_or_abort(word);
 
       if (MSH_ELEM_TYPE == elemtype)
