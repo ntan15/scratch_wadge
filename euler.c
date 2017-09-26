@@ -453,16 +453,45 @@ const uint8_t OOToNO[NFACEORIEN][NFACEORIEN] = {
 // This is done to make partitioning the mesh simple.
 typedef struct
 {
-  uintloc_t E;      // number of elements
+  uintloc_t E;  // number of total elements on this rank
+  uintloc_t EB; // number of being elements on this rank
+  uintloc_t EG; // number of ghost elements on this rank
+
   uintglo_t *EToVG; // element to global vertex numbers
   dfloat_t *EToVX;  // element to vertex coordinates
 
+  uintloc_t *EToE; // element to neighboring element
+  uint8_t *EToF;   // element to neighboring element face
+  uint8_t *EToO;   // element to neighboring element orientation
+
+  uintloc_t EI;     // number of interior elements
+  uintloc_t *ESetI; // set of interior elements
+
+  uintloc_t EE;     // number of exterior elements
+  uintloc_t *ESetE; // set of exterior elements
+
+  uintloc_t ES;     // number of element to send
+  uintloc_t *ESetS; // set of elements to send
+
+  uintloc_t *recv_starts; // element index to receive from each rank
+  uintloc_t *send_starts; // index into ESetS to send to each rank
 } host_mesh_t;
 
 static void host_mesh_free(host_mesh_t *mesh)
 {
   asd_free_aligned(mesh->EToVG);
   asd_free_aligned(mesh->EToVX);
+
+  asd_free_aligned(mesh->EToE);
+  asd_free_aligned(mesh->EToF);
+  asd_free_aligned(mesh->EToO);
+
+  asd_free_aligned(mesh->ESetI);
+  asd_free_aligned(mesh->ESetE);
+  asd_free_aligned(mesh->ESetS);
+
+  asd_free_aligned(mesh->recv_starts);
+  asd_free_aligned(mesh->send_starts);
 }
 
 static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
@@ -616,7 +645,963 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   asd_free_aligned(VXglo);
   asd_free_aligned(EToVglo);
 
+  // Initialize an unconnected mesh
+  mesh->EB = mesh->E;
+  mesh->EG = 0;
+
+  mesh->EToE = asd_malloc_aligned(sizeof(uintloc_t) * NFACES * E);
+  mesh->EToF = asd_malloc_aligned(sizeof(uint8_t) * NFACES * E);
+  mesh->EToO = asd_malloc_aligned(sizeof(uint8_t) * NFACES * E);
+
+  for (uintloc_t e = 0; e < mesh->E; ++e)
+  {
+    for (uint8_t f = 0; f < NFACES; ++f)
+    {
+      mesh->EToE[NFACES * e + f] = e;
+      mesh->EToF[NFACES * e + f] = f;
+      mesh->EToO[NFACES * e + f] = 0;
+    }
+  }
+
+  mesh->EI = 0;
+  mesh->EE = 0;
+  mesh->ES = 0;
+
+  mesh->ESetI = asd_malloc_aligned(sizeof(uintloc_t) * mesh->EI);
+  mesh->ESetE = asd_malloc_aligned(sizeof(uintloc_t) * mesh->EE);
+  mesh->ESetS = asd_malloc_aligned(sizeof(uintloc_t) * mesh->ES);
+
+  mesh->recv_starts = asd_malloc_aligned(sizeof(uintloc_t) * (prefs->size + 1));
+  mesh->send_starts = asd_malloc_aligned(sizeof(uintloc_t) * (prefs->size + 1));
+
+  for (int r = 0; r <= prefs->size; ++r)
+  {
+    mesh->recv_starts[r] = 0;
+    mesh->send_starts[r] = 0;
+  }
+  mesh->recv_starts[prefs->rank + 1] = mesh->E;
+
   return mesh;
+}
+
+#define FN_R0 (NFACEVERTS + 0)
+#define FN_E0 (NFACEVERTS + 1)
+#define FN_F0 (NFACEVERTS + 2)
+#define FN_O0 (NFACEVERTS + 3)
+#define FN_R1 (NFACEVERTS + 4)
+#define FN_E1 (NFACEVERTS + 5)
+#define FN_F1 (NFACEVERTS + 6)
+#define FN_O1 (NFACEVERTS + 7)
+#define NFN (NFACEVERTS + 8)
+
+int uintloc_cmp(const void *a, const void *b)
+{
+  const uintloc_t *ia = (const uintloc_t *)a;
+  const uintloc_t *ib = (const uintloc_t *)b;
+  int retval = 0;
+
+  if (*ia > *ib)
+    retval = 1;
+  else if (*ia < *ib)
+    retval = -1;
+
+  return retval;
+}
+
+int fn_cmp(const void *a, const void *b)
+{
+  const uintglo_t *ia = (const uintglo_t *)a;
+  const uintglo_t *ib = (const uintglo_t *)b;
+  int retval = 0;
+
+  for (int v = 0; v < NFACEVERTS; ++v)
+  {
+    if (ia[v] > ib[v])
+      retval = 1;
+    else if (ia[v] < ib[v])
+      retval = -1;
+    if (retval != 0)
+      break;
+  }
+
+  return retval;
+}
+
+int fn_r0r1e0f0_cmp(const void *a, const void *b)
+{
+  const uintglo_t *ia = (const uintglo_t *)a;
+  const uintglo_t *ib = (const uintglo_t *)b;
+  int retval = 0;
+
+  if (ia[FN_R0] > ib[FN_R0])
+    retval = 1;
+  else if (ia[FN_R0] < ib[FN_R0])
+    retval = -1;
+  else if (ia[FN_R1] > ib[FN_R1])
+    retval = 1;
+  else if (ia[FN_R1] < ib[FN_R1])
+    retval = -1;
+  else if (ia[FN_E0] > ib[FN_E0])
+    retval = 1;
+  else if (ia[FN_E0] < ib[FN_E0])
+    retval = -1;
+  else if (ia[FN_F0] > ib[FN_F0])
+    retval = 1;
+  else if (ia[FN_F0] < ib[FN_F0])
+    retval = -1;
+
+  return retval;
+}
+
+int fn_r0r1e1f1_cmp(const void *a, const void *b)
+{
+  const uintglo_t *ia = (const uintglo_t *)a;
+  const uintglo_t *ib = (const uintglo_t *)b;
+  int retval = 0;
+
+  if (ia[FN_R0] > ib[FN_R0])
+    retval = 1;
+  else if (ia[FN_R0] < ib[FN_R0])
+    retval = -1;
+  else if (ia[FN_R1] > ib[FN_R1])
+    retval = 1;
+  else if (ia[FN_R1] < ib[FN_R1])
+    retval = -1;
+  else if (ia[FN_E1] > ib[FN_E1])
+    retval = 1;
+  else if (ia[FN_E1] < ib[FN_E1])
+    retval = -1;
+  else if (ia[FN_F1] > ib[FN_F1])
+    retval = 1;
+  else if (ia[FN_F1] < ib[FN_F1])
+    retval = -1;
+
+  return retval;
+}
+
+// https://en.wikipedia.org/wiki/XOR_swap_algorithm
+#define XOR_SWAP(a, b)                                                         \
+  do                                                                           \
+  {                                                                            \
+    (a) ^= (b);                                                                \
+    (b) ^= (a);                                                                \
+    (a) ^= (b);                                                                \
+  } while (0)
+
+static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
+{
+  int rank, size;
+  ASD_MPI_CHECK(MPI_Comm_rank(comm, &rank));
+  ASD_MPI_CHECK(MPI_Comm_size(comm, &size));
+
+  MPI_Request *recv_requests =
+      asd_malloc_aligned(sizeof(MPI_Request) * 2 * size);
+  MPI_Request *send_requests =
+      asd_malloc_aligned(sizeof(MPI_Request) * 2 * size);
+
+  host_mesh_t *nm = asd_malloc(sizeof(host_mesh_t));
+
+  uintglo_t *fnloc =
+      asd_malloc_aligned(sizeof(uintglo_t) * NFN * NFACES * om->E);
+
+  // {{{ fill fnloc
+  for (uintloc_t e = 0, fn = 0; e < om->E; ++e)
+  {
+    for (uint8_t f = 0; f < NFACES; ++f, ++fn)
+    {
+      uintglo_t fv[NFACEVERTS], o = 0;
+      for (uint8_t v = 0; v < NFACEVERTS; ++v)
+        fv[v] = om->EToVG[NVERTS * e + FToFV[NFACEVERTS * f + v]];
+
+// Use a sorting network from <http://pages.ripco.net/~jgamble/nw.html> to sort
+// the vertices.  Also compute orientation relative to the sorted order.
+#if NFACEVERTS == 2
+      {
+        if (fv[1] < fv[0])
+        {
+          XOR_SWAP(fv[0], fv[1]);
+          o = 1;
+        }
+      }
+#elif NFACEVERTS == 3
+      {
+        int s0 = 0, s1 = 0, s2 = 0;
+
+        if (fv[2] < fv[1])
+        {
+          XOR_SWAP(fv[1], fv[2]);
+          s0 = 1;
+        }
+
+        if (fv[2] < fv[0])
+        {
+          XOR_SWAP(fv[0], fv[2]);
+          s1 = 1;
+        }
+
+        if (fv[1] < fv[0])
+        {
+          XOR_SWAP(fv[0], fv[1]);
+          s2 = 1;
+        }
+
+        if (s0 == 0 && s1 == 0 && s2 == 0)
+          o = 0;
+        else if (s0 == 0 && s1 == 1 && s2 == 1)
+          o = 1;
+        else if (s0 == 1 && s1 == 0 && s2 == 1)
+          o = 2;
+        else if (s0 == 0 && s1 == 0 && s2 == 1)
+          o = 3;
+        else if (s0 == 1 && s1 == 1 && s2 == 1)
+          o = 4;
+        else if (s0 == 1 && s1 == 0 && s2 == 0)
+          o = 5;
+        else
+          ASD_ABORT("This should never be reached; problem sorting tet face");
+      }
+
+#else
+#error "sorting network for vertices not defined"
+#endif
+
+#if ASD_DEBUG
+      for (uint8_t v = 0; v < NFACEVERTS; ++v)
+        ASD_ABORT_IF_NOT(fv[OToFV[NFACEVERTS * o + v]] ==
+                             om->EToVG[NVERTS * e + FToFV[NFACEVERTS * f + v]],
+                         "Problem with orientation and sorted to vertex map");
+
+      for (uint8_t v = 0; v < NFACEVERTS; ++v)
+        ASD_ABORT_IF_NOT(
+            fv[v] ==
+                om->EToVG[NVERTS * e + FToFV[NFACEVERTS * f +
+                                             OToFV_inv[NFACEVERTS * o + v]]],
+            "Problem with orientation and sorted to vertex inverse map");
+#endif
+
+      for (uint8_t v = 0; v < NFACEVERTS; ++v)
+        fnloc[NFN * fn + v] = fv[v];
+
+      fnloc[NFN * fn + FN_R0] = rank;
+      fnloc[NFN * fn + FN_E0] = e;
+      fnloc[NFN * fn + FN_F0] = f;
+      fnloc[NFN * fn + FN_O0] = o;
+
+      fnloc[NFN * fn + FN_R1] = UINTGLO_MAX;
+      fnloc[NFN * fn + FN_E1] = UINTGLO_MAX;
+      fnloc[NFN * fn + FN_F1] = UINTGLO_MAX;
+      fnloc[NFN * fn + FN_O1] = UINTGLO_MAX;
+    }
+  }
+  // }}}
+
+  qsort(fnloc, NFACES * om->E, sizeof(uintglo_t) * NFN, fn_cmp);
+
+#if 0
+  printf("fnloc:\n");
+  for (uintloc_t fn = 0; fn < NFACES * om->E; ++fn)
+  {
+    printf("%3ju ", (uintmax_t)fn);
+    for (int n = 0; n < NFN; ++n)
+      printf(" %20" UINTGLO_PRI, fnloc[fn * NFN + n]);
+    printf("\n");
+  }
+#endif
+
+  // {{{ select pivots
+  uintglo_t *pivotsloc, *pivotsglo;
+
+  pivotsloc = asd_malloc_aligned(sizeof(uintglo_t) * NFN * size);
+  pivotsglo = (rank == 0)
+                  ? asd_malloc_aligned(sizeof(uintglo_t) * NFN * size * size)
+                  : NULL;
+
+  for (int r = 0; r < size; ++r)
+    for (int d = 0; d < NFN; ++d)
+      pivotsloc[r * NFN + d] = fnloc[((NFACES * om->E * r) / size) * NFN + d];
+
+#if 0
+  printf("pivotsloc\n");
+  for (int r = 0; r < size; ++r)
+  {
+    printf("%2d ", r);
+    for (int d = 0; d < NFN; ++d)
+      printf(" %20" UINTGLO_PRI, pivotsloc[r * NFN + d]);
+    printf("\n");
+  }
+#endif
+
+  ASD_MPI_CHECK(MPI_Gather(pivotsloc, size * NFN, UINTGLO_MPI, pivotsglo,
+                           size * NFN, UINTGLO_MPI, 0, comm));
+
+#if 0
+  if (rank == 0)
+  {
+    printf("pivotsglo\n");
+    for (int r = 0; r < size; ++r)
+      for (int s = 0; s < size; ++s)
+      {
+        printf("%2d %2d ", r, s);
+        for (int d = 0; d < NFN; ++d)
+          printf(" %20" UINTGLO_PRI, pivotsglo[r * size * NFN + s * NFN + d]);
+        printf("\n");
+      }
+  }
+#endif
+
+  if (rank == 0)
+  {
+    uintglo_t *sorted_pivotsglo =
+        asd_malloc_aligned(sizeof(uintglo_t) * NFN * size * size);
+    asd_multimergesort(sorted_pivotsglo, pivotsglo, size, size,
+                       sizeof(uintglo_t) * NFN, fn_cmp);
+
+#if 0
+    printf("sorted_pivotsglo\n");
+    for (int r = 0; r < size; ++r)
+      for (int s = 0; s < size; ++s)
+      {
+        printf("%2d %2d ", r, s);
+        for (int d = 0; d < NFN; ++d)
+          printf(" %20" UINTGLO_PRI,
+                 sorted_pivotsglo[r * size * NFN + s * NFN + d]);
+        printf("\n");
+      }
+#endif
+
+    for (int r = 0; r < size; ++r)
+      for (int d = 0; d < NFN; ++d)
+        pivotsloc[r * NFN + d] =
+            sorted_pivotsglo[((size * size * r) / size) * NFN + d];
+
+    asd_free_aligned(pivotsglo);
+    asd_free_aligned(sorted_pivotsglo);
+  }
+
+  ASD_MPI_CHECK(MPI_Bcast(pivotsloc, size * NFN, UINTGLO_MPI, 0, comm));
+  // }}}
+
+  // {{{ compute communication map to globally sort fnloc
+  uintloc_t *startsloc = asd_calloc(sizeof(uintloc_t), size + 1);
+  startsloc[size] = NFACES * om->E;
+
+  // binary search for the starts of each rank in fnloc
+  for (int r = 0; r < size; ++r)
+  {
+    uintloc_t start = 0;
+    uintloc_t end = NFACES * om->E - 1;
+    uintloc_t offset;
+
+    while (end >= start)
+    {
+      offset = (start + end) / 2;
+
+      if (offset == 0)
+        break;
+
+      int c = fn_cmp(fnloc + offset * NFN, pivotsloc + r * NFN);
+
+      if (start == end)
+      {
+        if (c < 0)
+          ++offset;
+        break;
+      }
+
+      if (c < 0)
+        start = offset + 1;
+      else if (c > 0)
+        end = offset - 1;
+      else
+        break;
+    }
+
+    // Make sure matching faces end up on the same rank
+    while (offset > 0 &&
+           0 == fn_cmp(fnloc + (offset - 1) * NFN, pivotsloc + r * NFN))
+      --offset;
+
+    ASD_ABORT_IF_NOT(offset <= NFACES * om->E, "Problem with binary search");
+
+    startsloc[r] = offset;
+  }
+  asd_free_aligned(pivotsloc);
+
+#if 0
+  printf("startsloc\n");
+  for (int r = 0; r <= size; ++r)
+  {
+    printf("%2d %20" UINTLOC_PRI, r, startsloc[r]);
+    if (startsloc[r] < NFACES * om->E)
+      for (int d = 0; d < NFN; ++d)
+        printf(" %20" UINTGLO_PRI, fnloc[startsloc[r] * NFN + d]);
+    printf("\n");
+  }
+  printf("\n\n");
+#endif
+
+  // get number of elements to receive
+  int *countsglo = asd_malloc(sizeof(int) * size);
+  for (int r = 0; r < size; ++r)
+  {
+    uintmax_t uic = startsloc[r + 1] - startsloc[r];
+    ASD_ABORT_IF_NOT(uic < INT_MAX, "Sending more than INT_MAX elements");
+    int c = (int)uic;
+    ASD_MPI_CHECK(MPI_Gather(&c, 1, MPI_INT, countsglo, 1, MPI_INT, r, comm));
+  }
+  uintloc_t *startsglo = asd_calloc(sizeof(uintloc_t), size + 1);
+  for (int r = 0; r < size; ++r)
+    startsglo[r + 1] = startsglo[r] + countsglo[r];
+  asd_free(countsglo);
+
+#if 0
+  printf("countsglo\n");
+  for (int r = 0; r < size; ++r)
+    printf("%2d %20ju\n", r, (uintmax_t)(startsglo[r + 1] - startsglo[r]));
+
+  printf("countsloc\n");
+  for (int r = 0; r < size; ++r)
+    printf("%2d %20ju\n", r, (uintmax_t)(startsloc[r + 1] - startsloc[r]));
+#endif
+  // }}}
+
+  // {{{ receive fnglo for global sort
+  uintglo_t *fnglo =
+      asd_malloc_aligned(sizeof(uintglo_t) * NFN * startsglo[size]);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Irecv(fnglo + NFN * startsglo[r],
+              NFN * (startsglo[r + 1] - startsglo[r]), UINTGLO_MPI, r, 333,
+              comm, recv_requests + r);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Isend(fnloc + NFN * startsloc[r],
+              NFN * (startsloc[r + 1] - startsloc[r]), UINTGLO_MPI, r, 333,
+              comm, send_requests + r);
+
+  MPI_Waitall(size, recv_requests, MPI_STATUSES_IGNORE);
+  MPI_Waitall(size, send_requests, MPI_STATUSES_IGNORE);
+
+#if 0
+  printf("fnglo received:\n");
+  for (uintloc_t fn = 0; fn < startsglo[size]; ++fn)
+  {
+    for (int n = 0; n < NFN; ++n)
+      printf(" %20" UINTGLO_PRI, fnglo[fn * NFN + n]);
+    printf("\n");
+  }
+#endif
+  // }}}
+
+  // TODO Should we replace with multi-mergesort?
+  qsort(fnglo, startsglo[size], sizeof(uintglo_t) * NFN, fn_cmp);
+
+  // {{{ find neighbors
+
+  for (uintloc_t fn = 0; fn < startsglo[size];)
+  {
+    if (fn + 1 < startsglo[size] &&
+        fn_cmp(&fnglo[NFN * fn], &fnglo[NFN * (fn + 1)]) == 0)
+    {
+#if 0
+      ASD_VERBOSE("Matching face %ju %ju %ju %ju %ju %ju",
+                  fnglo[NFN * fn + FN_R0], fnglo[NFN * (fn + 1) + FN_R0],
+                  fnglo[NFN * fn + FN_E0], fnglo[NFN * (fn + 1) + FN_E0],
+                  fnglo[NFN * fn + FN_F0], fnglo[NFN * (fn + 1) + FN_F0],
+                  fnglo[NFN * fn + FN_O0], fnglo[NFN * (fn + 1) + FN_O0]);
+#endif
+
+      // found face between elements
+      fnglo[NFN * fn + FN_R1] = fnglo[NFN * (fn + 1) + FN_R0];
+      fnglo[NFN * fn + FN_E1] = fnglo[NFN * (fn + 1) + FN_E0];
+      fnglo[NFN * fn + FN_F1] = fnglo[NFN * (fn + 1) + FN_F0];
+      fnglo[NFN * fn + FN_O1] = fnglo[NFN * (fn + 1) + FN_O0];
+
+      fnglo[NFN * (fn + 1) + FN_R1] = fnglo[NFN * fn + FN_R0];
+      fnglo[NFN * (fn + 1) + FN_E1] = fnglo[NFN * fn + FN_E0];
+      fnglo[NFN * (fn + 1) + FN_F1] = fnglo[NFN * fn + FN_F0];
+      fnglo[NFN * (fn + 1) + FN_O1] = fnglo[NFN * fn + FN_O0];
+
+      fn += 2;
+    }
+    else
+    {
+      // found unconnected face
+      fnglo[NFN * fn + FN_R1] = fnglo[NFN * fn + FN_R0];
+      fnglo[NFN * fn + FN_E1] = fnglo[NFN * fn + FN_E0];
+      fnglo[NFN * fn + FN_F1] = fnglo[NFN * fn + FN_F0];
+      fnglo[NFN * fn + FN_O1] = fnglo[NFN * fn + FN_O0];
+      fn += 1;
+    }
+  }
+// }}}
+
+#if 0
+  printf("fnglo sorted:\n");
+  for (uintloc_t fn = 0; fn < startsglo[size]; ++fn)
+  {
+    for (int n = 0; n < NFN; ++n)
+      printf(" %20" UINTGLO_PRI, fnglo[fn * NFN + n]);
+    printf("\n");
+  }
+#endif
+
+  qsort(fnglo, startsglo[size], sizeof(uintglo_t) * NFN, fn_r0r1e0f0_cmp);
+
+#if 0
+  printf("fnglo sorted to send:\n");
+  for (uintloc_t fn = 0; fn < startsglo[size]; ++fn)
+  {
+    for (int n = 0; n < NFN; ++n)
+      printf(" %20" UINTGLO_PRI, fnglo[fn * NFN + n]);
+    printf("\n");
+  }
+#endif
+
+  // {{{ receive EToH with partition information
+  for (int r = 0; r < size; ++r)
+    MPI_Irecv(fnloc + NFN * startsloc[r],
+              NFN * (startsloc[r + 1] - startsloc[r]), UINTGLO_MPI, r, 333,
+              comm, recv_requests + r);
+
+  for (int r = 0; r < size; ++r)
+    MPI_Isend(fnglo + NFN * startsglo[r],
+              NFN * (startsglo[r + 1] - startsglo[r]), UINTGLO_MPI, r, 333,
+              comm, send_requests + r);
+
+  MPI_Waitall(size, recv_requests, MPI_STATUSES_IGNORE);
+  MPI_Waitall(size, send_requests, MPI_STATUSES_IGNORE);
+
+// }}}
+
+#if 0
+  printf("fnloc:\n");
+  for (uintloc_t fn = 0; fn < NFACES * om->E; ++fn)
+  {
+    for (int n = 0; n < NFN; ++n)
+      printf(" %5" UINTGLO_PRI, fnloc[fn * NFN + n]);
+    printf("\n");
+  }
+#endif
+
+  // {{{ Fill send information
+  qsort(fnloc, NFACES * om->E, sizeof(uintglo_t) * NFN, fn_r0r1e0f0_cmp);
+
+  {
+    // Count unique sending elements
+    uintloc_t ES = 0;
+    uintglo_t pr, pe;
+
+    if (om->E > 0)
+    {
+      pr = fnloc[FN_R1];
+      pe = fnloc[FN_E0];
+
+      if (pr != (uintglo_t)rank)
+        ++ES;
+    }
+    for (uintloc_t fn = 1; fn < NFACES * om->E; ++fn)
+    {
+      const uintglo_t nr = fnloc[NFN * fn + FN_R1];
+      const uintglo_t ne = fnloc[NFN * fn + FN_E0];
+
+      if (nr != (uintglo_t)rank && !(pr == nr && pe == ne))
+      {
+        ++ES;
+        pr = nr;
+        pe = ne;
+      }
+    }
+    nm->ES = ES;
+  }
+
+  {
+    // Collect sending map
+    uintloc_t es = 0;
+    uintglo_t pr, pe;
+
+    uintloc_t *ESetS = asd_malloc_aligned(sizeof(uintloc_t) * nm->ES);
+    uintloc_t *send_starts = asd_malloc_aligned(sizeof(uintloc_t) * (size + 1));
+
+    for (int r = 0; r <= size; ++r)
+      send_starts[r] = 0;
+
+    if (om->E > 0)
+    {
+      pr = fnloc[FN_R1];
+      pe = fnloc[FN_E0];
+
+      if (pr != (uintglo_t)rank)
+      {
+        ASD_ABORT_IF_NOT(pe <= UINTLOC_MAX, "Bad element size");
+        ESetS[es] = (uintloc_t)pe;
+        ++send_starts[pr + 1];
+        ++es;
+      }
+    }
+    for (uintloc_t fn = 1; fn < NFACES * om->E; ++fn)
+    {
+      const uintglo_t nr = fnloc[NFN * fn + FN_R1];
+      const uintglo_t ne = fnloc[NFN * fn + FN_E0];
+
+      if (nr != (uintglo_t)rank && !(pr == nr && pe == ne))
+      {
+        ASD_ABORT_IF_NOT(ne <= UINTLOC_MAX, "Bad element size");
+        ESetS[es] = (uintloc_t)ne;
+        ++es;
+        ++send_starts[nr + 1];
+        pr = nr;
+        pe = ne;
+      }
+    }
+    for (int r = 0; r < size; ++r)
+      send_starts[r + 1] += send_starts[r];
+
+    ASD_ASSERT(send_starts[size] == nm->ES);
+
+    nm->ESetS = ESetS;
+    nm->send_starts = send_starts;
+  }
+  // }}}
+
+  // {{{ Fill recv information and ghost/body information
+  qsort(fnloc, NFACES * om->E, sizeof(uintglo_t) * NFN, fn_r0r1e1f1_cmp);
+
+#if 0
+  printf("fnloc before recv info:\n");
+  for (uintloc_t fn = 0; fn < NFACES * om->E; ++fn)
+  {
+    for (int n = 0; n < NFN; ++n)
+      printf(" %5" UINTGLO_PRI, fnloc[fn * NFN + n]);
+    printf("\n");
+  }
+#endif
+
+  {
+    uintloc_t er = 0;
+    uintglo_t pr, pe;
+    const uintloc_t EB = om->E;
+
+    uintloc_t *recv_starts = asd_malloc_aligned(sizeof(uintloc_t) * (size + 1));
+
+    for (int r = 0; r <= size; ++r)
+      recv_starts[r] = 0;
+
+    if (om->E > 0)
+    {
+      pr = fnloc[FN_R1];
+      pe = fnloc[FN_E1];
+
+      if (pr != (uintglo_t)rank)
+      {
+        ASD_ABORT_IF_NOT(pe <= UINTLOC_MAX, "Bad element size");
+        ++recv_starts[pr + 1];
+
+        fnloc[FN_R1] = rank;
+        fnloc[FN_E1] = EB + er;
+
+        ++er;
+      }
+    }
+    for (uintloc_t fn = 1; fn < NFACES * om->E; ++fn)
+    {
+      const uintglo_t nr = fnloc[NFN * fn + FN_R1];
+      const uintglo_t ne = fnloc[NFN * fn + FN_E1];
+
+      if (nr != (uintglo_t)rank)
+      {
+        fnloc[NFN * fn + FN_R1] = rank;
+
+        if (!(pr == nr && pe == ne))
+        {
+          ASD_ABORT_IF_NOT(ne <= UINTLOC_MAX, "Bad element size");
+
+          fnloc[NFN * fn + FN_E1] = EB + er;
+
+          ++er;
+          ++recv_starts[nr + 1];
+          pr = nr;
+          pe = ne;
+        }
+        else if (er > 0)
+        {
+          fnloc[NFN * fn + FN_E1] = EB + er - 1;
+        }
+      }
+    }
+    for (int r = 0; r < size; ++r)
+      recv_starts[r + 1] += recv_starts[r];
+
+    nm->recv_starts = recv_starts;
+
+    nm->EB = EB;
+    nm->EG = recv_starts[size];
+    nm->E = nm->EB + nm->EG;
+
+#if 0
+    printf("fnloc after recv info:\n");
+    for (uintloc_t fn = 0; fn < NFACES * om->E; ++fn)
+    {
+      for (int n = 0; n < NFN; ++n)
+        printf(" %5" UINTGLO_PRI, fnloc[fn * NFN + n]);
+      printf("\n");
+    }
+#endif
+  }
+  // }}}
+
+  // {{{ Find exterior elements
+  {
+    uintloc_t EE = 0;
+
+    uintloc_t *ESetE = asd_malloc_aligned(sizeof(uintloc_t) * nm->ES);
+    memcpy(ESetE, nm->ESetS, sizeof(uintloc_t) * nm->ES);
+    qsort(ESetE, nm->ES, sizeof(uintloc_t), uintloc_cmp);
+
+    if (nm->ES > 0)
+    {
+      uintloc_t pe = ESetE[EE++];
+
+      for (uintloc_t es = 1; es < nm->ES; ++es)
+        if (pe != ESetE[es])
+          pe = ESetE[EE++] = ESetE[es];
+    }
+
+    nm->EE = EE;
+    nm->ESetE = ESetE;
+  }
+  // }}}
+
+  // {{{ Find interior elements
+  {
+    uintloc_t EI = 0;
+
+    uintloc_t *ESetI = asd_malloc_aligned(sizeof(uintloc_t) * om->E);
+
+    for (uintloc_t e = 0; e < om->E; ++e)
+      ESetI[e] = e;
+
+    for (uintloc_t ee = 0; ee < nm->EE; ++ee)
+      ESetI[ee] = UINTLOC_MAX;
+
+    qsort(ESetI, om->E, sizeof(uintloc_t), uintloc_cmp);
+
+    for (uintloc_t e = 0; e < om->E; ++e)
+    {
+      if (ESetI[e] == UINTLOC_MAX)
+      {
+        EI = e;
+        break;
+      }
+    }
+
+    nm->EI = EI;
+    nm->ESetI = ESetI;
+  }
+  // }}}
+
+  // {{{ Fill EToE, EToF, and EToO
+  {
+    uintloc_t *EToE = asd_malloc_aligned(sizeof(uintloc_t) * NFACES * nm->E);
+    uint8_t *EToF = asd_malloc_aligned(sizeof(uint8_t) * NFACES * nm->E);
+    uint8_t *EToO = asd_malloc_aligned(sizeof(uint8_t) * NFACES * nm->E);
+
+    // Default all elements to unconnected
+    for (uintloc_t e = 0; e < nm->E; ++e)
+    {
+      for (uint8_t f = 0; f < NFACES; ++f)
+      {
+        EToE[NFACES * e + f] = e;
+        EToF[NFACES * e + f] = f;
+        EToO[NFACES * e + f] = 0;
+      }
+    }
+
+    for (uintloc_t fn = 0; fn < NFACES * om->E; ++fn)
+    {
+      const uintglo_t r0 = fnloc[NFN * fn + FN_R0];
+      const uintglo_t e0 = fnloc[NFN * fn + FN_E0];
+      const uintglo_t f0 = fnloc[NFN * fn + FN_F0];
+      const uintglo_t o0 = fnloc[NFN * fn + FN_O0];
+      const uintglo_t r1 = fnloc[NFN * fn + FN_R1];
+      const uintglo_t e1 = fnloc[NFN * fn + FN_E1];
+      const uintglo_t f1 = fnloc[NFN * fn + FN_F1];
+      const uintglo_t o1 = fnloc[NFN * fn + FN_O1];
+
+      ASD_ABORT_IF_NOT(r0 == (uintglo_t)rank,
+                       "Problem with local element rank");
+      ASD_ABORT_IF_NOT(r1 == (uintglo_t)rank,
+                       "Problem with neigh element rank");
+
+      ASD_ABORT_IF_NOT(e0 <= UINTLOC_MAX, "Problem with element size");
+      ASD_ABORT_IF_NOT(f0 <= UINT8_MAX, "Problem with face size");
+      ASD_ABORT_IF_NOT(e1 <= UINTLOC_MAX, "Problem with element size");
+      ASD_ABORT_IF_NOT(f1 <= UINT8_MAX, "Problem with face size");
+
+      EToE[NFACES * e0 + f0] = (uintloc_t)e1;
+      EToF[NFACES * e0 + f0] = (uint8_t)f1;
+      EToO[NFACES * e0 + f0] = OOToNO[o0][o1];
+    }
+
+    nm->EToE = EToE;
+    nm->EToF = EToF;
+    nm->EToO = EToO;
+  }
+
+  // {{{ Fill EToVG and EToVX
+  {
+    nm->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * VDIM * NVERTS * nm->E);
+    nm->EToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * nm->E);
+
+    for (int r = 0; r < size; ++r)
+    {
+      MPI_Irecv(nm->EToVX + VDIM * NVERTS * (nm->EB + nm->recv_starts[r]),
+                VDIM * NVERTS * (nm->recv_starts[r + 1] - nm->recv_starts[r]),
+                DFLOAT_MPI, r, 333, comm, recv_requests + r);
+
+      MPI_Irecv(nm->EToVG + NVERTS * (nm->EB + nm->recv_starts[r]),
+                NVERTS * (nm->recv_starts[r + 1] - nm->recv_starts[r]),
+                UINTGLO_MPI, r, 333, comm, recv_requests + size + r);
+    }
+
+    dfloat_t *sendEToVX =
+        asd_malloc_aligned(sizeof(dfloat_t) * VDIM * NVERTS * nm->ES);
+    uintglo_t *sendEToVG =
+        asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * nm->ES);
+
+    for (uintloc_t es = 0; es < nm->ES; ++es)
+    {
+      const uintloc_t e = nm->ESetS[es];
+
+      for (int n = 0; n < NVERTS; ++n)
+        for (int d = 0; d < VDIM; ++d)
+          sendEToVX[NVERTS * VDIM * es + VDIM * n + d] =
+              om->EToVX[NVERTS * VDIM * e + VDIM * n + d];
+
+      for (int n = 0; n < NVERTS; ++n)
+        sendEToVG[NVERTS * es + n] = om->EToVG[NVERTS * e + n];
+    }
+
+    for (int r = 0; r < size; ++r)
+    {
+      MPI_Isend(sendEToVX + VDIM * NVERTS * nm->send_starts[r],
+                VDIM * NVERTS * (nm->send_starts[r + 1] - nm->send_starts[r]),
+                DFLOAT_MPI, r, 333, comm, send_requests + r);
+
+      MPI_Isend(sendEToVG + NVERTS * nm->send_starts[r],
+                NVERTS * (nm->send_starts[r + 1] - nm->send_starts[r]),
+                UINTGLO_MPI, r, 333, comm, send_requests + size + r);
+    }
+
+    memcpy(nm->EToVX, om->EToVX, sizeof(dfloat_t) * VDIM * NVERTS * nm->EB);
+    memcpy(nm->EToVG, om->EToVG, sizeof(uintglo_t) * NVERTS * nm->EB);
+
+    MPI_Waitall(2 * size, recv_requests, MPI_STATUSES_IGNORE);
+    MPI_Waitall(2 * size, send_requests, MPI_STATUSES_IGNORE);
+
+    asd_free_aligned(sendEToVG);
+    asd_free_aligned(sendEToVX);
+  }
+  // }}}
+
+  // Check connectivity of mesh.  See if (EToE,EToF,EToO) and EToVG at least
+  // agree.
+  {
+    int mesh_connected = 1;
+
+    for (uintloc_t e0 = 0; e0 < nm->EB; ++e0)
+    {
+      for (uint8_t f0 = 0; f0 < NFACES; ++f0)
+      {
+        const uintloc_t e1 = nm->EToE[NFACES * e0 + f0];
+        const uint8_t f1 = nm->EToF[NFACES * e0 + f0];
+        const uint8_t o = nm->EToO[NFACES * e0 + f0];
+
+        int elem_connected = 1;
+
+        for (int v = 0; v < NFACEVERTS; ++v)
+        {
+          const uintglo_t vg0 =
+              nm->EToVG[NVERTS * e0 +
+                        FToFV[NFACEVERTS * f0 + OToFV[NFACEVERTS * o + v]]];
+          const uintglo_t vg1 =
+              nm->EToVG[NVERTS * e1 + FToFV[NFACEVERTS * f1 + v]];
+
+          if (vg0 != vg1)
+          {
+            elem_connected = 0;
+            mesh_connected = 0;
+            break;
+          }
+        }
+
+        if (!elem_connected)
+          ASD_LERROR("Contrary to (EToE,EToF,EToO), EToVG indicates Element "
+                     "%5ju Face %ju is not connected to Element %5ju Face %ju "
+                     "via orientation %ju",
+                     (uintmax_t)e0, (uintmax_t)f0, (uintmax_t)e1, (uintmax_t)f1,
+                     (uintmax_t)o);
+      }
+    }
+
+    ASD_ABORT_IF_NOT(mesh_connected, "Mesh is not connected properly.\n"
+                                     "(EToE,EToF,EToO) and EToVG do not "
+                                     "agree.");
+  }
+
+#if 0
+  printf("ES = %ju\n", (uintmax_t)nm->ES);
+  printf("ESetS\n");
+  for (uintloc_t es = 0; es < nm->ES; ++es)
+    printf(" %5ju\n", (uintmax_t)nm->ESetS[es]);
+  printf("send_starts\n");
+  for (int r = 0; r <= size; ++r)
+    printf(" %5ju\n", (uintmax_t)nm->send_starts[r]);
+  printf("recv_starts\n");
+  for (int r = 0; r <= size; ++r)
+    printf(" %5ju\n", (uintmax_t)nm->recv_starts[r]);
+  printf("EE = %ju\n", (uintmax_t)nm->EE);
+  printf("ESetE\n");
+  for (uintloc_t ee = 0; ee < nm->EE; ++ee)
+    printf(" %5ju\n", (uintmax_t)nm->ESetE[ee]);
+  printf("EI = %ju\n", (uintmax_t)nm->EI);
+  printf("ESetI\n");
+  for (uintloc_t ei = 0; ei < nm->EI; ++ei)
+    printf(" %5ju\n", (uintmax_t)nm->ESetI[ei]);
+  // printf("EToV\n");
+  // for (uintloc_t e = 0; e < nm->E; ++e)
+  // {
+  //   for (uint8_t v = 0; v < NVERTS; ++v)
+  //     printf(" %4ju", (uintmax_t)nm->EToVG[NVERTS * e + v]);
+  //   printf("\n");
+  // }
+  // printf("\n");
+  printf("EToE\n");
+  for (uintloc_t e = 0; e < nm->E; ++e)
+  {
+    for (uint8_t f = 0; f < NFACES; ++f)
+      printf(" %4ju", (uintmax_t)nm->EToE[NFACES * e + f]);
+    printf("\n");
+  }
+  printf("\n");
+  printf("EToF\n");
+  for (uintloc_t e = 0; e < nm->E; ++e)
+  {
+    for (uint8_t f = 0; f < NFACES; ++f)
+      printf(" %4ju", (uintmax_t)nm->EToF[NFACES * e + f]);
+    printf("\n");
+  }
+  printf("\n");
+#endif
+
+  asd_free(startsglo);
+  asd_free(startsloc);
+  asd_free_aligned(fnglo);
+  asd_free_aligned(fnloc);
+  asd_free_aligned(recv_requests);
+  asd_free_aligned(send_requests);
+
+  return nm;
 }
 
 static void host_mesh_write_mfem(const int rank, const char *directory,
@@ -645,8 +1630,8 @@ static void host_mesh_write_mfem(const int rank, const char *directory,
   fprintf(file, "MFEM mesh v1.0\n\n");
   fprintf(file, "dimension\n%d\n\n", VDIM);
 
-  fprintf(file, "elements\n%" UINTLOC_PRI "\n", mesh->E);
-  for (uintloc_t e = 0; e < mesh->E; ++e)
+  fprintf(file, "elements\n%" UINTLOC_PRI "\n", mesh->EB);
+  for (uintloc_t e = 0; e < mesh->EB; ++e)
   {
     fprintf(file, "%" UINTLOC_PRI " %" UINTLOC_PRI, e + 1, MFEM_ELEM_TYPE);
     for (int n = 0; n < NVERTS; ++n)
@@ -656,10 +1641,33 @@ static void host_mesh_write_mfem(const int rank, const char *directory,
   }
   fprintf(file, "\n");
 
-  fprintf(file, "boundary\n0\n\n");
-  fprintf(file, "vertices\n%" UINTLOC_PRI "\n%d\n", NVERTS * mesh->E, VDIM);
+  // Count the number of boundary faces
+  uintloc_t NBC = 0;
+  for (uintloc_t e = 0; e < mesh->EB; ++e)
+    for (int f = 0; f < NFACES; ++f)
+      if (mesh->EToE[NFACES * e + f] == e && mesh->EToF[NFACES * e + f] == f)
+        ++NBC;
 
-  for (uintloc_t e = 0; e < mesh->E; ++e)
+  fprintf(file, "boundary\n%" UINTLOC_PRI "\n", NBC);
+  for (uintloc_t e = 0; e < mesh->EB; ++e)
+  {
+    for (int f = 0; f < NFACES; ++f)
+    {
+      if (mesh->EToE[NFACES * e + f] == e && mesh->EToF[NFACES * e + f] == f)
+      {
+        fprintf(file, "%d %" UINTLOC_PRI, 1, MFEM_FACE_TYPE);
+        for (int n = 0; n < NFACEVERTS; ++n)
+          fprintf(file, " %" UINTLOC_PRI,
+                  NVERTS * e + FToFV[NFACEVERTS * f + n]);
+
+        fprintf(file, "\n");
+      }
+    }
+  }
+
+  fprintf(file, "vertices\n%" UINTLOC_PRI "\n%d\n", NVERTS * mesh->EB, VDIM);
+
+  for (uintloc_t e = 0; e < mesh->EB; ++e)
   {
     for (int n = 0; n < NVERTS; ++n)
     {
@@ -1390,6 +2398,42 @@ static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
   asd_free_aligned(recv_requests);
   asd_free_aligned(send_requests);
 
+  // Initialize an unconnected mesh
+  nm->EB = nm->E;
+  nm->EG = 0;
+
+  nm->EToE = asd_malloc_aligned(sizeof(uintloc_t) * NFACES * nm->E);
+  nm->EToF = asd_malloc_aligned(sizeof(uint8_t) * NFACES * nm->E);
+  nm->EToO = asd_malloc_aligned(sizeof(uint8_t) * NFACES * nm->E);
+
+  for (uintloc_t e = 0; e < nm->E; ++e)
+  {
+    for (uint8_t f = 0; f < NFACES; ++f)
+    {
+      nm->EToE[NFACES * e + f] = e;
+      nm->EToF[NFACES * e + f] = f;
+      nm->EToO[NFACES * e + f] = 0;
+    }
+  }
+
+  nm->EI = 0;
+  nm->EE = 0;
+  nm->ES = 0;
+
+  nm->ESetI = asd_malloc_aligned(sizeof(uintloc_t) * nm->EI);
+  nm->ESetE = asd_malloc_aligned(sizeof(uintloc_t) * nm->EE);
+  nm->ESetS = asd_malloc_aligned(sizeof(uintloc_t) * nm->ES);
+
+  nm->recv_starts = asd_malloc_aligned(sizeof(uintloc_t) * (size + 1));
+  nm->send_starts = asd_malloc_aligned(sizeof(uintloc_t) * (size + 1));
+
+  for (int r = 0; r <= size; ++r)
+  {
+    nm->recv_starts[r] = 0;
+    nm->send_starts[r] = 0;
+  }
+  nm->recv_starts[rank + 1] = nm->E;
+
   return nm;
 }
 // }}}
@@ -1460,7 +2504,12 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
     m = n;
   }
 
-  app->hm = m;
+  n = host_mesh_connect(app->prefs->comm, m);
+
+  host_mesh_free(m);
+  asd_free(m);
+
+  app->hm = n;
 
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh",
                        app->hm);
