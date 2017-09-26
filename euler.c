@@ -1447,6 +1447,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
     nm->EToF = EToF;
     nm->EToO = EToO;
   }
+  // }}}
 
   // {{{ Fill EToVG and EToVX
   {
