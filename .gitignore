@@ -17,6 +17,7 @@
 
 /lua/
 /occa/
+/eigen/
 
 /data
 /compile_commands.json

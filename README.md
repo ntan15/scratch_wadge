@@ -33,6 +33,16 @@ popd
 ```
 and included in the vendor directory.
 
+### Eigen
+[Eigen](http://eigen.tuxfamily.org/) is used for building the element operators
+and is retrieved with
+```sh
+pushd vendor
+curl https://bitbucket.org/eigen/eigen/get/3.3.4.tar.gz > eigen-3.3.4.tar.gz
+popd
+```
+and included in the vendor directory.
+
 ## Code style
 We use [`clang-format`](http://clang.llvm.org/docs/ClangFormat.html) to ensure
 consistent formatting of the source code.  This can be enforced through git

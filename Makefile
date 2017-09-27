@@ -29,7 +29,7 @@ DEPS_SOURCE  += asd.c
 CFLAGS +=-DASD_USE_LUA
 
 # list of libraries to build
-TPLS ?= lua occa
+TPLS ?= eigen lua occa
 
 UNAME_S := $(shell uname -s)
 
@@ -52,6 +52,9 @@ all: eulertri eulertet
 
 debug:
 	$(MAKE) DEBUG=1
+
+eigen:
+	tar xzf vendor/eigen-*.tar.gz && mv eigen-* eigen
 
 lua:
 	tar xzf vendor/lua-*.tar.gz && mv lua-* lua
