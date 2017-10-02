@@ -10,7 +10,7 @@
 . git-sh-setup
 
 CHFILES=$(git-diff-index -M --name-only --cached HEAD | \
-          grep '.*\.[ch]$')
+          grep -E '.*\.(c|cpp|h)$')
 
 for CHFILE in $CHFILES;
 do
