@@ -8,5 +8,10 @@
     "directory" : "/Users/lucas/research/code/wadges",
     "command" : "clang -I/opt/local/include/openmpi-gcc6 --std=gnu11 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o asd.o asd.c",
     "file" : "asd.c"
+  },
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang -I/opt/local/include/openmpi-gcc6 --std=c++ -Ieigen -c -o elements.o elements.c",
+    "file" : "elements.c"
   }
 ]

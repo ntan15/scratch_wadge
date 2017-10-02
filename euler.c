@@ -20,6 +20,7 @@
 #include <occa_c.h>
 
 #include "asd.h"
+#include "elements.h"
 // }}}
 
 // {{{ Config Macros

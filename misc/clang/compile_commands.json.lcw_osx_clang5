@@ -8,5 +8,10 @@
     "directory" : "/Users/lucas/research/code/wadges",
     "command" : "clang-mp-5.0 -I/opt/local/include/mpich-clang50 --std=gnu11 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o asd.o asd.c",
     "file" : "asd.c"
+  },
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang-mp-5.0 -I/opt/local/include/mpich-clang50 --std=c++11 -Ieigen -c -o elements.o elements.c",
+    "file" : "elements.c"
   }
 ]

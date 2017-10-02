@@ -3,7 +3,9 @@ CC = mpicc
 CXX = mpicxx
 F77 = mpif77
 FC = mpif90
+
 CFLAGS = --std=gnu11 -g
+CXXFLAGS = -std=c++11 -g
 
 # below are flags that work with clang and gcc
 CFLAGS += -Wconversion -Wno-sign-conversion \
@@ -11,16 +13,29 @@ CFLAGS += -Wconversion -Wno-sign-conversion \
           -Wpointer-arith -Wwrite-strings -Wformat-security -pedantic \
           -Wextra -Wno-unused-parameter
 
+CXXFLAGS += -Wconversion -Wno-sign-conversion \
+            -Wcast-align -Wchar-subscripts -Wall -W \
+            -Wpointer-arith -Wwrite-strings -Wformat-security -pedantic \
+            -Wextra -Wno-unused-parameter
+
 DEBUG = 0
 ifeq (${DEBUG},1)
   CFLAGS += -O1
   CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
   CFLAGS += -fsanitize=address,undefined
+
+  CXXFLAGS += -O1
+  CXXFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
+  CXXFLAGS += -fsanitize=address,undefined
+
   CPPFLAGS +=-DASD_DEBUG
   OCCA_MAKE_FLAGS = OCCA_DEVELOPER=1 DEBUG=1
 else
   CFLAGS += -O2
   CFLAGS += -fno-common -fno-omit-frame-pointer
+
+  CXXFLAGS += -O2
+  CXXFLAGS += -fno-common -fno-omit-frame-pointer
 endif
 
 # asd flags
@@ -71,12 +86,23 @@ realclean:
 	rm -rf $(TPLS)
 	git clean -X -d -f
 
-eulertri: CPPFLAGS+=-DELEM_TYPE=0
-eulertri: euler.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) \
-        $< $(DEPS_SOURCE) $(LOADLIBES) $(LDLIBS) -o $@
+asd.o: asd.c asd.h | $(TPLS)
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-eulertet: CPPFLAGS+=-DELEM_TYPE=1
-eulertet: euler.c $(DEPS_SOURCE) $(DEPS_HEADERS)  | $(TPLS)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) \
-        $< $(DEPS_SOURCE) $(LOADLIBES) $(LDLIBS) -o $@
+eulertri.o: CPPFLAGS+=-DELEM_TYPE=0
+eulertri.o: euler.c $(DEPS_HEADERS)  | $(TPLS)
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+
+eulertet.o: CPPFLAGS+=-DELEM_TYPE=1
+eulertet.o: euler.c $(DEPS_HEADERS)  | $(TPLS)
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+
+elements.o: CPPFLAGS+=-Ieigen
+elements.o: elements.cpp elements.h | $(TPLS)
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+
+eulertri: asd.o eulertri.o elements.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+eulertet: asd.o eulertet.o elements.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
