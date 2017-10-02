@@ -16,7 +16,7 @@ ifeq (${DEBUG},1)
   CFLAGS += -O1
   CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
   CFLAGS += -fsanitize=address,undefined
-  CFLAGS +=-DASD_DEBUG
+  CPPFLAGS +=-DASD_DEBUG
   OCCA_MAKE_FLAGS = OCCA_DEVELOPER=1 DEBUG=1
 else
   CFLAGS += -O2
@@ -26,7 +26,7 @@ endif
 # asd flags
 DEPS_HEADERS += asd.h
 DEPS_SOURCE  += asd.c
-CFLAGS +=-DASD_USE_LUA
+CPPFLAGS +=-DASD_USE_LUA
 
 # list of libraries to build
 TPLS ?= eigen lua occa
