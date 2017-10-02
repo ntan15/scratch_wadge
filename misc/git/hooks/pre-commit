@@ -10,7 +10,7 @@
 . git-sh-setup
 
 CHFILES=$(git-diff-index -M --name-only --cached HEAD | \
-          grep '.*\.[ch]$' | grep -v 'bfam\.[ch]')
+          grep '.*\.[ch]$')
 
 for CHFILE in $CHFILES;
 do
