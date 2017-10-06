@@ -455,7 +455,7 @@ const uint8_t OOToNO[NFACEORIEN][NFACEORIEN] = {
 typedef struct
 {
   uintloc_t E;  // number of total elements on this rank
-  uintloc_t EB; // number of being elements on this rank
+  uintloc_t ER; // number of real  elements on this rank
   uintloc_t EG; // number of ghost elements on this rank
 
   uintglo_t *EToVG; // element to global vertex numbers
@@ -724,7 +724,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   asd_dictionary_clear(&periodic_vertices);
 
   // Initialize an unconnected mesh
-  mesh->EB = mesh->E;
+  mesh->ER = mesh->E;
   mesh->EG = 0;
 
   mesh->EToE = asd_malloc_aligned(sizeof(uintloc_t) * NFACES * E);
@@ -1362,7 +1362,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
   {
     uintloc_t er = 0;
     uintglo_t pr, pe;
-    const uintloc_t EB = om->E;
+    const uintloc_t ER = om->E;
 
     uintloc_t *recv_starts = asd_malloc_aligned(sizeof(uintloc_t) * (size + 1));
 
@@ -1380,7 +1380,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
         ++recv_starts[pr + 1];
 
         fnloc[FN_R1] = rank;
-        fnloc[FN_E1] = EB + er;
+        fnloc[FN_E1] = ER + er;
 
         ++er;
       }
@@ -1398,7 +1398,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
         {
           ASD_ABORT_IF_NOT(ne <= UINTLOC_MAX, "Bad element size");
 
-          fnloc[NFN * fn + FN_E1] = EB + er;
+          fnloc[NFN * fn + FN_E1] = ER + er;
 
           ++er;
           ++recv_starts[nr + 1];
@@ -1407,7 +1407,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
         }
         else if (er > 0)
         {
-          fnloc[NFN * fn + FN_E1] = EB + er - 1;
+          fnloc[NFN * fn + FN_E1] = ER + er - 1;
         }
       }
     }
@@ -1416,9 +1416,9 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
 
     nm->recv_starts = recv_starts;
 
-    nm->EB = EB;
+    nm->ER = ER;
     nm->EG = recv_starts[size];
-    nm->E = nm->EB + nm->EG;
+    nm->E = nm->ER + nm->EG;
 
 #if 0
     printf("fnloc after recv info:\n");
@@ -1538,11 +1538,11 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
 
     for (int r = 0; r < size; ++r)
     {
-      MPI_Irecv(nm->EToVX + VDIM * NVERTS * (nm->EB + nm->recv_starts[r]),
+      MPI_Irecv(nm->EToVX + VDIM * NVERTS * (nm->ER + nm->recv_starts[r]),
                 VDIM * NVERTS * (nm->recv_starts[r + 1] - nm->recv_starts[r]),
                 DFLOAT_MPI, r, 333, comm, recv_requests + r);
 
-      MPI_Irecv(nm->EToVG + NVERTS * (nm->EB + nm->recv_starts[r]),
+      MPI_Irecv(nm->EToVG + NVERTS * (nm->ER + nm->recv_starts[r]),
                 NVERTS * (nm->recv_starts[r + 1] - nm->recv_starts[r]),
                 UINTGLO_MPI, r, 333, comm, recv_requests + size + r);
     }
@@ -1576,8 +1576,8 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
                 UINTGLO_MPI, r, 333, comm, send_requests + size + r);
     }
 
-    memcpy(nm->EToVX, om->EToVX, sizeof(dfloat_t) * VDIM * NVERTS * nm->EB);
-    memcpy(nm->EToVG, om->EToVG, sizeof(uintglo_t) * NVERTS * nm->EB);
+    memcpy(nm->EToVX, om->EToVX, sizeof(dfloat_t) * VDIM * NVERTS * nm->ER);
+    memcpy(nm->EToVG, om->EToVG, sizeof(uintglo_t) * NVERTS * nm->ER);
 
     MPI_Waitall(2 * size, recv_requests, MPI_STATUSES_IGNORE);
     MPI_Waitall(2 * size, send_requests, MPI_STATUSES_IGNORE);
@@ -1592,7 +1592,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
   {
     int mesh_connected = 1;
 
-    for (uintloc_t e0 = 0; e0 < nm->EB; ++e0)
+    for (uintloc_t e0 = 0; e0 < nm->ER; ++e0)
     {
       for (uint8_t f0 = 0; f0 < NFACES; ++f0)
       {
@@ -1713,8 +1713,8 @@ static void host_mesh_write_mfem(const int rank, const char *directory,
   fprintf(file, "MFEM mesh v1.0\n\n");
   fprintf(file, "dimension\n%d\n\n", VDIM);
 
-  fprintf(file, "elements\n%" UINTLOC_PRI "\n", mesh->EB);
-  for (uintloc_t e = 0; e < mesh->EB; ++e)
+  fprintf(file, "elements\n%" UINTLOC_PRI "\n", mesh->ER);
+  for (uintloc_t e = 0; e < mesh->ER; ++e)
   {
     fprintf(file, "%" UINTLOC_PRI " %" UINTLOC_PRI, e + 1, MFEM_ELEM_TYPE);
     for (int n = 0; n < NVERTS; ++n)
@@ -1726,13 +1726,13 @@ static void host_mesh_write_mfem(const int rank, const char *directory,
 
   // Count the number of boundary faces
   uintloc_t NBC = 0;
-  for (uintloc_t e = 0; e < mesh->EB; ++e)
+  for (uintloc_t e = 0; e < mesh->ER; ++e)
     for (int f = 0; f < NFACES; ++f)
       if (mesh->EToE[NFACES * e + f] == e && mesh->EToF[NFACES * e + f] == f)
         ++NBC;
 
   fprintf(file, "boundary\n%" UINTLOC_PRI "\n", NBC);
-  for (uintloc_t e = 0; e < mesh->EB; ++e)
+  for (uintloc_t e = 0; e < mesh->ER; ++e)
   {
     for (int f = 0; f < NFACES; ++f)
     {
@@ -1748,9 +1748,9 @@ static void host_mesh_write_mfem(const int rank, const char *directory,
     }
   }
 
-  fprintf(file, "vertices\n%" UINTLOC_PRI "\n%d\n", NVERTS * mesh->EB, VDIM);
+  fprintf(file, "vertices\n%" UINTLOC_PRI "\n%d\n", NVERTS * mesh->ER, VDIM);
 
-  for (uintloc_t e = 0; e < mesh->EB; ++e)
+  for (uintloc_t e = 0; e < mesh->ER; ++e)
   {
     for (int n = 0; n < NVERTS; ++n)
     {
@@ -2482,7 +2482,7 @@ static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
   asd_free_aligned(send_requests);
 
   // Initialize an unconnected mesh
-  nm->EB = nm->E;
+  nm->ER = nm->E;
   nm->EG = 0;
 
   nm->EToE = asd_malloc_aligned(sizeof(uintloc_t) * NFACES * nm->E);
