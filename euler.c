@@ -254,6 +254,8 @@ typedef struct prefs
   int occa_mode;
 
   int mesh_N;
+  int mesh_Nq;
+  
   char *mesh_filename;
   int mesh_sfc_partition;
 
@@ -302,7 +304,10 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
 
   prefs->mesh_filename =
       asd_lua_expr_string(L, "app.mesh.filename", "mesh.msh");
+
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
+  prefs->mesh_Nq = (int)asd_lua_expr_integer(L, "app.mesh.Nq", 3);
+  
   prefs->mesh_sfc_partition =
       asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
 
@@ -2663,10 +2668,10 @@ int main(int argc, char *argv[])
                                      asd_gopt_longs("version")),
                      asd_gopt_option('v', ASD_GOPT_REPEAT, asd_gopt_shorts('v'),
                                      asd_gopt_longs("verbose"))));
-
+  
   if (asd_gopt(options, 'd'))
     debug(comm);
-
+  
   if (asd_gopt(options, 'h'))
   {
     usage();
@@ -2699,6 +2704,9 @@ int main(int argc, char *argv[])
   //
   // run
   //
+  foo(0);
+  build_operators_C(app->prefs->mesh_N, app->prefs->mesh_Nq);
+  
 
   //
   // cleanup

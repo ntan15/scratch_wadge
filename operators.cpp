@@ -1,8 +1,22 @@
-#include <occa.hpp>
-#include "Basis.h"
-#include "NodeData.h"
+#include "operators.h"
+#include "node_data.h"
+#include <iostream>
+#include "math.h"
+using namespace std;
+
 
 // ================== test eigen ================
+
+void test_eigen()
+{
+  Eigen::MatrixXd m(2, 2);
+  m(0, 0) = 3;
+  m(1, 0) = 2.5;
+  m(0, 1) = -1;
+  m(1, 1) = m(1, 0) + m(0, 1);
+
+  cout << "in operators: " << m << endl;
+}
 
 void test_solve(){
   MatrixXd A(3,3);
@@ -77,6 +91,74 @@ void test_basis(){
   cout << "VB4 = " << endl << VB4 << endl;
 }
 
+void build_operators_2D(int N, int Nq){
+
+  // ======= 2D case
+
+  int Nfq = ceil(Nq/2.0); // GQ face quadrature to match vol quadrature
+  VectorXd r,s;
+  Nodes2D(N,r,s);
+  //  cout << r << endl;
+  //  cout << s << endl;
+
+  VectorXd rq,sq,wq;
+  tri_cubature(Nq,rq,sq,wq);
+
+  // nodal
+  MatrixXd V = Vandermonde2D(N,r,s);
+  MatrixXd Vr,Vs;
+  GradVandermonde2D(N,r,s,Vr,Vs);
+  MatrixXd Dr = mldivide(Vr,V);
+  MatrixXd Ds = mldivide(Vs,V);  
+
+  // quadrature
+  MatrixXd Vqtmp = Vandermonde2D(N,rq,sq);
+  MatrixXd Vq = mrdivide(Vqtmp,V);
+  MatrixXd M = Vq.transpose() * wq.asDiagonal() * Vq;
+  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
+  MatrixXd Pq = mldivide(M,VqW);
+
+  MatrixXd Drq = Vq*Dr*Pq;
+  MatrixXd Dsq = Vq*Ds*Pq;  
+  
+  // face quadrature
+  VectorXd r1D = r.head(N+1);
+  MatrixXd V1D = Vandermonde1D(N,r1D);
+
+  VectorXd rq1D,wq1D;
+  //  cout << "Nq = " << Nq << ", Nfq = " << Nfq << endl;
+  JacobiGQ(Nfq,0,0,rq1D,wq1D); 
+  MatrixXd rrfq(rq1D.rows(),3),ssfq(rq1D.rows(),3);
+  VectorXd ones = MatrixXd::Ones(rq1D.rows(),1);
+  rrfq.col(0) = rq1D;     ssfq.col(0) = -ones;
+  rrfq.col(1) = -rq1D;    ssfq.col(1) = rq1D;
+  rrfq.col(2) = -ones;    ssfq.col(2) = -rq1D;
+  VectorXd rfq = flatten(rrfq);
+  VectorXd sfq = flatten(ssfq);  
+  //  VectorXd rfq(Map<VectorXd>(rrfq.data(), rrfq.cols()*rrfq.rows()));
+  //  VectorXd sfq(Map<VectorXd>(ssfq.data(), ssfq.cols()*ssfq.rows()));  
+
+  VectorXd wfq = wq1D.replicate(3,1);
+  MatrixXd Vfqtmp = Vandermonde1D(N,rq1D);
+  Vfqtmp = mrdivide(Vfqtmp,V1D);
+  MatrixXd Imat = MatrixXd::Identity(3,3); // face identity matrix
+  MatrixXd Vfqf = kron(Imat,Vfqtmp);
+  MatrixXd Vfqtmp2 = Vandermonde2D(N,rfq,sfq);
+  MatrixXd Vfq = mrdivide(Vfqtmp2,V);
+  MatrixXd Mfq = Vfq.transpose() * wfq.asDiagonal() * Vfqf; 
+  MatrixXd Lq = Vq*mldivide(M,Mfq);
+  
+  //  VectorXd r,s,t;
+  //  Nodes3D(N, r, s, t);
+  //  VectorXd rq,sq,tq,wq;
+  //  tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq){  
+  //  MatrixXd V = Vandermonde3D(N,r,s,t);
+    
+  cout << "in operators building ops!" << endl;
+
+}
+
+
 // =================== begin matlab codes =======================
 
 // d = degree of basis
@@ -123,6 +205,18 @@ VectorXd JacobiP(VectorXd x, double alpha, double beta, int d){
   return P;
 
 }
+
+MatrixXd Vandermonde1D(int N, VectorXd r){
+  int Np = (N+1);
+  MatrixXd Vout(r.rows(),Np);
+
+  for (int i = 0; i <= N; ++i){
+    Vout.col(i) = JacobiP(r,0,0,i);
+  }
+  return Vout;
+
+}
+
 
 VectorXd GradJacobiP(VectorXd x, double alpha, double beta, int p){
 
@@ -188,6 +282,67 @@ MatrixXd Vandermonde2D(int N, VectorXd r, VectorXd s){
   return Vout;
 
 }
+
+
+void GradSimplex2DP(VectorXd a, VectorXd b, int id, int jd, 
+		    VectorXd &V2Dr, VectorXd &V2Ds){
+
+  VectorXd fa,dfa,gb,dgb;
+  fa = JacobiP(a,0,0,id);           dfa = GradJacobiP(a,0,0,id);
+  gb = JacobiP(b,2*id+1,0,jd);      dgb = GradJacobiP(b,2*id+1,0,jd);
+
+    // r-derivative
+  int Np = a.rows();
+  V2Dr.resize(Np);
+  V2Dr.array() = dfa.array()*gb.array();
+  if(id>0)
+    V2Dr.array() *= Eigen::pow(0.5*(1-b.array()),id-1);
+
+  // s-derivative
+  V2Ds.resize(Np);
+  V2Ds.array() = dfa.array()*gb.array()*(.5*(1+a.array()));
+  if(id > 0)
+    V2Ds.array() *= Eigen::pow(.5*(1-b.array()),id-1);
+
+  VectorXd tmp = dgb.array()*Eigen::pow(.5*(1-b.array()),id);
+  if(id > 0)
+    tmp.array() += -.5*id*gb.array()*Eigen::pow(.5*(1-b.array()),id-1);
+  
+  V2Ds.array() += fa.array()*tmp.array();
+
+  // normalize
+  V2Dr = V2Dr*pow(2,2*id+.5);
+  V2Ds = V2Ds*pow(2,2*id+.5);
+
+
+}
+void GradVandermonde2D(int N, VectorXd r, VectorXd s,
+		       MatrixXd &V2Dr, MatrixXd &V2Ds){
+
+  int Npts = r.rows();
+  int Np = (N+1)*(N+2)/2;
+  V2Dr.resize(Npts,Np);
+  V2Ds.resize(Npts,Np);
+  
+  // find tensor-product coordinates
+  VectorXd a,b;
+  rstoab(r,s,a,b);
+  
+  // Initialize matrices
+  int sk = 0;
+  for (int i = 0; i <= N; ++i){
+    for (int j = 0; j <= N-i; ++j){
+      VectorXd Vr,Vs;
+      GradSimplex2DP(a,b,i,j,Vr,Vs);
+      V2Dr.col(sk) = Vr;
+      V2Ds.col(sk) = Vs;
+      sk = sk+1;
+    }
+  }
+
+
+}
+
 
 // ========================== 3D ===========================
 
@@ -636,7 +791,11 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
   }
   MatrixXd J(Np,Np); J.fill(0.0);
   for (int i = 0; i < Np; ++i){
-    J(i,i) = -.5*(alpha*alpha-beta*beta) / (h1(i)+2.0) / h1(i);
+    if (alpha_int==0 && beta_int==0){
+      J(i,i) = 0.0;
+    }else{
+      J(i,i) = -.5*(alpha*alpha-beta*beta) / (h1(i)+2.0) / h1(i);
+    }
     if (i < N){
       J(i,i+1) = 2.0 / (h1(i)+2.0) *
 	sqrt((i+1.0)*(i+1.0 + alpha+beta)*
@@ -654,8 +813,8 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
   MatrixXd V = eig.eigenvectors();
   r = eig.eigenvalues();
 
-  double gamma_alpha = factorial(alpha-1);
-  double gamma_beta = factorial(alpha-1);
+  //  double gamma_alpha = factorial(alpha-1);
+  //  double gamma_beta = factorial(alpha-1);
 
   // assumes alpha,beta = int so gamma(x) = factorial(x-1)
   w = V.row(0).array().square() * pow(2.0,alpha+beta+1.0) / (alpha+beta+1) *
@@ -665,7 +824,17 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
   //  cout << "w = " << w << endl;
 }
 
+ void Nodes2D(int N, VectorXd &r, VectorXd &s){
+   int Np = (N+1)*(N+2)/2;
+   VectorXd rr,ss,tt;
+   Nodes3D(N, rr, ss, tt);
 
+   // assume that t = -1 face is first
+   r = rr.head(Np);
+   s = ss.head(Np);   
+ }
+
+ 
 
 void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t){
   int Np = (N+1)*(N+2)*(N+3)/6;
@@ -822,6 +991,27 @@ void tri_cubature(int N, VectorXd &rfq, VectorXd &sfq, VectorXd &wfq){
 
 // ===================== lin algo subroutines =====================
 
+VectorXd flatten(MatrixXd &A){
+
+  VectorXd a(Map<VectorXd>(A.data(), A.cols()*A.rows()));
+  return a;
+
+}
+
+MatrixXd kron(MatrixXd &A, MatrixXd &B){
+  int ra = A.rows();  int rb = B.rows();
+  int ca = A.cols();  int cb = B.cols();  
+  MatrixXd C(ra*rb,ca*cb);
+  C.fill(0.0);
+  for (int i = 0; i < ra; ++i){
+    for (int j = 0; j < ca; ++j){
+      C.block(i*rb, j*cb, rb, cb) =  A(i,j)*B;
+    }
+  }      
+  return C;
+
+}
+
 
 // backslash
 MatrixXd mldivide(MatrixXd &A, MatrixXd &B){
@@ -876,7 +1066,6 @@ void get_sparse_ids(MatrixXd A, MatrixXi &cols, MatrixXd &vals){
   }
   //  cout << "vals = " << endl << vals << endl;
 }
-
 
 // ============================= visualization ============================= 
 /*
