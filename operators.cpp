@@ -93,13 +93,12 @@ void test_basis(){
 
 void build_operators_2D(int N, int Nq){
 
+#if ELEM_TYPE==0
   // ======= 2D case
 
   int Nfq = ceil(Nq/2.0); // GQ face quadrature to match vol quadrature
   VectorXd r,s;
   Nodes2D(N,r,s);
-  //  cout << r << endl;
-  //  cout << s << endl;
 
   VectorXd rq,sq,wq;
   tri_cubature(Nq,rq,sq,wq);
@@ -108,8 +107,8 @@ void build_operators_2D(int N, int Nq){
   MatrixXd V = Vandermonde2D(N,r,s);
   MatrixXd Vr,Vs;
   GradVandermonde2D(N,r,s,Vr,Vs);
-  MatrixXd Dr = mldivide(Vr,V);
-  MatrixXd Ds = mldivide(Vs,V);  
+  MatrixXd Dr = mrdivide(Vr,V);
+  MatrixXd Ds = mrdivide(Vs,V);  
 
   // quadrature
   MatrixXd Vqtmp = Vandermonde2D(N,rq,sq);
@@ -118,23 +117,29 @@ void build_operators_2D(int N, int Nq){
   MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
   MatrixXd Pq = mldivide(M,VqW);
 
-  MatrixXd Drq = Vq*Dr*Pq;
-  MatrixXd Dsq = Vq*Ds*Pq;  
-  
   // face quadrature
   VectorXd r1D = r.head(N+1);
   MatrixXd V1D = Vandermonde1D(N,r1D);
 
+  int Nfaces = 3;
   VectorXd rq1D,wq1D;
   //  cout << "Nq = " << Nq << ", Nfq = " << Nfq << endl;
   JacobiGQ(Nfq,0,0,rq1D,wq1D); 
-  MatrixXd rrfq(rq1D.rows(),3),ssfq(rq1D.rows(),3);
+  MatrixXd rrfq(rq1D.rows(),Nfaces),ssfq(rq1D.rows(),Nfaces);
   VectorXd ones = MatrixXd::Ones(rq1D.rows(),1);
   rrfq.col(0) = rq1D;     ssfq.col(0) = -ones;
   rrfq.col(1) = -rq1D;    ssfq.col(1) = rq1D;
   rrfq.col(2) = -ones;    ssfq.col(2) = -rq1D;
   VectorXd rfq = flatten(rrfq);
-  VectorXd sfq = flatten(ssfq);  
+  VectorXd sfq = flatten(ssfq);
+
+  // reference normals
+  MatrixXd nnrJ(rq1D.rows(),Nfaces), nnsJ(rq1D.rows(),3);
+  nnrJ.col(0).fill(0.0);  nnrJ.col(1).fill(1.0);  nnrJ.col(2).fill(-1.0);  
+  nnsJ.col(0).fill(-1.0);  nnsJ.col(1).fill(1.0);  nnsJ.col(2).fill(0.0);
+  VectorXd nrJ = flatten(nnrJ);
+  VectorXd nsJ = flatten(nnsJ);  
+  
   //  VectorXd rfq(Map<VectorXd>(rrfq.data(), rrfq.cols()*rrfq.rows()));
   //  VectorXd sfq(Map<VectorXd>(ssfq.data(), ssfq.cols()*ssfq.rows()));  
 
@@ -143,10 +148,25 @@ void build_operators_2D(int N, int Nq){
   Vfqtmp = mrdivide(Vfqtmp,V1D);
   MatrixXd Imat = MatrixXd::Identity(3,3); // face identity matrix
   MatrixXd Vfqf = kron(Imat,Vfqtmp);
-  MatrixXd Vfqtmp2 = Vandermonde2D(N,rfq,sfq);
-  MatrixXd Vfq = mrdivide(Vfqtmp2,V);
-  MatrixXd Mfq = Vfq.transpose() * wfq.asDiagonal() * Vfqf; 
-  MatrixXd Lq = Vq*mldivide(M,Mfq);
+
+  Vfqtmp = Vandermonde2D(N,rfq,sfq);
+  MatrixXd Vfq = mrdivide(Vfqtmp,V);
+  MatrixXd Mfq = Vfq.transpose() * wfq.asDiagonal(); 
+  MatrixXd Lq = mldivide(M,Mfq);
+  MatrixXd VqLq = Vq*Lq;
+
+  MatrixXd Drq = Vq*Dr*Pq - .5*Vq*Lq*nrJ.asDiagonal()*Vfq*Pq;
+  MatrixXd Dsq = Vq*Ds*Pq - .5*Vq*Lq*nsJ.asDiagonal()*Vfq*Pq;  
+
+
+  cout << "for N = " << N << " and Nq = " << Nq << endl;
+  cout << "Vq = " << endl << Vq << endl;
+  cout << "Pq = " << endl << Pq << endl;  
+  cout << "Drq = " << endl << Drq << endl;
+  cout << "Dsq = " << endl << Dsq << endl;
+  cout << "Lq = " << endl << Dsq << endl;      
+    
+#endif
   
   //  VectorXd r,s,t;
   //  Nodes3D(N, r, s, t);
@@ -306,13 +326,13 @@ void GradSimplex2DP(VectorXd a, VectorXd b, int id, int jd,
 
   VectorXd tmp = dgb.array()*Eigen::pow(.5*(1-b.array()),id);
   if(id > 0)
-    tmp.array() += -.5*id*gb.array()*Eigen::pow(.5*(1-b.array()),id-1);
+    tmp.array() -= .5*id*gb.array()*Eigen::pow(.5*(1-b.array()),id-1);
   
   V2Ds.array() += fa.array()*tmp.array();
 
   // normalize
-  V2Dr = V2Dr*pow(2,2*id+.5);
-  V2Ds = V2Ds*pow(2,2*id+.5);
+  V2Dr = V2Dr*pow(2,id+.5);
+  V2Ds = V2Ds*pow(2,id+.5);
 
 
 }
@@ -818,7 +838,7 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
 
   // assumes alpha,beta = int so gamma(x) = factorial(x-1)
   w = V.row(0).array().square() * pow(2.0,alpha+beta+1.0) / (alpha+beta+1) *
-    factorial(alpha) * factorial(beta) / factorial(alpha+beta);
+    factorial(alpha_int) * factorial(beta_int) / factorial(alpha_int+beta_int);
 
   //  cout << "r = " << r << endl;
   //  cout << "w = " << w << endl;
