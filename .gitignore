@@ -27,3 +27,9 @@
 *.pvtu
 *.visit
 *.vtu
+
+# for latex
+*.log
+*.aux
+*.out
+*.synctex.gz
