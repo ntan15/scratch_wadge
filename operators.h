@@ -7,6 +7,7 @@ void test_solve();
 void test_basis();
 
 void build_operators_2D(int N, int Nq);
+void build_operators_3D(int N, int Nq);
 
 // 1D 
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);

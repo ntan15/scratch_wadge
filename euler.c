@@ -2566,7 +2566,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh_pre",
                        m);
-
+  
   if (app->prefs->mesh_sfc_partition)
   {
     uintloc_t *part_E =
@@ -2704,9 +2704,12 @@ int main(int argc, char *argv[])
   //
   // run
   //
-  foo(0);
-  build_operators_C(app->prefs->mesh_N, app->prefs->mesh_Nq);
-  
+  //foo(0);
+#if ELEM_TYPE == 0 // triangle  
+  build_operators_C_2D(app->prefs->mesh_N, app->prefs->mesh_Nq);
+#else
+  build_operators_C_3D(app->prefs->mesh_N, app->prefs->mesh_Nq);
+#endif
 
   //
   // cleanup

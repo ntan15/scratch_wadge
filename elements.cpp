@@ -18,8 +18,12 @@ void foo(int arg)
 }
 
 // pass to eigen
-void build_operators_C(int N, int Nq){
-
+void build_operators_C_2D(int N, int Nq){
+  cout << "running 2D operators" << endl;
   build_operators_2D(N,Nq);
 }
 
+void build_operators_C_3D(int N, int Nq){
+  cout << "running 3D operators" << endl;
+  build_operators_3D(N,Nq);
+}

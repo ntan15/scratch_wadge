@@ -93,7 +93,6 @@ void test_basis(){
 
 void build_operators_2D(int N, int Nq){
 
-#if ELEM_TYPE==0
   // ======= 2D case
 
   int Nfq = ceil(Nq/2.0); // GQ face quadrature to match vol quadrature
@@ -158,15 +157,126 @@ void build_operators_2D(int N, int Nq){
   MatrixXd Drq = Vq*Dr*Pq - .5*Vq*Lq*nrJ.asDiagonal()*Vfq*Pq;
   MatrixXd Dsq = Vq*Ds*Pq - .5*Vq*Lq*nsJ.asDiagonal()*Vfq*Pq;  
 
-
   cout << "for N = " << N << " and Nq = " << Nq << endl;
   cout << "Vq = " << endl << Vq << endl;
   cout << "Pq = " << endl << Pq << endl;  
   cout << "Drq = " << endl << Drq << endl;
   cout << "Dsq = " << endl << Dsq << endl;
   cout << "Lq = " << endl << Dsq << endl;      
+
+  cout << "in operators 2D building ops!" << endl;
+}
+
+void build_operators_3D(int N, int Nq){
+
+  // ======= 3D case
+
+  int Nfq = Nq; // GQ face quadrature to match vol quadrature
+  VectorXd r,s,t;
+  Nodes3D(N,r,s,t);
+
+  VectorXd rq,sq,tq,wq;
+  tet_cubature(Nq,rq,sq,tq,wq);
+
+  // nodal
+  MatrixXd V = Vandermonde3D(N,r,s,t);
+  MatrixXd Vr,Vs,Vt;
+  GradVandermonde3D(N,r,s,t,Vr,Vs,Vt);
+  MatrixXd Dr = mrdivide(Vr,V);
+  MatrixXd Ds = mrdivide(Vs,V);
+  MatrixXd Dt = mrdivide(Vt,V);
+
+  // quadrature
+  MatrixXd Vqtmp = Vandermonde3D(N,rq,sq,tq);
+  MatrixXd Vq = mrdivide(Vqtmp,V);
+  MatrixXd M = Vq.transpose() * wq.asDiagonal() * Vq;
+  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
+  MatrixXd Pq = mldivide(M,VqW);
+
+  // face quadrature
+  int Nfp = (N+1)*(N+2)/2;
+  VectorXd rtri = r.head(Nfp);
+  VectorXd stri = s.head(Nfp);  
+  MatrixXd Vtri = Vandermonde2D(N,rtri,stri);
+
+  int Nfaces = 4;
+  VectorXd rqtri,sqtri,wqtri;
+  //  cout << "Nq = " << Nq << ", Nfq = " << Nfq << endl;
+  tri_cubature(Nfq,rqtri,sqtri,wqtri);
+
+  MatrixXd rrfq(rqtri.rows(),Nfaces),ssfq(rqtri.rows(),Nfaces),ttfq(rqtri.rows(),Nfaces);
+  VectorXd ones = MatrixXd::Ones(rqtri.rows(),1);
+  rrfq.col(0) = rqtri;
+  ssfq.col(0) = sqtri;
+  ttfq.col(0).fill(-1.0);
+
+  rrfq.col(1).fill(-1.0);
+  ssfq.col(1) = rqtri;
+  ttfq.col(1) = sqtri;  
+
+  rrfq.col(2) = rqtri;
+  ssfq.col(2).fill(-1.0);
+  ttfq.col(2) = sqtri;  
+
+  //  rfqf = -(1 + rqt + sqt); sfqf = rqt; tfqf = sqt; 
+  rrfq.col(3) = -(ones + rqtri + sqtri);
+  ssfq.col(3) = rqtri;
+  ttfq.col(3) = sqtri;
+
+  //  cout << "rfq = " << endl << rrfq << endl;
+  //  cout << "sfq = " << endl << ssfq << endl;
+  //  cout << "tfq = " << endl << ttfq << endl;  
+  
+  VectorXd rfq = flatten(rrfq);
+  VectorXd sfq = flatten(ssfq);
+  VectorXd tfq = flatten(ttfq);  
+
+  // reference normals
+  MatrixXd nnrJ(rqtri.rows(),Nfaces), nnsJ(rqtri.rows(),Nfaces), nntJ(rqtri.rows(),Nfaces);
+  nnrJ.col(0).fill(0.0);
+  nnsJ.col(0).fill(0.0);
+  nntJ.col(0).fill(-1.0);
+  
+  nnrJ.col(1).fill(-1.0);
+  nnsJ.col(1).fill(0.0);
+  nntJ.col(1).fill(0.0);  
     
-#endif
+  nnrJ.col(2).fill(0.0);  
+  nnsJ.col(2).fill(-1.0);
+  nntJ.col(2).fill(0.0);  
+
+  nnrJ.col(3).fill(1.0);  
+  nnsJ.col(3).fill(1.0);
+  nntJ.col(3).fill(1.0);  
+  
+  VectorXd nrJ = flatten(nnrJ);
+  VectorXd nsJ = flatten(nnsJ);
+  VectorXd ntJ = flatten(nntJ);    
+ 
+  VectorXd wfq = wqtri.replicate(Nfaces,1);
+  MatrixXd Vfqtmp = Vandermonde2D(N,rqtri,sqtri);
+  Vfqtmp = mrdivide(Vfqtmp,Vtri);
+  MatrixXd Imat = MatrixXd::Identity(Nfaces,Nfaces); // face identity matrix
+  MatrixXd Vfqf = kron(Imat,Vfqtmp);
+
+  Vfqtmp = Vandermonde3D(N,rfq,sfq,tfq);
+  MatrixXd Vfq = mrdivide(Vfqtmp,V);
+  MatrixXd Mfq = Vfq.transpose() * wfq.asDiagonal(); 
+  MatrixXd Lq = mldivide(M,Mfq);
+  MatrixXd VqLq = Vq*Lq;
+
+  MatrixXd Drq = Vq*Dr*Pq - .5*Vq*Lq*nrJ.asDiagonal()*Vfq*Pq;
+  MatrixXd Dsq = Vq*Ds*Pq - .5*Vq*Lq*nsJ.asDiagonal()*Vfq*Pq;
+  MatrixXd Dtq = Vq*Dt*Pq - .5*Vq*Lq*ntJ.asDiagonal()*Vfq*Pq;    
+
+  cout << "for N = " << N << " and Nq = " << Nq << endl;
+  cout << "Vq = " << endl << Vq << endl;
+  cout << "Pq = " << endl << Pq << endl;  
+  cout << "Drq = " << endl << Drq << endl;
+  cout << "Dsq = " << endl << Dsq << endl;
+  cout << "Dtq = " << endl << Dtq << endl;  
+  cout << "Lq = " << endl << Lq << endl;      
+
   
   //  VectorXd r,s,t;
   //  Nodes3D(N, r, s, t);
@@ -174,7 +284,7 @@ void build_operators_2D(int N, int Nq){
   //  tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq){  
   //  MatrixXd V = Vandermonde3D(N,r,s,t);
     
-  cout << "in operators building ops!" << endl;
+  cout << "in operators 3D building ops!" << endl;
 
 }
 
@@ -311,7 +421,7 @@ void GradSimplex2DP(VectorXd a, VectorXd b, int id, int jd,
   fa = JacobiP(a,0,0,id);           dfa = GradJacobiP(a,0,0,id);
   gb = JacobiP(b,2*id+1,0,jd);      dgb = GradJacobiP(b,2*id+1,0,jd);
 
-    // r-derivative
+  // r-derivative
   int Np = a.rows();
   V2Dr.resize(Np);
   V2Dr.array() = dfa.array()*gb.array();
@@ -776,19 +886,19 @@ MatrixXd sgeofacs3d(VectorXd x,VectorXd y,VectorXd z,
 // ===================== tabulated nodes ========================
 
 /*
-void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
-			VectorXd &b,  VectorXd &wb,
-			VectorXd &c,  VectorXd &wc){
+  void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
+  VectorXd &b,  VectorXd &wb,
+  VectorXd &c,  VectorXd &wc){
 
   int Np = (N+1);
   a.resize(Np); wa.resize(Np);
   b.resize(Np); wb.resize(Np);
   c.resize(Np); wc.resize(Np);
 
-#define loadnodes_duffy(M)						\
+  #define loadnodes_duffy(M)						\
   a(i) = p_r1D_N##M[i]; wa(i) = p_s_N##M[i]; t(i) = p_t_N##M[i];
 
-}
+  }
 */
 
 // requires alpha, beta = integers
@@ -844,15 +954,15 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
   //  cout << "w = " << w << endl;
 }
 
- void Nodes2D(int N, VectorXd &r, VectorXd &s){
-   int Np = (N+1)*(N+2)/2;
-   VectorXd rr,ss,tt;
-   Nodes3D(N, rr, ss, tt);
+void Nodes2D(int N, VectorXd &r, VectorXd &s){
+  int Np = (N+1)*(N+2)/2;
+  VectorXd rr,ss,tt;
+  Nodes3D(N, rr, ss, tt);
 
-   // assume that t = -1 face is first
-   r = rr.head(Np);
-   s = ss.head(Np);   
- }
+  // assume that t = -1 face is first
+  r = rr.head(Np);
+  s = ss.head(Np);   
+}
 
  
 
@@ -861,7 +971,7 @@ void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t){
   r.resize(Np);
   s.resize(Np);
   t.resize(Np);
-#define loadnodes(M)				\
+#define loadnodes(M)						\
   r(i) = p_r_N##M[i]; s(i) = p_s_N##M[i]; t(i) = p_t_N##M[i];
 
   for (int i = 0; i < Np; ++i){
@@ -893,7 +1003,7 @@ void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t){
 void tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq){
 
 #define loadNq(M)  Nq = p_Nq_N##M;
-#define loadq(M)				\
+#define loadq(M)							\
   rq(i) = p_rq_N##M[i]; sq(i) = p_sq_N##M[i]; tq(i) = p_tq_N##M[i]; wq(i) = p_wq_N##M[i];
 
   int Nq;
@@ -952,7 +1062,7 @@ void tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq)
 void tri_cubature(int N, VectorXd &rfq, VectorXd &sfq, VectorXd &wfq){
 
 #define loadNfq(M)  Nfq = p_Nfq_N##M;
-#define loadfq(M)				\
+#define loadfq(M)							\
   rfq(i) = p_rfq_N##M[i]; sfq(i) = p_sfq_N##M[i]; wfq(i) = p_wfq_N##M[i];
 
   int Nfq;
@@ -1090,7 +1200,7 @@ void get_sparse_ids(MatrixXd A, MatrixXi &cols, MatrixXd &vals){
 // ============================= visualization ============================= 
 /*
 
-void writeVisToGMSH(string fileName, Mesh *mesh, dfloat *Q, int iField, int Nfields){
+  void writeVisToGMSH(string fileName, Mesh *mesh, dfloat *Q, int iField, int Nfields){
 
   int timeStep = 0;
   double time = 0.0;
@@ -1102,25 +1212,25 @@ void writeVisToGMSH(string fileName, Mesh *mesh, dfloat *Q, int iField, int Nfie
   MatrixXi monom(p_Np, Dim);
   MatrixXd vdm(p_Np, p_Np);
   for(int i=0, n=0; i<=N; i++){
-    for(int j=0; j<=N; j++){
-      for(int k=0; k<=N; k++){
-	if(i+j+k <= N){
-	  monom(n,0) = i;
-	  monom(n,1) = j;
-	  monom(n,2) = k;
-	  n++;
-	}
-      }
-    }
+  for(int j=0; j<=N; j++){
+  for(int k=0; k<=N; k++){
+  if(i+j+k <= N){
+  monom(n,0) = i;
+  monom(n,1) = j;
+  monom(n,2) = k;
+  n++;
+  }
+  }
+  }
   }
   for(int m=0; m<p_Np; m++){
-    for(int n=0; n<p_Np; n++){
-      double r = mesh->r(n);
-      double s = mesh->s(n);
-      double t = mesh->t(n);
-      vdm(m,n) = pow((r+1)/2.,monom(m,0)) *
-	pow((s+1)/2.,monom(m,1)) * pow((t+1)/2.,monom(m,2));
-    }
+  for(int n=0; n<p_Np; n++){
+  double r = mesh->r(n);
+  double s = mesh->s(n);
+  double t = mesh->t(n);
+  vdm(m,n) = pow((r+1)/2.,monom(m,0)) *
+  pow((s+1)/2.,monom(m,1)) * pow((t+1)/2.,monom(m,2));
+  }
   }
   MatrixXd coeff = vdm.inverse();
 
@@ -1138,15 +1248,15 @@ void writeVisToGMSH(string fileName, Mesh *mesh, dfloat *Q, int iField, int Nfie
   *posFile << "5 2" << endl;  // 5 2 = tets
   *posFile << p_Np << " " << p_Np << endl;  // size of matrix 'coeff'
   for(int m=0; m<p_Np; m++){
-    for(int n=0; n<p_Np; n++)
-      *posFile << coeff(m,n) << " ";
-    *posFile << endl;
+  for(int n=0; n<p_Np; n++)
+  *posFile << coeff(m,n) << " ";
+  *posFile << endl;
   }
   *posFile << p_Np << " " << Dim << endl;  // size of matrix 'monom'
   for(int n=0; n<p_Np; n++){
-    for(int d=0; d<Dim; d++)
-      *posFile << monom(n,d) << " ";
-    *posFile << endl;
+  for(int d=0; d<Dim; d++)
+  *posFile << monom(n,d) << " ";
+  *posFile << endl;
   }
   *posFile << "$EndInterpolationScheme" << endl;
 
@@ -1162,15 +1272,15 @@ void writeVisToGMSH(string fileName, Mesh *mesh, dfloat *Q, int iField, int Nfie
   *posFile << "1" << endl;  /// ("numComp")
   *posFile << K << endl;  /// total number of elementNodeData in this file
   for(int k=0; k<K; k++){
-    *posFile << mesh->EToGmshE(k) << " " << p_Np;
-    for(int i=0; i<p_Np; i++)
-      *posFile << " " << Q[i + iField*p_Np + k*p_Np*Nfields];
-    *posFile << endl;
+  *posFile << mesh->EToGmshE(k) << " " << p_Np;
+  for(int i=0; i<p_Np; i++)
+  *posFile << " " << Q[i + iField*p_Np + k*p_Np*Nfields];
+  *posFile << endl;
   }
   *posFile << "$EndElementNodeData" << endl;
 
   posFile->close();
   delete posFile;
 
-}
+  }
 */

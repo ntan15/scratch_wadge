@@ -109,5 +109,5 @@ operators.o: operators.cpp operators.h | $(TPLS)
 eulertri: asd.o eulertri.o operators.o elements.o 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-eulertet: asd.o eulertet.o elements.o
+eulertet: asd.o eulertet.o operators.o elements.o 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
