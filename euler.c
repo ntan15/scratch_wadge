@@ -254,6 +254,8 @@ typedef struct prefs
   int occa_mode;
 
   int mesh_N;
+  int mesh_Nq;
+  
   char *mesh_filename;
   int mesh_sfc_partition;
 
@@ -302,7 +304,10 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
 
   prefs->mesh_filename =
       asd_lua_expr_string(L, "app.mesh.filename", "mesh.msh");
+
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
+  prefs->mesh_Nq = (int)asd_lua_expr_integer(L, "app.mesh.Nq", 3);
+  
   prefs->mesh_sfc_partition =
       asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
 
@@ -2561,7 +2566,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh_pre",
                        m);
-
+  
   if (app->prefs->mesh_sfc_partition)
   {
     uintloc_t *part_E =
@@ -2663,10 +2668,10 @@ int main(int argc, char *argv[])
                                      asd_gopt_longs("version")),
                      asd_gopt_option('v', ASD_GOPT_REPEAT, asd_gopt_shorts('v'),
                                      asd_gopt_longs("verbose"))));
-
+  
   if (asd_gopt(options, 'd'))
     debug(comm);
-
+  
   if (asd_gopt(options, 'h'))
   {
     usage();
@@ -2699,6 +2704,12 @@ int main(int argc, char *argv[])
   //
   // run
   //
+  //foo(0);
+#if ELEM_TYPE == 0 // triangle  
+  build_operators_C_2D(app->prefs->mesh_N, app->prefs->mesh_Nq);
+#else
+  build_operators_C_3D(app->prefs->mesh_N, app->prefs->mesh_Nq);
+#endif
 
   //
   // cleanup
