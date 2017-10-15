@@ -134,8 +134,15 @@ void build_operators_2D(int N, int Nq){
 
   // reference normals
   MatrixXd nnrJ(rq1D.rows(),Nfaces), nnsJ(rq1D.rows(),3);
-  nnrJ.col(0).fill(0.0);  nnrJ.col(1).fill(1.0);  nnrJ.col(2).fill(-1.0);  
-  nnsJ.col(0).fill(-1.0);  nnsJ.col(1).fill(1.0);  nnsJ.col(2).fill(0.0);
+  nnrJ.col(0).fill(0.0);
+  nnsJ.col(0).fill(-1.0);
+
+  nnrJ.col(1).fill(1.0);
+  nnsJ.col(1).fill(1.0);
+  
+  nnrJ.col(2).fill(-1.0);  
+  nnsJ.col(2).fill(0.0);
+
   VectorXd nrJ = flatten(nnrJ);
   VectorXd nsJ = flatten(nnsJ);  
   
@@ -210,18 +217,18 @@ void build_operators_3D(int N, int Nq){
   ssfq.col(0) = sqtri;
   ttfq.col(0).fill(-1.0);
 
-  rrfq.col(1).fill(-1.0);
-  ssfq.col(1) = rqtri;
+  rrfq.col(1) = rqtri;
+  ssfq.col(1).fill(-1.0);
   ttfq.col(1) = sqtri;  
 
-  rrfq.col(2) = rqtri;
-  ssfq.col(2).fill(-1.0);
-  ttfq.col(2) = sqtri;  
-
   //  rfqf = -(1 + rqt + sqt); sfqf = rqt; tfqf = sqt; 
-  rrfq.col(3) = -(ones + rqtri + sqtri);
+  rrfq.col(2) = -(ones + rqtri + sqtri);
+  ssfq.col(2) = rqtri;
+  ttfq.col(2) = sqtri;
+
+  rrfq.col(3).fill(-1.0);
   ssfq.col(3) = rqtri;
-  ttfq.col(3) = sqtri;
+  ttfq.col(3) = sqtri;  
 
   //  cout << "rfq = " << endl << rrfq << endl;
   //  cout << "sfq = " << endl << ssfq << endl;
@@ -236,18 +243,18 @@ void build_operators_3D(int N, int Nq){
   nnrJ.col(0).fill(0.0);
   nnsJ.col(0).fill(0.0);
   nntJ.col(0).fill(-1.0);
-  
-  nnrJ.col(1).fill(-1.0);
-  nnsJ.col(1).fill(0.0);
+     
+  nnrJ.col(1).fill(0.0);  
+  nnsJ.col(1).fill(-1.0);
   nntJ.col(1).fill(0.0);  
-    
-  nnrJ.col(2).fill(0.0);  
-  nnsJ.col(2).fill(-1.0);
-  nntJ.col(2).fill(0.0);  
 
-  nnrJ.col(3).fill(1.0);  
-  nnsJ.col(3).fill(1.0);
-  nntJ.col(3).fill(1.0);  
+  nnrJ.col(2).fill(1.0);  
+  nnsJ.col(2).fill(1.0);
+  nntJ.col(2).fill(1.0);  
+
+  nnrJ.col(3).fill(-1.0);
+  nnsJ.col(3).fill(0.0);
+  nntJ.col(3).fill(0.0);  
   
   VectorXd nrJ = flatten(nnrJ);
   VectorXd nsJ = flatten(nnsJ);
