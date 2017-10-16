@@ -275,7 +275,7 @@ legend style={font=\small}
 \newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}} % d in integrand
 
 \date{}
-\author{Jesse Chan}
+\author{Jesse Chan, Lucas Wilcox}
 \title{Entropy stable notes}
 \graphicspath{{./figs/}}
 
@@ -283,6 +283,7 @@ legend style={font=\small}
 \begin{document}
 
 \maketitle
+
 
 \section{Curved meshes}
 
@@ -340,6 +341,25 @@ It is possible to remove the effect of geometric aliasing by evaluating the abov
 
 Another alternative is to treat curvilinear grids using a skew-symmetric form, though this may not be strictly locally conservative.  
 
+\subsection{Weight-adjusted DG}
+
+
+Let $u_p$ be the $L^2$ projection of $u$ with respect to the $J$-weighted $L^2$ norm.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{u_p - \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
+
+Define the weight-adjusted projection $P_N u = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}$.  We note that it's self-adjoint with respect to the $J$-weighted $L^2$ inner product
+\begin{align*}
+\LRp{J P_N u, v} &= \LRp{\Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}, vJ} = \LRp{uJ, \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{vJ}}} =  \LRp{uJ, P_N v}.
+\end{align*}
+Let $u_p$ be the $L^2$ projection over the curved element $D^k$
+\[
+\LRp{u_p J,v} = \LRp{u J,v}, \qquad \forall v\in V_h.
+\]
+One idea: let $v$ then be the difference between the $L^2$ and weight-adjusted projection.  We can estimate it as
+\[
+\nor{v}_{L^2\LRp{D^k}}^2 = \LRp{Jv,v} = \LRp{J u_p ,v} - \LRp{JP_N u,v} = \LRp{J u, v - P_N v} \leq \nor{u}_{L^2\LRp{D^k}}\nor{v-P_N v}_{L^2\LRp{D^k}}.
+\]
+If $\nor{v-P_N v}_{L^2\LRp{D^k}} \leq Ch^{N+2} \nor{v}_{L^2\LRp{D^k}}$, then this yields a superconvergent error estimate.  
+
 \section{Limiting}
 
 Ignoring high order terms in the Taylor expansion, we have
@@ -348,21 +368,15 @@ u\LRp{\Pi_N v} - u = \pd{u}{v} \LRp{\Pi_Nv - v}.
 \]
 We want to limit $u$ with a compression towards the mean $u = \bar{u} + \theta(u-\bar{u})$ such that $\LRb{u\LRp{\Pi_N v}} \leq C\LRb{u}$.  
 
-\subsection{Option 1}
-
 One option: ensure $\LRb{u\LRp{\Pi_N v} - u(\bar{v})} \approx \LRb{u - u(\bar{v})}$ based on Taylor series. 
 \[
 u\LRp{\Pi_N v} - u(\bar{v})
 \]
-
 Limit $\tilde{u} = \bar{u} + \theta(u-\bar{u})$ such that 
 \[
 \min \Pi_N v \geq \min v, \qquad \max \Pi_N v \leq \max v.
 \]
-
-Another option: estimate or filter $\Pi_N v$ 
-
-\subsection{Other options}
+Other options
 \begin{itemize}
 \item Adaptively choose time-step size?
 \item Expensive option: bisection or Newton algorithm for finding theta.  
