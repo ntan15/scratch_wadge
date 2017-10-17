@@ -105,7 +105,7 @@ void build_operators_2D(int N, int Nq)
 
   // ======= 2D case
 
-  int Nfq = ceil(Nq / 2.0); // GQ face quadrature to match vol quadrature
+  int Nfq = (int)ceil(Nq / 2.0); // GQ face quadrature to match vol quadrature
   VectorXd r, s;
   Nodes2D(N, r, s);
 
@@ -315,7 +315,7 @@ void build_operators_3D(int N, int Nq)
 // d = degree of basis
 VectorXd JacobiP(VectorXd x, double alpha, double beta, int d)
 {
-  int Nx = x.rows();
+  int Nx = (int)x.rows();
   // cout << "Nx = " << Nx << ", x = " << x << endl;
   VectorXd P(Nx, 1);
   MatrixXd PL(Nx, d + 1);
@@ -388,7 +388,7 @@ VectorXd GradJacobiP(VectorXd x, double alpha, double beta, int p)
   /// Purpose: Evaluate the derivative of the orthonormal Jacobi
   ///   polynomial of type (alpha,beta)>-1, at points x
   ///          for order N and returns dP[1:length(xp))]
-  int Nx = x.rows();
+  int Nx = (int)x.rows();
   VectorXd dP(Nx);
 
   if (p == 0)
@@ -406,7 +406,7 @@ VectorXd GradJacobiP(VectorXd x, double alpha, double beta, int p)
 void rstoab(VectorXd r, VectorXd s, VectorXd &a, VectorXd &b)
 {
 
-  int Npts = r.rows();
+  int Npts = (int)r.rows();
   a.resize(Npts);
   b.resize(Npts);
   double tol = 1e-8;
@@ -463,7 +463,7 @@ void GradSimplex2DP(VectorXd a, VectorXd b, int id, int jd, VectorXd &V2Dr,
   dgb = GradJacobiP(b, 2 * id + 1, 0, jd);
 
   // r-derivative
-  int Np = a.rows();
+  int Np = (int)a.rows();
   V2Dr.resize(Np);
   V2Dr.array() = dfa.array() * gb.array();
   if (id > 0)
@@ -490,7 +490,7 @@ void GradVandermonde2D(int N, VectorXd r, VectorXd s, MatrixXd &V2Dr,
                        MatrixXd &V2Ds)
 {
 
-  int Npts = r.rows();
+  int Npts = (int)r.rows();
   int Np = (N + 1) * (N + 2) / 2;
   V2Dr.resize(Npts, Np);
   V2Ds.resize(Npts, Np);
@@ -520,7 +520,7 @@ void rsttoabc(VectorXd r, VectorXd s, VectorXd t, VectorXd &a, VectorXd &b,
               VectorXd &c)
 {
 
-  int Np = r.rows();
+  int Np = (int)r.rows();
   a.resize(Np);
   b.resize(Np);
   c.resize(Np);
@@ -577,7 +577,7 @@ void GradSimplex3DP(VectorXd a, VectorXd b, VectorXd c, int id, int jd, int kd,
   dhc = GradJacobiP(c, 2 * (id + jd) + 2, 0, kd);
 
   // r-derivative
-  int Np = a.rows();
+  int Np = (int)a.rows();
   V3Dr.resize(Np);
   V3Dr.array() = dfa.array() * (gb.array() * hc.array());
   if (id > 0)
@@ -650,7 +650,7 @@ void GradVandermonde3D(int N, VectorXd r, VectorXd s, VectorXd t,
                        MatrixXd &V3Dr, MatrixXd &V3Ds, MatrixXd &V3Dt)
 {
 
-  int Npts = r.rows();
+  int Npts = (int)r.rows();
   int Np = (N + 1) * (N + 2) * (N + 3) / 6;
   V3Dr.resize(Npts, Np);
   V3Ds.resize(Npts, Np);
@@ -690,7 +690,7 @@ void barytors(VectorXd L1, VectorXd L2, VectorXd L3, VectorXd &r, VectorXd &s)
   VectorXd v3(2);
   v3 << -1, 1;
 
-  int Npts = L1.rows();
+  int Npts = (int)L1.rows();
   r.resize(Npts);
   s.resize(Npts);
   for (int i = 0; i < Npts; ++i)
@@ -868,7 +868,7 @@ MatrixXd vgeofacs3d(VectorXd x, VectorXd y, VectorXd z, MatrixXd Dr,
                     MatrixXd Ds, MatrixXd Dt)
 {
 
-  int Npts = Dr.rows();
+  int Npts = (int)Dr.rows();
   MatrixXd vgeofacs(Npts, 10); // rx,sx,tx,ry,sy,ty,rz,sz,tz,J
 
   VectorXd xr = Dr * x;
@@ -929,7 +929,7 @@ MatrixXd sgeofacs3d(VectorXd x, VectorXd y, VectorXd z, MatrixXd Drf,
   VectorXd tz = vgeo.col(8);
   VectorXd J = vgeo.col(9);
 
-  int Npts = Drf.rows();
+  int Npts = (int)Drf.rows();
   MatrixXd sgeofacs(Npts, 4); // nx,ny,nz,sJ
 
   int Nfpts = Npts / 4; // assume each face has the same quadrature
@@ -1467,10 +1467,10 @@ VectorXd flatten(MatrixXd &A)
 
 MatrixXd kron(MatrixXd &A, MatrixXd &B)
 {
-  int ra = A.rows();
-  int rb = B.rows();
-  int ca = A.cols();
-  int cb = B.cols();
+  int ra = (int)A.rows();
+  int rb = (int)B.rows();
+  int ca = (int)A.cols();
+  int cb = (int)B.cols();
   MatrixXd C(ra * rb, ca * cb);
   C.fill(0.0);
   for (int i = 0; i < ra; ++i)
@@ -1502,7 +1502,7 @@ MatrixXd mrdivide(MatrixXd &A, MatrixXd &B)
 // extract sub-vector routine - currently unused
 VectorXd extract(const VectorXd &full, const VectorXi &ind)
 {
-  int num_indices = ind.rows();
+  int num_indices = (int)ind.rows();
   VectorXd target(num_indices);
   for (int i = 0; i < num_indices; i++)
   {
@@ -1514,8 +1514,8 @@ VectorXd extract(const VectorXd &full, const VectorXi &ind)
 // fixed-bandwidth sparse ids
 void get_sparse_ids(MatrixXd A, MatrixXi &cols, MatrixXd &vals)
 {
-  int nrows = A.rows();
-  int ncols = A.cols();
+  int nrows = (int)A.rows();
+  int ncols = (int)A.cols();
 
   double maxVal = A.array().abs().maxCoeff();
   double tol = 1e-5;
