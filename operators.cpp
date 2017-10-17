@@ -1,7 +1,7 @@
 #include "operators.h"
 #include "node_data.h"
+#include <cmath>
 #include <iostream>
-#include <math.h>
 using namespace std;
 
 // ================== test eigen ================
