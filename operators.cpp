@@ -729,7 +729,6 @@ MatrixXd Bern1D(int N, VectorXd r)
   int Np = (N + 1);
   MatrixXd V(r.rows(), Np);
   V.fill(0.0);
-  int sk = 0;
   for (int i = 0; i < Np; ++i)
   {
     V.col(i) = nchoosek(N, i) * x.array().pow(i) *
