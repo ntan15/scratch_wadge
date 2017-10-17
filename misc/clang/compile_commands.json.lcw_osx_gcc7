@@ -1,0 +1,22 @@
+[
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang -I/opt/local/include/openmpi-gcc7 --std=gnu11 -DELEM_TYPE=1 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o euler.o euler.c",
+    "file" : "euler.c"
+  },
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang -I/opt/local/include/openmpi-gcc7 --std=gnu11 -DASD_DEBUG -DASD_USE_LUA -Ilua/src -Iocca/include -c -o asd.o asd.c",
+    "file" : "asd.c"
+  },
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang++ -I/opt/local/include/openmpi-gcc7 --std=c++11 -Ieigen -c -o elements.o elements.c",
+    "file" : "elements.cpp"
+  },
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang++ -I/opt/local/include/openmpi-gcc7 --std=c++11 -Ieigen -c -o  operators.o operators.cpp",
+    "file" : "operators.cpp"
+  }
+]
