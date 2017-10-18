@@ -344,21 +344,89 @@ Another alternative is to treat curvilinear grids using a skew-symmetric form, t
 \subsection{Weight-adjusted DG}
 
 
-Let $u_p$ be the $L^2$ projection of $u$ with respect to the $J$-weighted $L^2$ norm.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{u_p - \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
-
-Define the weight-adjusted projection $P_N u = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}$.  We note that it's self-adjoint with respect to the $J$-weighted $L^2$ inner product
+We define the curvilinear $L^2$ projection $\Pi_N^J$ such that
+\[
+\LRp{\Pi_N^J u,v}_{D^k} = \LRp{J \Pi_N^J u,v}_{\hat{D}} = \LRp{uJ,v}_{\hat{D}} = \LRp{u,v}_{D^k}.  
+\]
+Let the weight-adjusted projection operator $P_N$ be defined as $P_N u = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}$.  Note that $P_N$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
 \begin{align*}
 \LRp{J P_N u, v} &= \LRp{\Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}, vJ} = \LRp{uJ, \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{vJ}}} =  \LRp{uJ, P_N v}.
 \end{align*}
-Let $u_p$ be the $L^2$ projection over the curved element $D^k$
+
+Let $\Pi_N^J u$ be the $L^2$ projection of $u$ with respect to the weighted (curvilinear) $L^2$ inner product.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{\Pi_N^J u - P_N u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
+
+We can prove this bound using results from \cite{chan2016weight1}.  We first define the operator $T_{w}^{-1}$ as follows
 \[
-\LRp{u_p J,v} = \LRp{u J,v}, \qquad \forall v\in V_h.
+\LRp{wT_{w}^{-1} u,v}_{\hat{D}} = \LRp{ u,v}_{\hat{D}}, \qquad \forall v\in V_h.
 \]
-One idea: let $v$ then be the difference between the $L^2$ and weight-adjusted projection.  We can estimate it as
+This forms the basis of the weight-adjusted approximation of weighted $L^2$ inner products.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
+\begin{theorem}
+\label{thm:moment}
+Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in V_h\LRp{D^k}$.  Then, 
+\begin{align*}
+&\LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{T^{-1}_{1/J}u,v}_{\hat{D}}} \leq \\
+&Ch^{2N+2}\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{W^{N+1,2}\LRp{D^k}}.
+\end{align*}
+\end{theorem}
+\begin{proof}
+The proof involves straightforward adaptations of Theorem 4, Theorem 5, and Theorem 6 in \cite{chan2016weight1} to the reference element $\hat{D}$.  
+\end{proof}
+The next result we need is a generalized inverse inequality.  
+\begin{lemma}
+\label{lemma:sobolev}
+Let $v \in P^N\LRp{D^k}$, and let $h = {\rm diam}\LRp{D^k}$.  Then,
 \[
-\nor{v}_{L^2\LRp{D^k}}^2 = \LRp{Jv,v} = \LRp{J u_p ,v} - \LRp{JP_N u,v} = \LRp{J u, v - P_N v} \leq \nor{u}_{L^2\LRp{D^k}}\nor{v-P_N v}_{L^2\LRp{D^k}}.
+\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N} h^{-N} \nor{v}_{L^2\LRp{D^k}}.
 \]
-If $\nor{v-P_N v}_{L^2\LRp{D^k}} \leq Ch^{N+2} \nor{v}_{L^2\LRp{D^k}}$, then this yields a superconvergent error estimate.  
+where $C_{N}$ is independent of $h$.
+\end{lemma}
+\begin{proof}
+The result is the consequence of a scaling argument and a Rayleigh quotient bound involving the largest eigenvalue of the generalized eigenvalue problem  
+\[
+\bm{K}_N\bm{u} = \lambda\bm{M}\bm{u},
+\]
+where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product for $W^{N+1,2}\LRp{D^k}$.  We note that the constant $C_N$ depends on the largest eigenvalue, which in turn depends on the order $N$ and dimension $d$.  
+\end{proof}
+
+We can now prove that $P_Nu$ is superconvergent to the curvilinear $L^2$ projection $\Pi^J_N u$
+\begin{theorem}
+Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi_Nu$ and the weight-adjusted projection $P_Nu$ is
+\[
+\nor{\Pi_N u - P_N u}_{L^2\LRp{D^k}} \leq C\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
+\]
+where $C$ is a mesh-independent constant.
+\end{theorem}
+
+\begin{proof}
+Let $\Pi_N^J u$ be the $L^2$ projection over the curved element $D^k$, such that
+\[
+\LRp{J\Pi_N^J u,v} = \LRp{u J,v}, \qquad \forall v\in V_h.
+\]
+By definition, $P_N u$ satisfies a similar property
+\[
+\LRp{T_{1/J}^{-1} P_N u,v} = \LRp{u J,v}, \qquad \forall v\in V_h.
+\]
+Then, we have that
+\[
+\nor{\Pi_N^J  u - P_N u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^J  u - P_N u,vJ}_{\hat{D}}, \qquad v = \Pi_N^J  u - P_N u.
+\]
+Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
+\begin{align*}
+\nor{\Pi_N^J  u - P_N u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^J ,vJ}_{\hat{D}} - \LRp{P_N u,vJ}_{\hat{D}}}\\
+& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N u,v}_{\hat{D}} - \LRp{JP_N u,v}_{\hat{D}}}.
+\end{align*}
+Applying Theorem~\ref{thm:moment} and Lemma~\ref{lemma:sobolev} with $M=N$ then yields that 
+\begin{align*}
+\nor{\Pi_N u - P_N u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}
+\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
+&\leq Ch^{N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}},
+\end{align*}
+where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through by 
+\[
+\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi_N u - P_N u}_{L^2\LRp{D^k}}
+\]
+ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
+\end{proof}
 
 \section{Limiting}
 

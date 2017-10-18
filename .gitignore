@@ -33,3 +33,5 @@
 *.aux
 *.out
 *.synctex.gz
+*.blg
+*.bbl
