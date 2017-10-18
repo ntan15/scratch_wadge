@@ -10,7 +10,7 @@
 . git-sh-setup
 
 CHFILES=$(git-diff-index -M --name-only --cached HEAD | \
-          grep -E '.*\.(c|cpp|h)$')
+          grep -E '.*\.(c|cpp|h)$' | grep -v 'node_data\.h')
 
 for CHFILE in $CHFILES;
 do

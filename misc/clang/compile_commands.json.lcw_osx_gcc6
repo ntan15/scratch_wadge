@@ -11,7 +11,12 @@
   },
   {
     "directory" : "/Users/lucas/research/code/wadges",
-    "command" : "clang -I/opt/local/include/openmpi-gcc6 --std=c++ -Ieigen -c -o elements.o elements.c",
-    "file" : "elements.c"
+    "command" : "clang++ -I/opt/local/include/openmpi-gcc6 --std=c++11 -Ieigen -c -o elements.o elements.c",
+    "file" : "elements.cpp"
+  },
+  {
+    "directory" : "/Users/lucas/research/code/wadges",
+    "command" : "clang++ -I/opt/local/include/openmpi-gcc6 --std=c++11 -Ieigen -c -o  operators.o operators.cpp",
+    "file" : "operators.cpp"
   }
 ]
