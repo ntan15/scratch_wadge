@@ -255,7 +255,7 @@ typedef struct prefs
 
   int mesh_N;
   int mesh_Nq;
-  
+
   char *mesh_filename;
   int mesh_sfc_partition;
 
@@ -307,7 +307,7 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
 
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
   prefs->mesh_Nq = (int)asd_lua_expr_integer(L, "app.mesh.Nq", 3);
-  
+
   prefs->mesh_sfc_partition =
       asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
 
@@ -1221,7 +1221,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
       fn += 1;
     }
   }
-// }}}
+    // }}}
 
 #if 0
   printf("fnglo sorted:\n");
@@ -1259,7 +1259,7 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
   MPI_Waitall(size, recv_requests, MPI_STATUSES_IGNORE);
   MPI_Waitall(size, send_requests, MPI_STATUSES_IGNORE);
 
-// }}}
+  // }}}
 
 #if 0
   printf("fnloc:\n");
@@ -1972,7 +1972,7 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
       cminloc[d] = ASD_MIN(cminloc[d], EToC[e * VDIM + d]);
     }
   }
-// }}}
+    // }}}
 
 #if 0
   printf("EToC:\n");
@@ -2285,7 +2285,7 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
     }
   }
 
-// }}}
+    // }}}
 
 #if 0
   printf("EToHglo sorted:\n");
@@ -2566,7 +2566,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh_pre",
                        m);
-  
+
   if (app->prefs->mesh_sfc_partition)
   {
     uintloc_t *part_E =
@@ -2668,10 +2668,10 @@ int main(int argc, char *argv[])
                                      asd_gopt_longs("version")),
                      asd_gopt_option('v', ASD_GOPT_REPEAT, asd_gopt_shorts('v'),
                                      asd_gopt_longs("verbose"))));
-  
+
   if (asd_gopt(options, 'd'))
     debug(comm);
-  
+
   if (asd_gopt(options, 'h'))
   {
     usage();
@@ -2704,8 +2704,8 @@ int main(int argc, char *argv[])
   //
   // run
   //
-  //foo(0);
-#if ELEM_TYPE == 0 // triangle  
+  // foo(0);
+#if ELEM_TYPE == 0 // triangle
   build_operators_C_2D(app->prefs->mesh_N, app->prefs->mesh_Nq);
 #else
   build_operators_C_3D(app->prefs->mesh_N, app->prefs->mesh_Nq);
