@@ -234,49 +234,47 @@ legend style={font=\small}
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.75}
 
-\renewcommand{\hat}{\widehat}
 
 \newcommand{\bbm}[1]{\mathbbm{#1}}
 \newcommand{\bs}[1]{\boldsymbol{#1}}
 \newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
 
-\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
-\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
-\newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
 
 \newcommand{\mb}[1]{\mathbf{#1}}
 \newcommand{\mbb}[1]{\mathbb{#1}}
 \newcommand{\mc}[1]{\mathcal{#1}}
 
+\renewcommand{\hat}{\widehat}
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
 \newcommand{\snor}[1]{\left| #1 \right|}
 \newcommand{\nor}[1]{\left\| #1 \right\|}
-
 \newcommand{\LRp}[1]{\left( #1 \right)}
 \newcommand{\LRs}[1]{\left[ #1 \right]}
 \newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
 \newcommand{\LRb}[1]{\left| #1 \right|}
 \newcommand{\LRc}[1]{\left\{ #1 \right\}}
 \newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
-\newcommand{\LRl}[1]{\left. #1 \right|}
-
-\newcommand{\Grad} {\ensuremath{\nabla}}
-
+\newcommand{\LRl}[1]{\left. \LRp{#1} \right|}
 \newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
 \newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
+\newcommand{\Grad} {\ensuremath{\nabla}}
+\newcommand{\note}[1]{{\color{blue}{#1}}}
+\renewcommand{\d}{\partial}
+
 
 \newcommand{\LK}{L^2\LRp{D^k}}
 \newcommand{\LdK}{L^2\LRp{\partial D^k}}
-\renewcommand{\d}{\partial}
 \newcommand{\Dhat}{\widehat{D}}
 \newcommand{\Lhat}{L^2\LRp{\Dhat}}
 
-\newcommand{\note}[1]{{\color{blue}{#1}}}
 
 \newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}} % d in integrand
 
 \date{}
 \author{Jesse Chan, Lucas Wilcox}
-\title{Entropy stable notes}
+\title{High order entropy stable discontinuous Galerkin methods on curvilinear meshes}
 \graphicspath{{./figs/}}
 
 
@@ -284,6 +282,64 @@ legend style={font=\small}
 
 \maketitle
 
+
+\begin{abstract}
+Things to include: entropy stability for curvilinear meshes, choosing geometric factors to ensure constant state preservation, high order accuracy.  
+\end{abstract}
+
+\section{Intro/layout}
+
+\begin{enumerate}
+\item Global DG differentiation operators and flux differencing 
+\item Global DG operators for curvilinear meshes
+\item Flux differencing with geometric averaging.  
+\end{enumerate}
+
+
+
+\section{Flux differencing for affine meshes}
+
+Define the global DG divergence
+\begin{align*}
+\LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\Grad \cdot \Pi_N\bm{u},vw}_{D^k} \\
+& + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\bm{n}}_{\d D^k} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\bm{n}}_{\d D^k}.
+\end{align*}
+This is equivalent to defining
+\[
+\Grad_h \cdot\bm{u} = \sum_i D^i_h \bm{u}_i.  
+\]
+Let $\bm{f}^i_S(\bm{u}_L,\bm{u}_R)$ for $i= 1,\ldots,d$ denote the multi-dimensional entropy conservative flux of Tadmor \cite{tadmor1987numerical}, such that
+\[
+\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}^i_S(\bm{u}_L,\bm{u}_R) = \psi_{i,L} - \psi_{i,R}
+\]
+where $\psi_i$ denotes the $i$th component of the entropy potential.  We concatenate these components together into a matrix $\bm{f}_S$ whose $i$th row is $\bm{f}^i_S$
+\[
+\bm{f}_S = \LRs{\bm{f}^1_S,\ldots,\bm{f}^d_S}^T.  
+\]
+\begin{theorem}
+\label{thm:ec}
+The semi-discrete DG discretization 
+\[
+\LRp{\pd{\bm{u}}{t} + 2\LRl{{\Grad_h\cdot \bm{f}_S(\bm{u},\bm{u}')}}_{\bm{x}'=\bm{x}},\bm{w}}_{\Omega} = 0
+\]
+is entropy conservative.  
+\end{theorem}
+\begin{proof}
+Take $\bm{w} = \bm{v}$.  The time term reduces to $\pd{S(\bm{u})}{t}$ by the chain rule.  The spatial term is then
+\begin{align*}
+2\LRp{\LRl{{\Grad_h\cdot \bm{f}_S(\bm{u},\bm{u}')}}_{\bm{x}'=\bm{x}},\bm{v}} &= \LRp{\LRl{{\Grad_h\cdot \bm{f}_S(\bm{u},\bm{u}')}\bm{v}'}_{\bm{x}'=\bm{x}},{1}} + \sum_{i=1}^d  \LRp{\LRl{{D^i_h \bm{f}^i_S(\bm{u},\bm{u}')}}_{\bm{x}'=\bm{x}},\bm{v}} \\
+&= \sum_{i=1}^d\LRa{\bm{f}^i_S(\bm{u},\bm{u}),\bm{v}\bm{n}_i} - \LRp{\LRl{{D^i_h \LRp{\LRp{\bm{v}'-\bm{v}}^T\bm{f}^i_S(\bm{u},\bm{u}')}}}_{\bm{x}'=\bm{x}},{1}}
+\end{align*}
+The boundary term is simplified by noting that $\bm{f}^i_S(\bm{u},\bm{u}) = \bm{f}^i(\bm{u})$.  
+Applying properties of the entropy conservative flux yields
+\[
+\LRp{\bm{v}'-\bm{v}}^T\bm{f}^i_S(\bm{u},\bm{u}') = \psi_i' - \psi_i,
+\]
+which simplifies the final volume term to
+\[
+\LRp{\LRl{D^i_h \LRp{\psi_i' - \psi_i}}_{\bm{x}'=\bm{x}},{1}} = \LRa{-\psi_i\bm{n}_i,1}.
+\]
+\end{proof}
 
 \section{Curved meshes}
 
@@ -310,7 +366,7 @@ Let $\bm{G}$ denote the Jacobian of the geometric mapping
 \]
 and let $J$ denote the determinant of $\bm{G}$.  One can show that
 \[
-\hat{\Grad} \cdot \LRp{J\bm{G}^T} = 0  
+\hat{\Grad} \cdot \LRp{J\bm{G}^T} = 0, \qquad \hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}} = \Grad \cdot \bm{u}
 \]
 at the continuous level.  We also have that the mapped normals obey the property
 \[
@@ -322,38 +378,175 @@ At the continuous level, the physical gradient and divergence satisfy
 \]
 as well as a corresponding integration by parts property.  
 
-\section{Flux differencing}
+\subsection{Flux differencing for curvilinear meshes}
 
-Replace the flux derivative with
+We introduce a ``reference'' global DG derivative, which is defined (for $v\in V_h$ but $u,w\not\in V_h$)
+\begin{align*}
+\LRp{\hat{D}^i_h u,vw}_{\Omega} &= \sum_k \LRp{\pd{\Pi_N\bm{u}}{\hat{\bm{x}}_i},vw}_{\hat{D}} 
+ + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}_i}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}_i}_{\d \hat{D}}.
+\end{align*}
+%\begin{align*}
+%\LRp{\hat{\Grad}_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \Pi_N\bm{u},vw}_{\hat{D}} \\
+%& + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}}.
+%\end{align*}
+We use this to define a reference DG divergence
+\begin{align*}
+\hat{\Grad}_h \cdot \bm{u} = \sum_{i=1}^d \hat{D}^i_h \bm{u}_i.
+\end{align*}
+We next introduce two physical DG divergences based on the reference DG divergence.  The a ``conservative'' DG divergence is defined using the reference DG divergence operator
 \[
-\LRp{\Grad \cdot \bm{F}(\bm{U}),\bm{V}}_{D^k} \approx
-\LRp{\LRl{\Grad \cdot \bm{F}_S(\bm{U}(\bm{x}),\bm{U}(\bm{x}'))}_{\bm{x}' = \bm{x}},\bm{V}}_{D^k}.
+\Grad^c_h \cdot \bm{u} = \hat{\Grad}_h \cdot \LRp{J\bm{G}^T\bm{u}}.  
 \]
-It is possible to remove the effect of geometric aliasing by evaluating the above term via
+%which can be expressed explicitly as 
+%\begin{align*}
+%\LRp{\Grad^c_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \Pi_N\LRp{ J\bm{G}^T\bm{u}},vw }_{\hat{D}} + \\
+%&\frac{1}{2}\LRa{J\bm{G}^T\bm{u}^+ - \Pi_N \LRp{J\bm{G}^T\bm{u}}, vw \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T\bm{u} - \Pi_N \LRp{J\bm{G}^T\bm{u}}, \Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}}
+%\end{align*}
+We also introduce the ``non-conservative'' divergence 
 \[
-\LRp{\LRl{\hat{\Grad} \cdot \bm{F}^k_S(\bm{U}(\bm{x}),\bm{U}(\bm{x}'))}_{\bm{x}' = \bm{x}},\bm{V}}_{\hat{D}}, \qquad \bm{F}^k_S = \avg{J\bm{G}}\bm{F}_S\LRp{\bm{U}(\bm{x}),\bm{U}(\bm{x}')}
+\Grad_h^{nc} \cdot \bm{u} = \LRp{J\bm{G}\hat{\Grad}_h}\cdot \bm{u} = \sum_{i=1}^d \sum_{j=1}^d J\bm{G}_{ij} \hat{D}^j_h\bm{u}_i.
 \]
-
-%We can evaluate the new geometrically de-aliased flux using the discrete gradient of Chen and Shu
+%which is defined explicitly via
+%\begin{align*}
+%\LRp{\Grad^{nc}_h \cdot \bm{u},vw}_{\Omega} &= \sum_k  \LRp{\LRp{J\bm{G}\hat{\Grad}}\cdot\Pi_N \bm{u},vw}_{\hat{D}} \\
+%&\frac{1}{2}\LRa{J\bm{G}^T\bm{u}^+ - \Pi_N \LRp{J\bm{G}^T\bm{u}}, vw \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T\bm{u} - \Pi_N \LRp{J\bm{G}^T\bm{u}}, \Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}}
+%\end{align*}
+%where we define $\LRp{J\bm{G}\hat{\Grad}}\cdot$ as differentiating first, then scaling by geometric factors
 %\[
-%\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} = \sum_k \LRp{\hat{\Grad} \cdot J\bm{G}^T\Pi_N \bm{u},v }_{\hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T\bm{u}^+ - \Pi_N J\bm{G}^T\bm{u}, v \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T\bm{u} - \Pi_N J\bm{G}^T\bm{u}, \Pi_N\LRp{v\hat{\bm{n}}}}_{\d \hat{D}}
+%\LRp{J\bm{G}\hat{\Grad}}\cdot \bm{u} =  \sum_{i,j=1}^d J\bm{G}_{ij} \pd{\bm{u}_i}{\hat{\bm{x}}_j}, \qquad \forall \bm{u}\in \LRp{P^N}^d.
+%\]
+Unless $J\bm{G}$ is element-wise constant,
+\[
+\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} \neq \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}, 
+\]
+due to the presence of the projection operator $\Pi_N$ in the definition of $\hat{\Grad}_h$.  
+
+Instead of choosing one definition over the other, it was shown in \cite{wintermeyer2017entropy} that stability is achieved when using the average of these two definitions of the physical gradient.  The following lemma describes how to implement this within the flux differencing framework.
+\begin{lemma}
+Let $\bm{u}^k(\bm{x},\bm{x}')$ be defined as
+\[
+\bm{u}^k(\bm{x},\bm{x}') = \avg{J\bm{G}^T}\bm{u} = \LRp{\frac{J(\bm{x})\bm{G}^T(\bm{x}) + J(\bm{x}')\bm{G}^T(\bm{x}')}{2}}\bm{u}.
+\]
+Applying the reference global DG divergence to $\bm{u}^k$ is equivalent to averaging both definitions of the global DG divergence
+\[
+\LRl{{\hat{\Grad}_h \cdot \bm{u}^k(\bm{x},\bm{x}')}}_{\bm{x}'=\bm{x}} = \frac{1}{2}\LRp{\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} + \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}} = \frac{1}{2}\LRp{\Grad^c_h\cdot \bm{u} + \Grad_h^{nc}\cdot\bm{u}}.
+\]
+\end{lemma}
+\begin{proof}
+\note{TBD.}
+\end{proof}
+
+We now have the following curvilinear generalization of Theorem~\ref{thm:ec}
+\begin{theorem}
+\label{thm:ec_curvi}
+The semi-discrete DG discretization 
+\[
+\LRp{\pd{\bm{u}}{t} + 2\LRl{\hat{\Grad}_h\cdot \bm{f}^k_S(\bm{u},\bm{u}')}_{\bm{x}'=\bm{x}},\bm{w}} = 0, \qquad \bm{f}^k_S(\bm{u}_L,\bm{u}_R) = \avg{J\bm{G}^T}\bm{f}_S(\bm{u}_L,\bm{u}_R).
+\]
+is entropy conservative on curvilinear meshes.  
+\end{theorem}
+\begin{proof}
+Take $\bm{w} = \bm{v}$.  The time term is the same as before; however, we now have two spatial terms corresponding to the conservative and non-conservative DG divergences.  
+%\begin{align*}
+%\LRp{\LRl{{\Grad^c_h\cdot \bm{f}_S(\bm{u},\bm{u}')}}_{\bm{x}'=\bm{x}},\bm{v}} &= \sum_{i=1}^d  \LRp{\LRl{{\hat{D}^i_h \LRp{J\bm{G}_{(\cdot,i)}^T\bm{f}^i_S(\bm{u},\bm{u}')}}}_{\bm{x}'=\bm{x}},\bm{v}} \\
+%&= \sum_{i=1}^d\LRa{J\bm{G}^T_{(\cdot,i)}\bm{f}^i_S(\bm{u},\bm{u}),\bm{v}\bm{n}_i} - \LRp{\LRl{{D^i_h \LRp{\bm{v}^T\bm{f}^i_S(\bm{u},\bm{u}')}}}_{\bm{x}'=\bm{x}},{1}}
+%\end{align*}
+%where $\bm{G}_{(\cdot,i)}$ corresponds to the $i$th column of $\bm{G}$.  
+\note{Essentially, integrating the conservative divergence terms by parts results in volume contributions with the non-conservative divergence, and vice-versa.  Contributions are swapped between each type of divergence, so that the last steps of the affine entropy conservation proof can be repeated for two volume terms (involving the conservative and non-conservative divergence, respectively).}
+
+%The boundary term is simplified by noting that $\bm{f}^i_S(\bm{u},\bm{u}) = \bm{f}^i(\bm{u})$.  
+%Applying properties of the entropy conservative flux yields
+%\[
+%\LRp{\bm{v}'-\bm{v}}^T\bm{f}^i_S(\bm{u},\bm{u}') = \psi_i' - \psi_i,
+%\]
+%which simplifies the final volume term to
+%\[
+%\LRp{\LRl{D^i_h \LRp{\psi_i' - \psi_i}}_{\bm{x}'=\bm{x}},{1}} = \LRa{-\psi_i\bm{n}_i,1}.
+%\]
+\end{proof}
+
+
+%We similarly introduce a global DG gradient
+%\[
+%\Grad_h u = J\bm{G}\hat{\Grad}_h u.
+%\]
+%Assuming that $\bm{n}^+ = -\bm{n}$ across element faces, we can show that this divergence operator satisfies a weighted integration by parts property 
+%\[
+%\LRp{\Grad_h \bm{u}, vw}_{\Omega} = \LRa{\bm{u}\cdot\bm{n},vw}_{\d \Omega} - \LRp{\bm{u}, {J\bm{G}\hat{\Grad}_h}(vw)}_{\Omega}.
 %\]
 
-Another alternative is to treat curvilinear grids using a skew-symmetric form, though this may not be strictly locally conservative.  
+%\begin{align*}
+%\LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} = -\LRp{\Grad_h \LRp{vw},\bm{u}}_{\Omega} &= 
+%\sum_k -\LRp{J\bm{G}\hat{\Grad}\Pi_N(vw) ,\bm{u}}_{\hat{D}} + \\
+%&-\frac{1}{2}\LRa{(vw)^+ - \Pi_N(vw), \LRp{J\bm{G}^T\bm{u}}^T \hat{\bm{n}}}_{\d \hat{D}} + \\
+%&-\frac{1}{2}\LRa{(vw) - \Pi_N(vw), \Pi_N \LRp{J\bm{G}^T\bm{u}}^T\hat{\bm{n}}}_{\d \hat{D}}
+%\end{align*}
+
+
+%
+%
+%For nonlinear fluxes, we can thus replace the flux derivative with
+%\[
+%\LRp{\Grad \cdot \bm{F}(\bm{U}),\bm{V}}_{D^k} \approx
+%\LRp{\LRl{\Grad \cdot \bm{F}_S(\bm{U}(\bm{x}),\bm{U}(\bm{x}'))}_{\bm{x}' = \bm{x}},\bm{V}}_{D^k}.
+%\]
+%On curvilinear grids, we evaluate the above term via
+%\[
+%\LRp{\LRl{\hat{\Grad} \cdot \bm{F}^k_S(\bm{U}(\bm{x}),\bm{U}(\bm{x}'))}_{\bm{x}' = \bm{x}},\bm{V}}_{\hat{D}}, \qquad \bm{F}^k_S = \avg{J\bm{G}}\bm{F}_S\LRp{\bm{U}(\bm{x}),\bm{U}(\bm{x}')}
+%\]
+%This is equivalent to a split formulation involving the global DG divergence and gradient.  
+%
+%Remark: another alternative is to treat curvilinear grids using a skew-symmetric form, though this is not locally conservative.  
+
+
+%Then, if we compute $\LRl{{\hat{\Grad}_h \cdot \tilde{\bm{u}}(\bm{x},\bm{x}')}}_{\bm{x}'=\bm{x}}$ by applying operators with respect to the $\bm{x}$-coordinate only, we get
+%\begin{align*}
+%\LRp{\LRl{{\hat{\Grad}_h \cdot \tilde{\bm{u}}(\bm{x},\bm{x}')}}_{\bm{x}'=\bm{x}},vw}_{\Omega} &= \sum_k 
+%\LRp{\hat{\Grad} \cdot\Pi_N\LRp{J\bm{G}^T\bm{u}} + \LRp{ J\bm{G}\hat{\Grad}}\cdot \Pi_N \bm{u},vw}_{\hat{D}} \\
+%%\LRp{\frac{1}{2}\hat{\Grad} \cdot\Pi_N\LRp{J\bm{G}^T\bm{u}},vw}_{\hat{D}} + \text{volume term 2} \\
+%& + \LRa{ J\bm{G}^T\bm{u}^+ - \frac{1}{2}\Pi_N \LRp{J\bm{G}^T\bm{u}} - \frac{1}{2}J\bm{G}^T\Pi_N \LRp{\bm{u}},vw\hat{\bm{n}}}_{\d \hat{D}} \\
+%& + \LRa{ J\bm{G}^T\bm{u}^+ - \frac{1}{2}\Pi_N \LRp{J\bm{G}^T\bm{u}} - \frac{1}{2}J\bm{G}^T\Pi_N \LRp{\bm{u}},\Pi_N(vw)\hat{\bm{n}}}_{\d \hat{D}} \\
+%&= \LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} - \LRp{\bm{u},\Grad_h(vw)}_{\Omega}
+%\end{align*}
+
+
+
+\section{Free stream preservation}
+
+We seek conditions for which free-stream preservation 
+\[
+\pd{\bm{u}}{t} = \Grad_h \cdot \bm{u} = 0
+\]
+is satisfied if $\bm{u} = \bm{1}$.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
+
+This can be remedied by using Kopriva's interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally.   Then, noting that $J\bm{G}^T\bm{u} \in \LRp{P^N\LRp{D^k}}^d$ for $\bm{u}$ constant, we have that
+\[
+\hat{\Grad}\cdot \LRp{J\bm{G}^T\bm{u}} = \LRp{\hat{\Grad}\cdot \LRp{J\bm{G}^T}}\cdot\bm{u} = 0, \qquad J\bm{G}^T\bm{u} = \Pi_N\LRp{J\bm{G}^T\bm{u}}.
+\]
+As a result, because $\bm{u}^+ = \bm{u}$ for $\bm{u}$ globally constant,
+\begin{align*}
+\LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},vw }_{\hat{D}} + \\
+&\frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, vw \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, \Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}} = 0
+\end{align*}
+for any $w \in H^1\LRp{\Omega_h}$ and $v\in V_h$.  
+
+
+
+
 
 \subsection{Weight-adjusted DG}
 
 
-We define the curvilinear $L^2$ projection $\Pi_N^J$ such that
+We define the curvilinear $L^2$ projection $\Pi_N^k$ such that
 \[
-\LRp{\Pi_N^J u,v}_{D^k} = \LRp{J \Pi_N^J u,v}_{\hat{D}} = \LRp{uJ,v}_{\hat{D}} = \LRp{u,v}_{D^k}.  
+\LRp{\Pi_N^k u,v}_{D^k} = \LRp{J \Pi_N^k u,v}_{\hat{D}} = \LRp{uJ,v}_{\hat{D}} = \LRp{u,v}_{D^k}.  
 \]
 Let the weight-adjusted projection operator $P_N$ be defined as $P_N u = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}$.  Note that $P_N$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
 \begin{align*}
 \LRp{J P_N u, v} &= \LRp{\Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}, vJ} = \LRp{uJ, \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{vJ}}} =  \LRp{uJ, P_N v}.
 \end{align*}
 
-Let $\Pi_N^J u$ be the $L^2$ projection of $u$ with respect to the weighted (curvilinear) $L^2$ inner product.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{\Pi_N^J u - P_N u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
+Let $\Pi_N^k u$ be the $L^2$ projection of $u$ with respect to the weighted (curvilinear) $L^2$ inner product.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
 
 We can prove this bound using results from \cite{chan2016weight1}.  We first define the operator $T_{w}^{-1}$ as follows
 \[
@@ -388,19 +581,19 @@ The result is the consequence of a scaling argument and a Rayleigh quotient boun
 where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product for $W^{N+1,2}\LRp{D^k}$.  We note that the constant $C_N$ depends on the largest eigenvalue, which in turn depends on the order $N$ and dimension $d$.  
 \end{proof}
 
-We can now prove that $P_Nu$ is superconvergent to the curvilinear $L^2$ projection $\Pi^J_N u$
+We can now prove that $P_Nu$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$
 \begin{theorem}
 Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi_Nu$ and the weight-adjusted projection $P_Nu$ is
 \[
-\nor{\Pi_N u - P_N u}_{L^2\LRp{D^k}} \leq C\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
+\nor{\Pi_N^k u - P_N u}_{L^2\LRp{D^k}} \leq C\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
 \]
 where $C$ is a mesh-independent constant.
 \end{theorem}
 
 \begin{proof}
-Let $\Pi_N^J u$ be the $L^2$ projection over the curved element $D^k$, such that
+Let $\Pi_N^k u$ be the $L^2$ projection over the curved element $D^k$, such that
 \[
-\LRp{J\Pi_N^J u,v} = \LRp{u J,v}, \qquad \forall v\in V_h.
+\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in V_h.
 \]
 By definition, $P_N u$ satisfies a similar property
 \[
@@ -408,22 +601,22 @@ By definition, $P_N u$ satisfies a similar property
 \]
 Then, we have that
 \[
-\nor{\Pi_N^J  u - P_N u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^J  u - P_N u,vJ}_{\hat{D}}, \qquad v = \Pi_N^J  u - P_N u.
+\nor{\Pi_N^k  u - P_N u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N u.
 \]
 Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
 \begin{align*}
-\nor{\Pi_N^J  u - P_N u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^J ,vJ}_{\hat{D}} - \LRp{P_N u,vJ}_{\hat{D}}}\\
+\nor{\Pi_N^k  u - P_N u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k ,vJ}_{\hat{D}} - \LRp{P_N u,vJ}_{\hat{D}}}\\
 & = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N u,v}_{\hat{D}} - \LRp{JP_N u,v}_{\hat{D}}}.
 \end{align*}
-Applying Theorem~\ref{thm:moment} and Lemma~\ref{lemma:sobolev} with $M=N$ then yields that 
+Applying Theorem~\ref{thm:moment} and Lemma~\ref{lemma:sobolev} then yields that 
 \begin{align*}
-\nor{\Pi_N u - P_N u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}
+\nor{\Pi_N^k u - P_N u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}
 \nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
 &\leq Ch^{N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}},
 \end{align*}
 where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through by 
 \[
-\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi_N u - P_N u}_{L^2\LRp{D^k}}
+\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N u}_{L^2\LRp{D^k}}
 \]
  gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
