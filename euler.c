@@ -1680,6 +1680,14 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
     printf("\n");
   }
   printf("\n");
+  printf("EToO\n");
+  for (uintloc_t e = 0; e < nm->E; ++e)
+  {
+    for (uint8_t f = 0; f < NFACES; ++f)
+      printf(" %4ju", (uintmax_t)nm->EToO[NFACES * e + f]);
+    printf("\n");
+  }
+  printf("\n");
 #endif
 
   asd_free(startsglo);
