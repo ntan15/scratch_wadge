@@ -519,16 +519,18 @@ We seek conditions for which free-stream preservation
 \]
 is satisfied if $\bm{u} = \bm{1}$.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
 
-This can be remedied by using Kopriva's interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally.   Then, noting that $J\bm{G}^T\bm{u} \in \LRp{P^N\LRp{D^k}}^d$ for $\bm{u}$ constant, we have that
+This can be remedied by using Kopriva's interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$.  We remedy this by computing a divergence-free polynomial basis on the reference element using the SVD, projecting the cross product form of the geometric factors onto this basis using quadrature, and extracting the individual polynomial components of these projected geometric factors.  However, surface normals are computed using the non-projected geometric factors, to ensure that $\bm{n}^+ = -\bm{n}^-$.  
+
+Then, noting that $J\bm{G}^T\bm{u} \in \LRp{P^N\LRp{D^k}}^d$ for $\bm{u}$ constant, we have that
 \[
 \hat{\Grad}\cdot \LRp{J\bm{G}^T\bm{u}} = \LRp{\hat{\Grad}\cdot \LRp{J\bm{G}^T}}\cdot\bm{u} = 0, \qquad J\bm{G}^T\bm{u} = \Pi_N\LRp{J\bm{G}^T\bm{u}}.
 \]
 As a result, because $\bm{u}^+ = \bm{u}$ for $\bm{u}$ globally constant,
 \begin{align*}
-\LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},vw }_{\hat{D}} + \\
-&\frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, vw \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, \Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}} = 0
+\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},v }_{\hat{D}} + \\
+&\frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, v \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, \Pi_N\LRp{v}\hat{\bm{n}}}_{\d \hat{D}} = 0
 \end{align*}
-for any $w \in H^1\LRp{\Omega_h}$ and $v\in V_h$.  
+for any $v\in V_h$.  
 
 
 

@@ -27,5 +27,7 @@ void build_operators_C_2D(int N, int Nq)
 void build_operators_C_3D(int N, int Nq)
 {
   cout << "running 3D operators" << endl;
-  build_operators_3D(N, Nq);
+  build_ref_ops_3D(N,Nq,Nq);
+  build_operators_3D();
+  build_geofacs_3D();  
 }

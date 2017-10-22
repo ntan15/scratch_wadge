@@ -187,12 +187,23 @@ void build_operators_2D(int N, int Nq)
   cout << "in operators 2D building ops!" << endl;
 }
 
-void build_operators_3D(int N, int Nq)
+// container for reference arrays (points, weights, interp matrices)
+struct ref_elem_data
 {
+  bool built;
+  int N, Nq, Nfaces;
+  VectorXd r, s, t;
+  VectorXd rfq, sfq, tfq, wfq;
+  VectorXd rq, sq, tq, wq;
+  VectorXd nrJ, nsJ, ntJ;
+  MatrixXd V, Dr, Ds, Dt;
+  MatrixXd Vq, Pq, Vfqf, Vfq, Lq;
+} ref_data;
 
+void build_ref_ops_3D(int N, int Nq, int Nfq)
+{
   // ======= 3D case
 
-  int Nfq = Nq; // GQ face quadrature to match vol quadrature
   VectorXd r, s, t;
   Nodes3D(N, r, s, t);
 
@@ -210,9 +221,6 @@ void build_operators_3D(int N, int Nq)
   // quadrature
   MatrixXd Vqtmp = Vandermonde3D(N, rq, sq, tq);
   MatrixXd Vq = mrdivide(Vqtmp, V);
-  MatrixXd M = Vq.transpose() * wq.asDiagonal() * Vq;
-  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
-  MatrixXd Pq = mldivide(M, VqW);
 
   // face quadrature
   int Nfp = (N + 1) * (N + 2) / 2;
@@ -236,7 +244,6 @@ void build_operators_3D(int N, int Nq)
   ssfq.col(1).fill(-1.0);
   ttfq.col(1) = sqtri;
 
-  //  rfqf = -(1 + rqt + sqt); sfqf = rqt; tfqf = sqt;
   rrfq.col(2) = -(ones + rqtri + sqtri);
   ssfq.col(2) = rqtri;
   ttfq.col(2) = sqtri;
@@ -244,10 +251,6 @@ void build_operators_3D(int N, int Nq)
   rrfq.col(3).fill(-1.0);
   ssfq.col(3) = rqtri;
   ttfq.col(3) = sqtri;
-
-  //  cout << "rfq = " << endl << rrfq << endl;
-  //  cout << "sfq = " << endl << ssfq << endl;
-  //  cout << "tfq = " << endl << ttfq << endl;
 
   VectorXd rfq = flatten(rrfq);
   VectorXd sfq = flatten(ssfq);
@@ -284,10 +287,254 @@ void build_operators_3D(int N, int Nq)
 
   Vfqtmp = Vandermonde3D(N, rfq, sfq, tfq);
   MatrixXd Vfq = mrdivide(Vfqtmp, V);
+
+  ref_data.N = N;
+  ref_data.Nq = Nq;
+  ref_data.Nfaces = 4;
+  ref_data.r = r;
+  ref_data.s = s;
+  ref_data.t = t;
+  ref_data.V = V;
+  ref_data.Dr = Dr;
+  ref_data.Ds = Ds;
+  ref_data.Dt = Dt;
+
+  ref_data.rq = rq;
+  ref_data.sq = sq;
+  ref_data.tq = tq;
+  ref_data.wq = wq;
+  ref_data.Vq = Vq; // interp to quad pts
+
+  ref_data.rfq = rfq;
+  ref_data.sfq = sfq;
+  ref_data.tfq = tfq;
+  ref_data.wfq = wfq;
+  ref_data.Vfqf = Vfqf; // trace dim(d-1) interpolation matrix
+  ref_data.Vfq = Vfq;   // interp to face surface nodes
+
+  ref_data.nrJ = nrJ; // reference element normals
+  ref_data.nsJ = nsJ;
+  ref_data.ntJ = ntJ;
+
+  ref_data.built = true;
+}
+
+void build_geofacs_3D()
+{
+  if (ref_data.built == false)
+  {
+    printf("Build reference operators first.\n");
+    return;
+  }
+
+  printf("Building geofacs here\n");
+
+  VectorXd r = ref_data.r;
+  VectorXd s = ref_data.s;
+  VectorXd t = ref_data.t;
+  int N = ref_data.N;
+  double a = .05;
+  VectorXd dr = Eigen::pow(r.array() + s.array(), N);
+  VectorXd ds = Eigen::pow(s.array() + t.array(), N);
+  VectorXd dt = Eigen::pow(r.array() + t.array(), N);
+  VectorXd x = r - a / 1.0 * dr;
+  VectorXd y = s + a / 2.0 * ds;
+  VectorXd z = t + a / 3.0 * dt;
+
+  // vol geofacs
+  MatrixXd Drq = ref_data.Vq * ref_data.Dr;
+  MatrixXd Dsq = ref_data.Vq * ref_data.Ds;
+  MatrixXd Dtq = ref_data.Vq * ref_data.Dt;
+  VectorXd xr, yr, zr, xs, ys, zs, xt, yt, zt;
+  xr = Drq * x;
+  yr = Drq * y;
+  zr = Drq * z;
+  xs = Dsq * x;
+  ys = Dsq * y;
+  zs = Dsq * z;
+  xt = Dtq * x;
+  yt = Dtq * y;
+  zt = Dtq * z;
+
+  VectorXd rxJ = ys.array() * zt.array() - zs.array() * yt.array();
+  VectorXd sxJ = yt.array() * zr.array() - zt.array() * yr.array();
+  VectorXd txJ = yr.array() * zs.array() - zr.array() * ys.array();
+
+  VectorXd ryJ = xt.array() * zs.array() - xs.array() * zt.array();
+  VectorXd syJ = xr.array() * zt.array() - xt.array() * zr.array();
+  VectorXd tyJ = xs.array() * zr.array() - zs.array() * xr.array();
+
+  VectorXd rzJ = xs.array() * yt.array() - xt.array() * ys.array();
+  VectorXd szJ = xt.array() * yr.array() - xr.array() * yt.array();
+  VectorXd tzJ = xr.array() * ys.array() - xs.array() * yr.array();
+
+  VectorXd J =
+      xr.array() * (ys.array() * zt.array() - zs.array() * yt.array()) -
+      yr.array() * (xs.array() * zt.array() - zs.array() * xt.array()) +
+      zr.array() * (xs.array() * yt.array() - ys.array() * xt.array());
+
+  // div-free projection for free stream preservation
+  bool preserveFreeStream = 1; // default to this
+  if (preserveFreeStream)
+  {
+    MatrixXd Div(ref_data.Dr.rows(), 3 * ref_data.Dr.cols());
+    Div << ref_data.Dr, ref_data.Ds, ref_data.Dt;
+    //  cout << "Div = " << endl << Div << endl;
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(Div, Eigen::ComputeFullU |
+                                                   Eigen::ComputeFullV);
+    VectorXd sigma = svd.singularValues();
+    double tol = 1e-10; // works up to N=9
+
+    int NpDiv = Div.cols() - (sigma.array() > tol).count(); // non-zero SVDs
+    MatrixXd Vv = svd.matrixV().rightCols(NpDiv);
+
+    MatrixXd I3 = MatrixXd::Identity(3, 3);
+    MatrixXd Vdivq = kron(I3, ref_data.Vq) * Vv;
+    MatrixXd Wq = ref_data.wq.asDiagonal();
+    MatrixXd Wdiv = kron(I3, Wq);
+    MatrixXd VTdivW = Vdivq.transpose() * Wdiv;
+    MatrixXd Mdiv = VTdivW * Vdivq;
+    MatrixXd VPdiv =
+        Vdivq * mldivide(Mdiv, VTdivW); // project + eval at quad pts
+
+    MatrixXd rstx(3 * rxJ.rows(), rxJ.cols());
+    rstx << rxJ, sxJ, txJ;
+    MatrixXd rsty(3 * rxJ.rows(), rxJ.cols());
+    rsty << ryJ, syJ, tyJ;
+    MatrixXd rstz(3 * rxJ.rows(), rxJ.cols());
+    rstz << rzJ, szJ, tzJ;
+
+    rstx = VPdiv * rstx;
+    rsty = VPdiv * rsty;
+    rstz = VPdiv * rstz;
+
+    rxJ = rstx.topRows(rxJ.rows());
+    sxJ = rstx.middleRows(rxJ.rows(), rxJ.rows());
+    txJ = rstx.bottomRows(rxJ.rows());
+
+    ryJ = rsty.topRows(rxJ.rows());
+    syJ = rsty.middleRows(rxJ.rows(), rxJ.rows());
+    tyJ = rsty.bottomRows(rxJ.rows());
+
+    rzJ = rstz.topRows(rxJ.rows());
+    szJ = rstz.middleRows(rxJ.rows(), rxJ.rows());
+    tzJ = rstz.bottomRows(rxJ.rows());
+
+    /*
+    cout << "rxJ = " << endl << rxJ << endl;
+    cout << "sxJ = " << endl << sxJ << endl;
+    cout << "txJ = " << endl << txJ << endl;
+    cout << "ryJ = " << endl << ryJ << endl;
+    cout << "syJ = " << endl << syJ << endl;
+    cout << "tyJ = " << endl << tyJ << endl;
+    cout << "rzJ = " << endl << rzJ << endl;
+    cout << "szJ = " << endl << szJ << endl;
+    cout << "tzJ = " << endl << tzJ << endl;
+    */
+  }
+
+  // surface geofacs
+  MatrixXd Drfq = ref_data.Vfq * ref_data.Dr;
+  MatrixXd Dsfq = ref_data.Vfq * ref_data.Ds;
+  MatrixXd Dtfq = ref_data.Vfq * ref_data.Dt;
+
+  xr = Drfq * x;
+  yr = Drfq * y;
+  zr = Drfq * z;
+  xs = Dsfq * x;
+  ys = Dsfq * y;
+  zs = Dsfq * z;
+  xt = Dtfq * x;
+  yt = Dtfq * y;
+  zt = Dtfq * z;
+
+  VectorXd rxJf = ys.array() * zt.array() - zs.array() * yt.array();
+  VectorXd sxJf = yt.array() * zr.array() - zt.array() * yr.array();
+  VectorXd txJf = yr.array() * zs.array() - zr.array() * ys.array();
+
+  VectorXd ryJf = xt.array() * zs.array() - xs.array() * zt.array();
+  VectorXd syJf = xr.array() * zt.array() - xt.array() * zr.array();
+  VectorXd tyJf = xs.array() * zr.array() - zs.array() * xr.array();
+
+  VectorXd rzJf = xs.array() * yt.array() - xt.array() * ys.array();
+  VectorXd szJf = xt.array() * yr.array() - xr.array() * yt.array();
+  VectorXd tzJf = xr.array() * ys.array() - xs.array() * yr.array();
+
+  VectorXd Jf =
+      xr.array() * (ys.array() * zt.array() - zs.array() * yt.array()) -
+      yr.array() * (xs.array() * zt.array() - zs.array() * xt.array()) +
+      zr.array() * (xs.array() * yt.array() - ys.array() * xt.array());
+
+  VectorXd nrJ = ref_data.nrJ;
+  VectorXd nsJ = ref_data.nsJ;
+  VectorXd ntJ = ref_data.ntJ;
+
+  VectorXd nxJ = rxJf.array() * nrJ.array() + sxJf.array() * nsJ.array() +
+                 txJf.array() * ntJ.array();
+  VectorXd nyJ = ryJf.array() * nrJ.array() + syJf.array() * nsJ.array() +
+                 tyJf.array() * ntJ.array();
+  VectorXd nzJ = rzJf.array() * nrJ.array() + szJf.array() * nsJ.array() +
+                 tzJf.array() * ntJ.array();
+
+  VectorXd nx = nxJ.array()/Jf.array();
+  VectorXd ny = nyJ.array()/Jf.array();
+  VectorXd nz = nzJ.array()/Jf.array();
+  VectorXd sJ = (nx.array().pow(2) +  ny.array().pow(2) +  nz.array().pow(2)).array().sqrt();
+  nx = nx.array()/sJ.array();
+  ny = ny.array()/sJ.array();
+  nz = nz.array()/sJ.array();
+  sJ = sJ.array()*Jf.array();
+
+  // todo: output to c arrays 
+  
+  
+}
+
+void build_operators_3D()
+{
+
+  if (ref_data.built == false)
+  {
+    printf("Build reference operators first.\n");
+    return;
+  }
+  int N = ref_data.N;
+  int Nq = ref_data.Nq;
+  VectorXd r = ref_data.r;
+  VectorXd s = ref_data.s;
+  VectorXd t = ref_data.t;
+
+  VectorXd rq = ref_data.rq;
+  VectorXd sq = ref_data.sq;
+  VectorXd tq = ref_data.tq;
+  VectorXd wq = ref_data.wq;
+
+  // nodal
+  MatrixXd V = ref_data.V;
+  MatrixXd Dr = ref_data.Dr;
+  MatrixXd Ds = ref_data.Ds;
+  MatrixXd Dt = ref_data.Dt;
+  MatrixXd Vq = ref_data.Vq;
+
+  int Nfaces = ref_data.Nfaces;
+  VectorXd rfq = ref_data.rfq;
+  VectorXd sfq = ref_data.sfq;
+  VectorXd tfq = ref_data.tfq;
+  VectorXd wfq = ref_data.wfq;
+  VectorXd nrJ = ref_data.nrJ;
+  VectorXd nsJ = ref_data.nsJ;
+  VectorXd ntJ = ref_data.ntJ;
+  MatrixXd Vfqf = ref_data.Vfqf;
+  MatrixXd Vfq = ref_data.Vfq;
+
+  // quadrature
+  MatrixXd M = Vq.transpose() * wq.asDiagonal() * Vq;
+  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
+  MatrixXd Pq = mldivide(M, VqW);
+
   MatrixXd Mfq = Vfq.transpose() * wfq.asDiagonal();
   MatrixXd Lq = mldivide(M, Mfq);
   MatrixXd VqLq = Vq * Lq;
-
   MatrixXd Drq = Vq * Dr * Pq - .5 * Vq * Lq * nrJ.asDiagonal() * Vfq * Pq;
   MatrixXd Dsq = Vq * Ds * Pq - .5 * Vq * Lq * nsJ.asDiagonal() * Vfq * Pq;
   MatrixXd Dtq = Vq * Dt * Pq - .5 * Vq * Lq * ntJ.asDiagonal() * Vfq * Pq;
@@ -348,9 +595,9 @@ VectorXd JacobiP(VectorXd x, double alpha, double beta, int d)
   for (int i = 1; i <= d - 1; i++)
   {
     double h1 = 2 * i + alpha + beta;
-    double anew = 2 / (h1 + 2) *
-                  sqrt((i + 1) * (i + 1 + alpha + beta) * (i + 1 + alpha) *
-                       (i + 1 + beta) / (h1 + 1) / (h1 + 3));
+    double anew =
+        2 / (h1 + 2) * sqrt((i + 1) * (i + 1 + alpha + beta) * (i + 1 + alpha) *
+                            (i + 1 + beta) / (h1 + 1) / (h1 + 3));
     double bnew = -(alpha * alpha - beta * beta) / h1 / (h1 + 2);
     // cout << "anew = " << anew << ", bnew = " << bnew << endl;
     for (int j = 1; j <= Nx; j++)
