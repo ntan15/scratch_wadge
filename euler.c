@@ -413,7 +413,7 @@ const uint8_t FToFV[NFACES * NFACEVERTS] = {
     0, 1, 2, // face 0
     0, 1, 3, // face 1
     1, 2, 3, // face 2
-    0, 3, 2  // face 3
+    0, 2, 3  // face 3
 };
 
 // Orientations for tetrahedron faces:
