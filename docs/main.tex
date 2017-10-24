@@ -299,6 +299,21 @@ Things to include: entropy stability for curvilinear meshes, choosing geometric 
 
 \section{Flux differencing for affine meshes}
 
+Let $\bm{F}(\bm{U})$ denote the flux matrix whose rows are 
+\[
+\bm{F}(\bm{U}) = \LRp{
+\begin{array}{c}
+\bm{F}_x \\
+\bm{F}_y
+\end{array}
+}.
+\]
+The conservation law of interest is the following
+\[
+\pd{\bm{U}}{t} + \Grad \cdot \bm{F}(\bm{U}) = 0,
+\]
+where the divergence is taken over each column of $\bm{F}(\bm{U})$.  
+
 Define the global DG divergence
 \begin{align*}
 \LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\Grad \cdot \Pi_N\bm{u},vw}_{D^k} \\
@@ -342,23 +357,6 @@ which simplifies the final volume term to
 \end{proof}
 
 \section{Curved meshes}
-
-Assume non-affine geometric factors.  
-
-Let $\bm{F}(\bm{U})$ denote the flux matrix whose rows are 
-\[
-\bm{F}(\bm{U}) = \LRp{
-\begin{array}{c}
-\bm{F}_x \\
-\bm{F}_y
-\end{array}
-}.
-\]
-The conservation law of interest is the following
-\[
-\pd{\bm{U}}{t} + \Grad \cdot \bm{F}(\bm{U}) = 0,
-\]
-where the divergence is taken over each column of $\bm{F}(\bm{U})$.  
 
 Let $\bm{G}$ denote the Jacobian of the geometric mapping
 \[
@@ -509,33 +507,6 @@ Take $\bm{w} = \bm{v}$.  The time term is the same as before; however, we now ha
 %&= \LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} - \LRp{\bm{u},\Grad_h(vw)}_{\Omega}
 %\end{align*}
 
-
-
-\section{Free stream preservation}
-
-We seek conditions for which free-stream preservation 
-\[
-\pd{\bm{u}}{t} = \Grad_h \cdot \bm{u} = 0
-\]
-is satisfied if $\bm{u} = \bm{1}$.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
-
-This can be remedied by using Kopriva's interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$.  We remedy this by computing a divergence-free polynomial basis on the reference element using the SVD, projecting the cross product form of the geometric factors onto this basis using quadrature, and extracting the individual polynomial components of these projected geometric factors.  However, surface normals are computed using the non-projected geometric factors, to ensure that $\bm{n}^+ = -\bm{n}^-$.  
-
-Then, noting that $J\bm{G}^T\bm{u} \in \LRp{P^N\LRp{D^k}}^d$ for $\bm{u}$ constant, we have that
-\[
-\hat{\Grad}\cdot \LRp{J\bm{G}^T\bm{u}} = \LRp{\hat{\Grad}\cdot \LRp{J\bm{G}^T}}\cdot\bm{u} = 0, \qquad J\bm{G}^T\bm{u} = \Pi_N\LRp{J\bm{G}^T\bm{u}}.
-\]
-As a result, because $\bm{u}^+ = \bm{u}$ for $\bm{u}$ globally constant,
-\begin{align*}
-\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},v }_{\hat{D}} + \\
-&\frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, v \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T - \Pi_N \LRp{J\bm{G}^T}, \Pi_N\LRp{v}\hat{\bm{n}}}_{\d \hat{D}} = 0
-\end{align*}
-for any $v\in V_h$.  
-
-
-
-
-
 \subsection{Weight-adjusted DG}
 
 
@@ -550,7 +521,7 @@ Let the weight-adjusted projection operator $P_N$ be defined as $P_N u = \Pi_N\L
 
 Let $\Pi_N^k u$ be the $L^2$ projection of $u$ with respect to the weighted (curvilinear) $L^2$ inner product.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
 
-We can prove this bound using results from \cite{chan2016weight1}.  We first define the operator $T_{w}^{-1}$ as follows
+We can prove this bound using results from \cite{chan2016weight1,chan2016weight2}.  We first define the operator $T_{w}^{-1}$ as follows
 \[
 \LRp{wT_{w}^{-1} u,v}_{\hat{D}} = \LRp{ u,v}_{\hat{D}}, \qquad \forall v\in V_h.
 \]
@@ -585,7 +556,7 @@ where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram ma
 
 We can now prove that $P_Nu$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$
 \begin{theorem}
-Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi_Nu$ and the weight-adjusted projection $P_Nu$ is
+Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_Nu$ is
 \[
 \nor{\Pi_N^k u - P_N u}_{L^2\LRp{D^k}} \leq C\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
 \]
@@ -622,6 +593,36 @@ where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through b
 \]
  gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
+
+
+\section{Free stream preservation}
+
+We seek conditions for which free-stream preservation 
+\[
+\pd{\bm{u}}{t} = \Grad_h \cdot \bm{u} = 0
+\]
+is satisfied if $\bm{u}$ constant.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
+
+This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous}.  
+
+Integrating by parts the DG formulation yields, for any constant $\bm{u}$
+\begin{align*}
+\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},v }_{\hat{D}} + \LRa{J\bm{G}^T\bm{u} - \Pi_N \LRp{J\bm{G}^T\bm{u}}, v \hat{\bm{n}}}_{\d \hat{D}}\\
+&= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\LRp{J\bm{G}\hat{\bm{n}}}^T\bm{u}, v }_{\d \hat{D}}\\
+&= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\bm{n}\cdot \bm{u}, v }_{\d \hat{D}}.  
+\end{align*}
+for any $v\in V_h$.  
+Thus, to ensure that this sums to zero, we modify the geometric factors by seeking $J\bm{G}$ which minimizes the $L^2$ error for a degree $N$ polynomial approximation to the true geometric factors, subject to a weakly divergence-free constraint
+\begin{align*}
+&\min_{\tilde{J\bm{G}}_i \in P^N} \frac{1}{2}\nor{\tilde{J\bm{G}}_i - J\bm{G}_i}_{L^2\LRp{\hat{D}}}^2,\\ 
+{\rm s.t.\ } &\LRa{\bm{n}_i,v}_{\d \hat{D}}-\LRp{\tilde{J\bm{G}}_i,\Grad v}_{\hat{D}} = 0, \qquad \forall v\in P^N.
+\end{align*}
+We note that the constraint matrix is overdetermined, with one linearly dependent constraint corresponding to $v = 1$.  Thus, in order to guarantee a solution, we require that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$ in order to guarantee that the right hand side is consistent.  This is automatically satisfied if the mapping is isoparametric: the cross product formula is exact at quadrature points and the geometric factors are degree $2N-2$ polynomials, which implies that for $v = 1$, $\LRa{\bm{n}_i,v}_{\d \hat{D}}$ is exactly integrated by a surface quadrature of degree $2N$.
+
+This strategy was first introduced in the context of SBP-SAT terms in \cite{fernandez2016simultaneous}.  We approach its implementation slightly differently, and use the fact that the quadratic program can be solved explicitly using the null space method, which is computationally feasible since the null space of the constraint matrix is computed only once on the reference element.  This null space corresponds to a discretely divergence-free basis, which we extract using the SVD.  
+
+The resulting free-stream preserving geometric factors result in separate approximations of the volume and surface geometric factors.  The surface geometric factors are constructed at surface quadrature points, which guarantees that neighboring surface normal terms cancel for watertight meshes.  The volume geometric factors are constructed at quadrature points and projected onto a polynomial basis of degree $N$ with weakly divergence-free constraints involving the surface normals.
+
 
 \section{Limiting}
 
