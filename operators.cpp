@@ -671,9 +671,11 @@ VectorXd JacobiP(VectorXd x, double alpha, double beta, int d)
   for (int i = 1; i <= d - 1; i++)
   {
     double h1 = 2 * i + alpha + beta;
+    // clang-format off
     double anew =
         2 / (h1 + 2) * sqrt((i + 1) * (i + 1 + alpha + beta) * (i + 1 + alpha) *
                             (i + 1 + beta) / (h1 + 1) / (h1 + 3));
+    // clang-format on
     double bnew = -(alpha * alpha - beta * beta) / h1 / (h1 + 2);
     // cout << "anew = " << anew << ", bnew = " << bnew << endl;
     for (int j = 1; j <= Nx; j++)
