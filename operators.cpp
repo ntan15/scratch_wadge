@@ -592,7 +592,6 @@ void build_operators_3D()
   MatrixXd Dt = ref_data.Dt;
   MatrixXd Vq = ref_data.Vq;
 
-  int Nfaces = ref_data.Nfaces;
   VectorXd rfq = ref_data.rfq;
   VectorXd sfq = ref_data.sfq;
   VectorXd tfq = ref_data.tfq;
