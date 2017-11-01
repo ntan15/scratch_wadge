@@ -482,8 +482,8 @@ void build_geofacs_3D()
     WeakDiv << DMr, DMs, DMt;
     Eigen::JacobiSVD<Eigen::MatrixXd> svd1(WeakDiv, Eigen::ComputeFullV);
     VectorXd sigma = svd1.singularValues();
-    double tol = 1e-10;                            // works up to N=9
-    int NpDivFree = (sigma.array() > tol).count(); // dim of div-free space
+    double tol = 1e-10;                                 // works up to N=9
+    int NpDivFree = (int)(sigma.array() > tol).count(); // dim of div-free space
     MatrixXd UDF = svd1.matrixV().rightCols(WeakDiv.cols() - NpDivFree);
 
     // step 2: compute L2 orthogonal complement
@@ -493,7 +493,7 @@ void build_geofacs_3D()
     MatrixXd UD = svd2.matrixU().rightCols(UDF.rows() - UDF.cols());
 
     // step 3: compute basis for quotient space
-    int Np = ref_data.r.rows();
+    int Np = (int)ref_data.r.rows();
     MatrixXd e = MatrixXd::Ones(Np, 1);
     Eigen::JacobiSVD<Eigen::MatrixXd> svd3(M * e, Eigen::ComputeFullU);
     MatrixXd Utest = svd3.matrixU().rightCols(Np - 1);
