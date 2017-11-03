@@ -213,8 +213,8 @@ typedef struct prefs
   char *occa_flags;
   int occa_mode;
 
-  int mesh_N;
-  int mesh_Nq;
+  int mesh_N; // order of the polynomial basis
+  int mesh_M; // order of the polynomials that can be integrated exactly
 
   char *mesh_filename;
   int mesh_sfc_partition;
@@ -266,7 +266,7 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
       asd_lua_expr_string(L, "app.mesh.filename", "mesh.msh");
 
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
-  prefs->mesh_Nq = (int)asd_lua_expr_integer(L, "app.mesh.Nq", 3);
+  prefs->mesh_M = (int)asd_lua_expr_integer(L, "app.mesh.M", 2 * prefs->mesh_N);
 
   prefs->mesh_sfc_partition =
       asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
@@ -315,6 +315,7 @@ static void prefs_print(prefs_t *prefs)
   ASD_ROOT_INFO("");
   ASD_ROOT_INFO("  mesh_filename = \"%s\"", prefs->mesh_filename);
   ASD_ROOT_INFO("  mesh_N        = %d", prefs->mesh_N);
+  ASD_ROOT_INFO("  mesh_M        = %d", prefs->mesh_M);
   ASD_ROOT_INFO("");
   ASD_ROOT_INFO("  output_datadir = %s", prefs->output_datadir);
   ASD_ROOT_INFO("  output_prefix  = %s", prefs->output_prefix);
@@ -2574,11 +2575,11 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   // foo(0);
 #if ELEM_TYPE == 0 // triangle
   app->hops =
-      host_operators_new_2D(app->prefs->mesh_N, app->prefs->mesh_Nq, app->hm->E,
+      host_operators_new_2D(app->prefs->mesh_N, app->prefs->mesh_M, app->hm->E,
                             app->hm->EToE, app->hm->EToF, app->hm->EToO);
 #else
   app->hops =
-      host_operators_new_3D(app->prefs->mesh_N, app->prefs->mesh_Nq, app->hm->E,
+      host_operators_new_3D(app->prefs->mesh_N, app->prefs->mesh_M, app->hm->E,
                             app->hm->EToE, app->hm->EToF, app->hm->EToO);
 #endif
 
