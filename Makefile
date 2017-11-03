@@ -97,17 +97,17 @@ eulertet.o: CPPFLAGS+=-DELEM_TYPE=1
 eulertet.o: euler.c $(DEPS_HEADERS)  | $(TPLS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-operators_c.o: CPPFLAGS+=-Ieigen 
+operators_c.o: CPPFLAGS+=-Ieigen
 operators_c.o: operators_c.cpp operators_c.h | $(TPLS)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 # for building operators using eigen
-operators.o: CPPFLAGS+=-Ieigen 
+operators.o: CPPFLAGS+=-Ieigen
 operators.o: operators.cpp operators.h | $(TPLS)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
-eulertri: asd.o eulertri.o operators.o operators_c.o 
+eulertri: asd.o eulertri.o operators.o operators_c.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-eulertet: asd.o eulertet.o operators.o operators_c.o 
+eulertet: asd.o eulertet.o operators.o operators_c.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
