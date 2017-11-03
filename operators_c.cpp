@@ -5,29 +5,54 @@
 
 using namespace std;
 
-void foo(int arg)
+host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
+                                        uintloc_t *EToE, uint8_t *EToF,
+                                        uint8_t *EToO)
 {
-  Eigen::MatrixXd m(2, 2);
-  m(0, 0) = 3;
-  m(1, 0) = 2.5;
-  m(0, 1) = -1;
-  m(1, 1) = m(1, 0) + m(0, 1);
-  std::cout << m << std::endl;
+  host_operators_t *ops =
+      (host_operators_t *)asd_malloc(sizeof(host_operators_t));
 
-  test_eigen();
+  return ops;
 }
 
-// pass to eigen
-void build_operators_C_2D(int N, int Nq)
+host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
+                                        uintloc_t *EToE, uint8_t *EToF,
+                                        uint8_t *EToO)
 {
-  cout << "running 2D operators" << endl;
-  build_operators_2D(N, Nq);
+  host_operators_t *ops =
+      (host_operators_t *)asd_malloc(sizeof(host_operators_t));
+
+  return ops;
 }
 
-void build_operators_C_3D(int N, int Nq)
+void host_operators_free(host_operators_t *ops)
 {
-  cout << "running 3D operators" << endl;
-  build_ref_ops_3D(N,Nq,Nq);
-  build_operators_3D();
-  build_geofacs_3D();  
+#if 0
+  asd_free_aligned(ops->vgeo);
+  asd_free_aligned(ops->fgeo);
+
+  asd_free_aligned(ops->mapPq);
+
+  asd_free_aligned(ops->Fmask);
+  asd_free_aligned(ops->nrJ);
+  asd_free_aligned(ops->nsJ);
+
+  asd_free_aligned(ops->Drq);
+  asd_free_aligned(ops->Dsq);
+
+  if (ops->dim == 3)
+  {
+    asd_free_aligned(ops->ntJ);
+    asd_free_aligned(ops->Dtq);
+  }
+
+  asd_free_aligned(ops->Vq);
+  asd_free_aligned(ops->Jq);
+  asd_free_aligned(ops->Pq);
+
+  asd_free_aligned(ops->VqLq);
+  asd_free_aligned(ops->VqPq);
+  asd_free_aligned(ops->VfPq);
+  asd_free_aligned(ops->Vfqf);
+#endif
 }

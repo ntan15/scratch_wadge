@@ -2503,6 +2503,7 @@ typedef struct app
   occaStream cmdx;
 
   host_mesh_t *hm;
+  host_operators_t *hops;
 } app_t;
 
 static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
@@ -2570,6 +2571,17 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   host_mesh_write_mfem(app->prefs->rank, app->prefs->output_datadir, "mesh",
                        app->hm);
 
+  // foo(0);
+#if ELEM_TYPE == 0 // triangle
+  app->hops =
+      host_operators_new_2D(app->prefs->mesh_N, app->prefs->mesh_Nq, app->hm->E,
+                            app->hm->EToE, app->hm->EToF, app->hm->EToO);
+#else
+  app->hops =
+      host_operators_new_3D(app->prefs->mesh_N, app->prefs->mesh_Nq, app->hm->E,
+                            app->hm->EToE, app->hm->EToF, app->hm->EToO);
+#endif
+
   return app;
 }
 
@@ -2591,6 +2603,9 @@ static void app_free(app_t *app)
 
   host_mesh_free(app->hm);
   asd_free(app->hm);
+
+  host_operators_free(app->hops);
+  asd_free(app->hops);
 }
 // }}}
 
@@ -2672,12 +2687,6 @@ int main(int argc, char *argv[])
   //
   // run
   //
-  // foo(0);
-#if ELEM_TYPE == 0 // triangle
-  build_operators_C_2D(app->prefs->mesh_N, app->prefs->mesh_Nq);
-#else
-  build_operators_C_3D(app->prefs->mesh_N, app->prefs->mesh_Nq);
-#endif
 
   //
   // cleanup
