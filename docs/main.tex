@@ -626,27 +626,57 @@ The resulting free-stream preserving geometric factors result in separate approx
 
 \section{Limiting}
 
-Ignoring high order terms in the Taylor expansion, we have
-\[
-u\LRp{\Pi_N v} - u = \pd{u}{v} \LRp{\Pi_Nv - v}.
-\]
-We want to limit $u$ with a compression towards the mean $u = \bar{u} + \theta(u-\bar{u})$ such that $\LRb{u\LRp{\Pi_N v}} \leq C\LRb{u}$.  
+The evaluation of $\bm{u}_v = \bm{u}\LRp{\Pi_N v}$ can increase entropy pointwise, such that $S(\bm{u}_v) \geq S(\bm{u})$.  This can manifest as spikes in $\bm{u}_v$.  We wish to mollify the effect of such spikes.  
 
-One option: ensure $\LRb{u\LRp{\Pi_N v} - u(\bar{v})} \approx \LRb{u - u(\bar{v})}$ based on Taylor series. 
+The first approach is to limit the conservative variable $\bm{u}$
 \[
-u\LRp{\Pi_N v} - u(\bar{v})
+\tilde{\bm{u}} = \bar{\bm{u}} + \Theta (\bm{u} - \bar{\bm{u}})
 \]
-Limit $\tilde{u} = \bar{u} + \theta(u-\bar{u})$ such that 
+where $\Theta$ is some diagonal matrix with entries in $[0,1]$.  The choice of $\Theta$ is adaptively guided by the pointwise change in entropy between $S(\bm{u}_v)$ and $S(\bm{u})$.  We can use the fact that $S(\bm{u})$ is convex, such that
 \[
-\min \Pi_N v \geq \min v, \qquad \max \Pi_N v \leq \max v.
+S(\bm{u}) - S(\bm{u}_v) \geq \pd{S}{\bm{u}}(\bm{u}_v)^T (\bm{u}-\bm{u}_v) = \Pi_N\bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v).  
 \]
-Other options
+We can examine the components of the RHS: if the mathematical entropy increases (i.e. $S(\bm{u}_v) > S(\bm{u})$, then some components will be negative, indicating what $\Theta$ should be.  \note{Todo: figure out proper scaling the diagonal elements of $\Theta$.}
+
+Another approach is to change the time-step size based on the difference between $\bm{u}$ and $\bm{u}_v$.  This would be similar to local time-stepping (high order interpolation of the numerical fluxes and multiple evaluations of )
+
+
 \begin{itemize}
 \item Adaptively choose time-step size?
 \item Expensive option: bisection or Newton algorithm for finding theta.  
 \end{itemize}
 
 
+\section{Implementation}
+
+The semi-discrete evolution equation is as follows
+\[
+\pd{\bm{u}}{t} = \LRs{\begin{array}{cc}
+\bm{P}_q & \bm{L}_q
+\end{array}}
+\LRp{
+\LRs{
+\begin{array}{cc}
+\bm{D}_q & \bm{V}_q\bm{L}_q\\
+\bm{V}_f\bm{P}_q & \bm{I}
+\end{array} 
+}\circ 
+\LRs{
+\begin{array}{cc}
+\bm{f}_{S}(\bm{u},\bm{u}_f) & \bm{f}_{S}(\bm{u},\bm{u}_f)\\
+ \bm{f}_{S}(\bm{u},\bm{u}_f) &  \bm{f}_S(\bm{u}_f,\bm{u}_f)
+\end{array} 
+}\bm{1}}.
+\]
+where $\bm{u}, \bm{u}_f$ are evaluations at volume and surface quadrature points.  
+
+The method is outlined as follows: we store the conservation variables $\bm{u}$ at quadrature points, and compute projected entropy variables $\bm{v}_u = \Pi_N\LRp{\bm{v}(\bm{u})}$ 
+\begin{enumerate}
+\item Apply volume flux differencing ($\bm{D}_q$ and $\bm{V}_q\bm{L}_q$) and projection ($\bm{V}_q\bm{P}_q$) (volume kernel)
+\item Apply surface flux differencing ($\bm{V}_f\bm{P}_q$) and lifting ($\bm{V}_q\bm{L}_q$) (volume kernel)
+\item Apply WADG (scale by $1/J$ and apply $\bm{V}_q\bm{P}_q$ and update $\bm{u}$ at volume quad points.  Compute projected entropy variables $\bm{v}_u = \Pi_N\LRp{\bm{v}(\bm{u})}$, interpolate to volume quad points, and compute conservative variable volume values (update)
+\item Interpolate entropy variables at surface quadrature points and write out conservative variable surface values (face).  
+\end{enumerate}
 
 \bibliographystyle{unsrt}
 \bibliography{dg}
