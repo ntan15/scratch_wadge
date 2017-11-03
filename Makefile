@@ -90,15 +90,15 @@ asd.o: asd.c asd.h | $(TPLS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 eulertri.o: CPPFLAGS+=-DELEM_TYPE=0
-eulertri.o: euler.c $(DEPS_HEADERS)  | $(TPLS)
+eulertri.o: euler.c operators_c.h $(DEPS_HEADERS)  | $(TPLS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 eulertet.o: CPPFLAGS+=-DELEM_TYPE=1
-eulertet.o: euler.c $(DEPS_HEADERS)  | $(TPLS)
+eulertet.o: euler.c operators_c.h $(DEPS_HEADERS)  | $(TPLS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 operators_c.o: CPPFLAGS+=-Ieigen
-operators_c.o: operators_c.cpp operators_c.h | $(TPLS)
+operators_c.o: operators_c.cpp operators_c.h operators.h | $(TPLS)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 # for building operators using eigen
