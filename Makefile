@@ -39,7 +39,7 @@ else
 endif
 
 # asd flags
-DEPS_HEADERS += asd.h
+DEPS_HEADERS += asd.h types.h
 DEPS_SOURCE  += asd.c
 CPPFLAGS +=-DASD_USE_LUA
 
@@ -98,7 +98,7 @@ eulertet.o: euler.c operators_c.h $(DEPS_HEADERS)  | $(TPLS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 operators_c.o: CPPFLAGS+=-Ieigen
-operators_c.o: operators_c.cpp operators_c.h operators.h | $(TPLS)
+operators_c.o: operators_c.cpp operators_c.h operators.h $(DEPS_HEADERS) | $(TPLS)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 # for building operators using eigen
