@@ -482,8 +482,8 @@ void build_geofacs_3D()
     WeakDiv << DMr, DMs, DMt;
     Eigen::JacobiSVD<Eigen::MatrixXd> svd1(WeakDiv, Eigen::ComputeFullV);
     VectorXd sigma = svd1.singularValues();
-    double tol = 1e-10;                            // works up to N=9
-    int NpDivFree = (sigma.array() > tol).count(); // dim of div-free space
+    double tol = 1e-10;                                 // works up to N=9
+    int NpDivFree = (int)(sigma.array() > tol).count(); // dim of div-free space
     MatrixXd UDF = svd1.matrixV().rightCols(WeakDiv.cols() - NpDivFree);
 
     // step 2: compute L2 orthogonal complement
@@ -493,7 +493,7 @@ void build_geofacs_3D()
     MatrixXd UD = svd2.matrixU().rightCols(UDF.rows() - UDF.cols());
 
     // step 3: compute basis for quotient space
-    int Np = ref_data.r.rows();
+    int Np = (int)ref_data.r.rows();
     MatrixXd e = MatrixXd::Ones(Np, 1);
     Eigen::JacobiSVD<Eigen::MatrixXd> svd3(M * e, Eigen::ComputeFullU);
     MatrixXd Utest = svd3.matrixU().rightCols(Np - 1);
@@ -592,7 +592,6 @@ void build_operators_3D()
   MatrixXd Dt = ref_data.Dt;
   MatrixXd Vq = ref_data.Vq;
 
-  int Nfaces = ref_data.Nfaces;
   VectorXd rfq = ref_data.rfq;
   VectorXd sfq = ref_data.sfq;
   VectorXd tfq = ref_data.tfq;
@@ -671,9 +670,11 @@ VectorXd JacobiP(VectorXd x, double alpha, double beta, int d)
   for (int i = 1; i <= d - 1; i++)
   {
     double h1 = 2 * i + alpha + beta;
+    // clang-format off
     double anew =
         2 / (h1 + 2) * sqrt((i + 1) * (i + 1 + alpha + beta) * (i + 1 + alpha) *
                             (i + 1 + beta) / (h1 + 1) / (h1 + 3));
+    // clang-format on
     double bnew = -(alpha * alpha - beta * beta) / h1 / (h1 + 2);
     // cout << "anew = " << anew << ", bnew = " << bnew << endl;
     for (int j = 1; j <= Nx; j++)

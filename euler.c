@@ -413,7 +413,7 @@ const uint8_t FToFV[NFACES * NFACEVERTS] = {
     0, 1, 2, // face 0
     0, 1, 3, // face 1
     1, 2, 3, // face 2
-    0, 3, 2  // face 3
+    0, 2, 3  // face 3
 };
 
 // Orientations for tetrahedron faces:
@@ -1677,6 +1677,14 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
   {
     for (uint8_t f = 0; f < NFACES; ++f)
       printf(" %4ju", (uintmax_t)nm->EToF[NFACES * e + f]);
+    printf("\n");
+  }
+  printf("\n");
+  printf("EToO\n");
+  for (uintloc_t e = 0; e < nm->E; ++e)
+  {
+    for (uint8_t f = 0; f < NFACES; ++f)
+      printf(" %4ju", (uintmax_t)nm->EToO[NFACES * e + f]);
     printf("\n");
   }
   printf("\n");
