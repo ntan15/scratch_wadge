@@ -7,6 +7,7 @@
 
 #ifdef __cplusplus
 #define restrict
+extern "C" {
 #endif
 
 // {{{ compiler helper macros
@@ -995,4 +996,9 @@ void asd_jacobi_p_mass(int N, long double *V, long double *M);
 void asd_jacobi_p_h_project(int N, long double h, long double *V,
                             long double *I, long double *M, long double *P);
 // }}}
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
 #endif
