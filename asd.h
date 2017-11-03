@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+#define restrict
+#endif
+
 // {{{ compiler helper macros
 // Define gcc version macro  __GNUC_PREREQ if not defined
 #if defined __GNUC__ && !defined __GNUC_PREREQ
