@@ -4,7 +4,7 @@ CXX = mpicxx
 F77 = mpif77
 FC = mpif90
 
-CFLAGS = --std=gnu11 -g
+CFLAGS = --std=c11 -g
 CXXFLAGS = -std=c++11 -g
 
 # below are flags that work with clang and gcc
