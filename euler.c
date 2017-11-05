@@ -56,18 +56,18 @@ static uintglo_t strtouglo_or_abort(const char *str)
   return u;
 }
 
-static dfloat_t strtodfloat_or_abort(const char *str)
+static double strtodouble_or_abort(const char *str)
 {
   char *end;
   errno = 0;
-  dfloat_t x = DFLOAT_STRTOD(str, &end);
+  double x = strtod(str, &end);
 
   if (end == str)
     ASD_ABORT("%s: not a floating point number", str);
   else if ('\0' != *end)
     ASD_ABORT("%s: extra characters at end of input: %s", str, end);
   else if (ERANGE == errno)
-    ASD_ABORT("%s out of range of type dfloat_t", str);
+    ASD_ABORT("%s out of range of type double", str);
 
   return x;
 }
@@ -425,7 +425,7 @@ typedef struct
   uintloc_t EG; // number of ghost elements on this rank
 
   uintglo_t *EToVG; // element to global vertex numbers
-  dfloat_t *EToVX;  // element to vertex coordinates
+  double *EToVX;    // element to vertex coordinates
 
   uintloc_t *EToE; // element to neighboring element
   uint8_t *EToF;   // element to neighboring element face
@@ -470,7 +470,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   asd_dictionary_init(&periodic_vertices);
 
   uintglo_t Nvglo = 0, Nperiodic = 0;
-  dfloat_t *VXglo = NULL;
+  double *VXglo = NULL;
   uintglo_t Eall = 0, Eglo = 0, e = 0;
   uintglo_t *EToVglo = NULL;
 
@@ -500,7 +500,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
         asd_free(line);
         line = asd_getline(fid);
         Nvglo = strtouglo_or_abort(line);
-        VXglo = asd_malloc_aligned(sizeof(dfloat_t) * VDIM * Nvglo);
+        VXglo = asd_malloc_aligned(sizeof(double) * VDIM * Nvglo);
       }
       else if (strstr(line, "$Elements"))
       {
@@ -532,7 +532,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
       for (int d = 0; d < VDIM; ++d)
       {
         word = strtok(NULL, " ");
-        dfloat_t x = strtodfloat_or_abort(word);
+        double x = strtodouble_or_abort(word);
         VXglo[VDIM * (v - 1) + d] = x;
       }
     }
@@ -610,8 +610,8 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
   ASD_TRACE("Dumping global mesh");
   ASD_TRACE("  Num Vertices %ju", (intmax_t)Nvglo);
   for (uintglo_t v = 0; v < Nvglo; ++v)
-    ASD_TRACE("%5" UINTGLO_PRI " %" DFLOAT_FMTe " %" DFLOAT_FMTe, v,
-              VXglo[VDIM * v + 0], VXglo[VDIM * v + 1]);
+    ASD_TRACE("%5" UINTGLO_PRI " %24.16e %24.16e", v, VXglo[VDIM * v + 0],
+              VXglo[VDIM * v + 1]);
 
   ASD_TRACE("  Num Elements %ju", (intmax_t)Eglo);
   for (uintglo_t e = 0; e < Eglo; ++e)
@@ -633,7 +633,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
 
   mesh->E = (uintloc_t)E;
   mesh->EToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * E);
-  mesh->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * E);
+  mesh->EToVX = asd_malloc_aligned(sizeof(double) * NVERTS * VDIM * E);
 
   for (e = ethis; e < enext; ++e)
   {
@@ -1499,22 +1499,22 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
 
   // {{{ Fill EToVG and EToVX
   {
-    nm->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * VDIM * NVERTS * nm->E);
+    nm->EToVX = asd_malloc_aligned(sizeof(double) * VDIM * NVERTS * nm->E);
     nm->EToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * nm->E);
 
     for (int r = 0; r < size; ++r)
     {
       MPI_Irecv(nm->EToVX + VDIM * NVERTS * (nm->ER + nm->recv_starts[r]),
                 VDIM * NVERTS * (nm->recv_starts[r + 1] - nm->recv_starts[r]),
-                DFLOAT_MPI, r, 333, comm, recv_requests + r);
+                MPI_DOUBLE, r, 333, comm, recv_requests + r);
 
       MPI_Irecv(nm->EToVG + NVERTS * (nm->ER + nm->recv_starts[r]),
                 NVERTS * (nm->recv_starts[r + 1] - nm->recv_starts[r]),
                 UINTGLO_MPI, r, 333, comm, recv_requests + size + r);
     }
 
-    dfloat_t *sendEToVX =
-        asd_malloc_aligned(sizeof(dfloat_t) * VDIM * NVERTS * nm->ES);
+    double *sendEToVX =
+        asd_malloc_aligned(sizeof(double) * VDIM * NVERTS * nm->ES);
     uintglo_t *sendEToVG =
         asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * nm->ES);
 
@@ -1535,14 +1535,14 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
     {
       MPI_Isend(sendEToVX + VDIM * NVERTS * nm->send_starts[r],
                 VDIM * NVERTS * (nm->send_starts[r + 1] - nm->send_starts[r]),
-                DFLOAT_MPI, r, 333, comm, send_requests + r);
+                MPI_DOUBLE, r, 333, comm, send_requests + r);
 
       MPI_Isend(sendEToVG + NVERTS * nm->send_starts[r],
                 NVERTS * (nm->send_starts[r + 1] - nm->send_starts[r]),
                 UINTGLO_MPI, r, 333, comm, send_requests + size + r);
     }
 
-    memcpy(nm->EToVX, om->EToVX, sizeof(dfloat_t) * VDIM * NVERTS * nm->ER);
+    memcpy(nm->EToVX, om->EToVX, sizeof(double) * VDIM * NVERTS * nm->ER);
     memcpy(nm->EToVG, om->EToVG, sizeof(uintglo_t) * NVERTS * nm->ER);
 
     MPI_Waitall(2 * size, recv_requests, MPI_STATUSES_IGNORE);
@@ -1730,7 +1730,7 @@ static void host_mesh_write_mfem(const int rank, const char *directory,
     {
       fprintf(file, "        ");
       for (int d = 0; d < VDIM; ++d)
-        fprintf(file, " %" DFLOAT_FMTe,
+        fprintf(file, " %24.16e",
                 mesh->EToVX[NVERTS * VDIM * e + VDIM * n + d]);
       fprintf(file, "\n");
     }
@@ -1921,8 +1921,8 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
   MPI_Request *send_requests = asd_malloc_aligned(sizeof(MPI_Request) * size);
 
   // {{{ compute centroid of each element
-  dfloat_t *EToC = asd_malloc_aligned(sizeof(dfloat_t) * VDIM * om->E);
-  dfloat_t cmaxloc[VDIM] = {-DFLOAT_MAX}, cminloc[VDIM] = {DFLOAT_MAX};
+  double *EToC = asd_malloc_aligned(sizeof(double) * VDIM * om->E);
+  double cmaxloc[VDIM] = {-DBL_MAX}, cminloc[VDIM] = {DBL_MAX};
   for (uintloc_t e = 0; e < om->E; ++e)
   {
     for (int d = 0; d < VDIM; ++d)
@@ -1949,28 +1949,28 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
   {
     printf("%20" UINTLOC_PRI, e);
     for (int d = 0; d < VDIM; ++d)
-      printf(" %" DFLOAT_FMTe, EToC[e * VDIM + d]);
+      printf(" %24.16e", EToC[e * VDIM + d]);
     printf("\n");
   }
 #endif
 
   // {{{ compute Hilbert integer centroids
-  dfloat_t cmaxglo[VDIM] = {-DFLOAT_MAX}, cminglo[VDIM] = {DFLOAT_MAX};
+  double cmaxglo[VDIM] = {-DBL_MAX}, cminglo[VDIM] = {DBL_MAX};
   // These calls could be joined
   ASD_MPI_CHECK(
-      MPI_Allreduce(cmaxloc, cmaxglo, VDIM, DFLOAT_MPI, MPI_MAX, comm));
+      MPI_Allreduce(cmaxloc, cmaxglo, VDIM, MPI_DOUBLE, MPI_MAX, comm));
   ASD_MPI_CHECK(
-      MPI_Allreduce(cminloc, cminglo, VDIM, DFLOAT_MPI, MPI_MIN, comm));
+      MPI_Allreduce(cminloc, cminglo, VDIM, MPI_DOUBLE, MPI_MIN, comm));
 
 #if 0
   printf("min:\n");
   for (int d = 0; d < VDIM; ++d)
-    printf(" %" DFLOAT_FMTe, cminglo[d]);
+    printf(" %24.16e", cminglo[d]);
   printf("\n");
 
   printf("max:\n");
   for (int d = 0; d < VDIM; ++d)
-    printf(" %" DFLOAT_FMTe, cmaxglo[d]);
+    printf(" %24.16e", cmaxglo[d]);
   printf("\n");
 #endif
 
@@ -2373,12 +2373,11 @@ static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
   host_mesh_t *nm = asd_malloc(sizeof(host_mesh_t));
 
   uintglo_t *bufEToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * om->E);
-  dfloat_t *bufEToVX =
-      asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * om->E);
+  double *bufEToVX = asd_malloc_aligned(sizeof(double) * NVERTS * VDIM * om->E);
 
   nm->E = part_E[rank];
   nm->EToVG = asd_malloc_aligned(sizeof(uintglo_t) * NVERTS * nm->E);
-  nm->EToVX = asd_malloc_aligned(sizeof(dfloat_t) * NVERTS * VDIM * nm->E);
+  nm->EToVX = asd_malloc_aligned(sizeof(double) * NVERTS * VDIM * nm->E);
 
   ASD_VERBOSE("Partition mesh and keep %ju elements.", (intmax_t)nm->E);
 
@@ -2435,7 +2434,7 @@ static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
   for (int r = 0; r < size; ++r)
     MPI_Irecv(nm->EToVX + NVERTS * VDIM * part_recv_starts[r],
               NVERTS * VDIM * (part_recv_starts[r + 1] - part_recv_starts[r]),
-              DFLOAT_MPI, r, 333, comm, recv_requests + size + r);
+              MPI_DOUBLE, r, 333, comm, recv_requests + size + r);
 
   for (int r = 0; r < size; ++r)
     MPI_Isend(bufEToVG + NVERTS * part_send_starts[r],
@@ -2445,7 +2444,7 @@ static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
   for (int r = 0; r < size; ++r)
     MPI_Isend(bufEToVX + NVERTS * VDIM * part_send_starts[r],
               NVERTS * VDIM * (part_send_starts[r + 1] - part_send_starts[r]),
-              DFLOAT_MPI, r, 333, comm, send_requests + size + r);
+              MPI_DOUBLE, r, 333, comm, send_requests + size + r);
 
   MPI_Waitall(2 * size, recv_requests, MPI_STATUSES_IGNORE);
   MPI_Waitall(2 * size, send_requests, MPI_STATUSES_IGNORE);
