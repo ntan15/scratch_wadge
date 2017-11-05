@@ -18,10 +18,18 @@ struct ref_elem_data
   MatrixXd Vq, Pq, Vfqf, Vfq, Lq;
 };
 
+struct geo_elem_data
+{
+  VectorXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ, nxJ, nyJ, nzJ, J, sJ;
+};
+
 ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq);
+geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
+                                const Ref<MatrixXd> EToVX);
 
 ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq);
-void build_geofacs_3D(ref_elem_data *ref_data);
+geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
+                                const Ref<MatrixXd> EToVX);
 
 // 1D
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);

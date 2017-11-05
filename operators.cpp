@@ -324,13 +324,100 @@ ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq)
   return ref_data;
 }
 
-void build_geofacs_3D(ref_elem_data *ref_data)
+geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
+                                const Ref<MatrixXd> EToVX)
 {
-  printf("Building geofacs here\n");
+  VectorXd r = ref_data->r;
+  VectorXd s = ref_data->s;
 
+#if 0
+  int N = ref_data->N;
+  double a = .05;
+  VectorXd dr = Eigen::pow(r.array() + s.array(), N);
+  VectorXd ds = Eigen::pow(s.array() + r.array(), N);
+  VectorXd x = r - a / 1.0 * dr;
+  VectorXd y = s + a / 2.0 * ds;
+#else
+  // TODO double check the order here
+  MatrixXd vxa = EToVX.row(0);
+  MatrixXd vya = EToVX.row(1);
+
+  MatrixXd vxb = EToVX.row(2);
+  MatrixXd vyb = EToVX.row(3);
+
+  MatrixXd vxc = EToVX.row(4);
+  MatrixXd vyc = EToVX.row(5);
+
+  VectorXd one = VectorXd::Ones(r.size());
+  MatrixXd x = 0.5 * (-(r + s) * vxa + (one + r) * vxb + (one + s) * vxc);
+  MatrixXd y = 0.5 * (-(r + s) * vya + (one + r) * vyb + (one + s) * vyc);
+#endif
+
+  // vol geofacs
+  MatrixXd Drq = ref_data->Vq * ref_data->Dr;
+  MatrixXd Dsq = ref_data->Vq * ref_data->Ds;
+  MatrixXd xr, yr, xs, ys;
+  xr = Drq * x;
+  yr = Drq * y;
+  xs = Dsq * x;
+  ys = Dsq * y;
+
+  MatrixXd rxJ = ys.array();
+  MatrixXd sxJ = -yr.array();
+  MatrixXd ryJ = -xs.array();
+  MatrixXd syJ = xr.array();
+  MatrixXd J = xr.array() * ys.array() - yr.array() * xs.array();
+
+  // surface geofacs
+  MatrixXd Drfq = ref_data->Vfq * ref_data->Dr;
+  MatrixXd Dsfq = ref_data->Vfq * ref_data->Ds;
+
+  xr = Drfq * x;
+  yr = Drfq * y;
+  xs = Dsfq * x;
+  ys = Dsfq * y;
+
+  MatrixXd rxJf = ys.array();
+  MatrixXd sxJf = -yr.array();
+  MatrixXd ryJf = -xs.array();
+  MatrixXd syJf = xr.array();
+
+  MatrixXd Jf = xr.array() * ys.array() - yr.array() * xs.array();
+
+  MatrixXd nrJ = ref_data->nrJ.replicate(1, EToVX.cols());
+  MatrixXd nsJ = ref_data->nsJ.replicate(1, EToVX.cols());
+
+  MatrixXd nxJ = rxJf.array() * nrJ.array() + sxJf.array() * nsJ.array();
+  MatrixXd nyJ = ryJf.array() * nrJ.array() + syJf.array() * nsJ.array();
+
+  MatrixXd nx = nxJ.array() / Jf.array();
+  MatrixXd ny = nyJ.array() / Jf.array();
+
+  MatrixXd sJ = (nx.array().pow(2) + ny.array().pow(2)).array().sqrt();
+  nx = nx.array() / sJ.array();
+  ny = ny.array() / sJ.array();
+  sJ = sJ.array() * Jf.array();
+
+  geo_elem_data *geo = new geo_elem_data;
+  geo->rxJ = Map<VectorXd>(rxJ.data(), rxJ.size());
+  geo->sxJ = Map<VectorXd>(sxJ.data(), sxJ.size());
+  geo->ryJ = Map<VectorXd>(ryJ.data(), ryJ.size());
+  geo->syJ = Map<VectorXd>(syJ.data(), syJ.size());
+  geo->nxJ = Map<VectorXd>(nxJ.data(), nxJ.size());
+  geo->nyJ = Map<VectorXd>(nyJ.data(), nyJ.size());
+  geo->J = Map<VectorXd>(J.data(), J.size());
+  geo->sJ = Map<VectorXd>(sJ.data(), sJ.size());
+  return geo;
+}
+
+geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
+                                const Ref<MatrixXd> EToVX)
+{
   VectorXd r = ref_data->r;
   VectorXd s = ref_data->s;
   VectorXd t = ref_data->t;
+
+#if 0
   int N = ref_data->N;
   double a = .05;
   VectorXd dr = Eigen::pow(r.array() + s.array(), N);
@@ -339,12 +426,40 @@ void build_geofacs_3D(ref_elem_data *ref_data)
   VectorXd x = r - a / 1.0 * dr;
   VectorXd y = s + a / 2.0 * ds;
   VectorXd z = t + a / 3.0 * dt;
+#else
+
+  // TODO double check the order here
+  MatrixXd vxa = EToVX.row(0);
+  MatrixXd vya = EToVX.row(1);
+  MatrixXd vza = EToVX.row(2);
+
+  MatrixXd vxb = EToVX.row(3);
+  MatrixXd vyb = EToVX.row(4);
+  MatrixXd vzb = EToVX.row(5);
+
+  MatrixXd vxc = EToVX.row(6);
+  MatrixXd vyc = EToVX.row(7);
+  MatrixXd vzc = EToVX.row(8);
+
+  MatrixXd vxd = EToVX.row(9);
+  MatrixXd vyd = EToVX.row(10);
+  MatrixXd vzd = EToVX.row(11);
+
+  VectorXd one = VectorXd::Ones(r.size());
+  MatrixXd x = 0.5 * (-(one + r + s + t) * vxa + (one + r) * vxb +
+                      (one + s) * vxc + (one + t) * vxd);
+  MatrixXd y = 0.5 * (-(one + r + s + t) * vya + (one + r) * vyb +
+                      (one + s) * vyc + (one + t) * vyd);
+  MatrixXd z = 0.5 * (-(one + r + s + t) * vza + (one + r) * vzb +
+                      (one + s) * vzc + (one + t) * vzd);
+
+#endif
 
   // vol geofacs
   MatrixXd Drq = ref_data->Vq * ref_data->Dr;
   MatrixXd Dsq = ref_data->Vq * ref_data->Ds;
   MatrixXd Dtq = ref_data->Vq * ref_data->Dt;
-  VectorXd xr, yr, zr, xs, ys, zs, xt, yt, zt;
+  MatrixXd xr, yr, zr, xs, ys, zs, xt, yt, zt;
   xr = Drq * x;
   yr = Drq * y;
   zr = Drq * z;
@@ -355,19 +470,19 @@ void build_geofacs_3D(ref_elem_data *ref_data)
   yt = Dtq * y;
   zt = Dtq * z;
 
-  VectorXd rxJ = ys.array() * zt.array() - zs.array() * yt.array();
-  VectorXd sxJ = yt.array() * zr.array() - zt.array() * yr.array();
-  VectorXd txJ = yr.array() * zs.array() - zr.array() * ys.array();
+  MatrixXd rxJ = ys.array() * zt.array() - zs.array() * yt.array();
+  MatrixXd sxJ = yt.array() * zr.array() - zt.array() * yr.array();
+  MatrixXd txJ = yr.array() * zs.array() - zr.array() * ys.array();
 
-  VectorXd ryJ = xt.array() * zs.array() - xs.array() * zt.array();
-  VectorXd syJ = xr.array() * zt.array() - xt.array() * zr.array();
-  VectorXd tyJ = xs.array() * zr.array() - zs.array() * xr.array();
+  MatrixXd ryJ = xt.array() * zs.array() - xs.array() * zt.array();
+  MatrixXd syJ = xr.array() * zt.array() - xt.array() * zr.array();
+  MatrixXd tyJ = xs.array() * zr.array() - zs.array() * xr.array();
 
-  VectorXd rzJ = xs.array() * yt.array() - xt.array() * ys.array();
-  VectorXd szJ = xt.array() * yr.array() - xr.array() * yt.array();
-  VectorXd tzJ = xr.array() * ys.array() - xs.array() * yr.array();
+  MatrixXd rzJ = xs.array() * yt.array() - xt.array() * ys.array();
+  MatrixXd szJ = xt.array() * yr.array() - xr.array() * yt.array();
+  MatrixXd tzJ = xr.array() * ys.array() - xs.array() * yr.array();
 
-  VectorXd Jq =
+  MatrixXd J =
       xr.array() * (ys.array() * zt.array() - zs.array() * yt.array()) -
       yr.array() * (xs.array() * zt.array() - zs.array() * xt.array()) +
       zr.array() * (xs.array() * yt.array() - ys.array() * xt.array());
@@ -387,38 +502,38 @@ void build_geofacs_3D(ref_elem_data *ref_data)
   yt = Dtfq * y;
   zt = Dtfq * z;
 
-  VectorXd rxJf = ys.array() * zt.array() - zs.array() * yt.array();
-  VectorXd sxJf = yt.array() * zr.array() - zt.array() * yr.array();
-  VectorXd txJf = yr.array() * zs.array() - zr.array() * ys.array();
+  MatrixXd rxJf = ys.array() * zt.array() - zs.array() * yt.array();
+  MatrixXd sxJf = yt.array() * zr.array() - zt.array() * yr.array();
+  MatrixXd txJf = yr.array() * zs.array() - zr.array() * ys.array();
 
-  VectorXd ryJf = xt.array() * zs.array() - xs.array() * zt.array();
-  VectorXd syJf = xr.array() * zt.array() - xt.array() * zr.array();
-  VectorXd tyJf = xs.array() * zr.array() - zs.array() * xr.array();
+  MatrixXd ryJf = xt.array() * zs.array() - xs.array() * zt.array();
+  MatrixXd syJf = xr.array() * zt.array() - xt.array() * zr.array();
+  MatrixXd tyJf = xs.array() * zr.array() - zs.array() * xr.array();
 
-  VectorXd rzJf = xs.array() * yt.array() - xt.array() * ys.array();
-  VectorXd szJf = xt.array() * yr.array() - xr.array() * yt.array();
-  VectorXd tzJf = xr.array() * ys.array() - xs.array() * yr.array();
+  MatrixXd rzJf = xs.array() * yt.array() - xt.array() * ys.array();
+  MatrixXd szJf = xt.array() * yr.array() - xr.array() * yt.array();
+  MatrixXd tzJf = xr.array() * ys.array() - xs.array() * yr.array();
 
-  VectorXd Jf =
+  MatrixXd Jf =
       xr.array() * (ys.array() * zt.array() - zs.array() * yt.array()) -
       yr.array() * (xs.array() * zt.array() - zs.array() * xt.array()) +
       zr.array() * (xs.array() * yt.array() - ys.array() * xt.array());
 
-  VectorXd nrJ = ref_data->nrJ;
-  VectorXd nsJ = ref_data->nsJ;
-  VectorXd ntJ = ref_data->ntJ;
+  MatrixXd nrJ = ref_data->nrJ.replicate(1, EToVX.cols());
+  MatrixXd nsJ = ref_data->nsJ.replicate(1, EToVX.cols());
+  MatrixXd ntJ = ref_data->ntJ.replicate(1, EToVX.cols());
 
-  VectorXd nxJ = rxJf.array() * nrJ.array() + sxJf.array() * nsJ.array() +
+  MatrixXd nxJ = rxJf.array() * nrJ.array() + sxJf.array() * nsJ.array() +
                  txJf.array() * ntJ.array();
-  VectorXd nyJ = ryJf.array() * nrJ.array() + syJf.array() * nsJ.array() +
+  MatrixXd nyJ = ryJf.array() * nrJ.array() + syJf.array() * nsJ.array() +
                  tyJf.array() * ntJ.array();
-  VectorXd nzJ = rzJf.array() * nrJ.array() + szJf.array() * nsJ.array() +
+  MatrixXd nzJ = rzJf.array() * nrJ.array() + szJf.array() * nsJ.array() +
                  tzJf.array() * ntJ.array();
 
-  VectorXd nx = nxJ.array() / Jf.array();
-  VectorXd ny = nyJ.array() / Jf.array();
-  VectorXd nz = nzJ.array() / Jf.array();
-  VectorXd sJ = (nx.array().pow(2) + ny.array().pow(2) + nz.array().pow(2))
+  MatrixXd nx = nxJ.array() / Jf.array();
+  MatrixXd ny = nyJ.array() / Jf.array();
+  MatrixXd nz = nzJ.array() / Jf.array();
+  MatrixXd sJ = (nx.array().pow(2) + ny.array().pow(2) + nz.array().pow(2))
                     .array()
                     .sqrt();
   nx = nx.array() / sJ.array();
@@ -441,7 +556,7 @@ void build_geofacs_3D(ref_elem_data *ref_data)
   yt = Dt * y;
   zt = Dt * z;
 
-  VectorXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ;
+  MatrixXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ;
   rxJ = Dt * (ys.array() * z.array()).matrix() -
         Ds * (yt.array() * z.array()).matrix();
   sxJ = Dr * (yt.array() * z.array()).matrix() -
@@ -535,7 +650,8 @@ void build_geofacs_3D(ref_elem_data *ref_data)
     szJ = rstz.middleRows(Np, Np);
     tzJ = rstz.bottomRows(Np);
 
-    cout << "dimensions of rxJ = " << rxJ.rows() << "," << rxJ.cols() << endl;
+    // cout << "dimensions of rxJ = " << rxJ.rows() << "," << rxJ.cols() <<
+    // endl;
 
     // interp to quadrature after using them to define surface geofacs
     rxJ = Vq * rxJ;
@@ -547,22 +663,25 @@ void build_geofacs_3D(ref_elem_data *ref_data)
     rzJ = Vq * rzJ;
     szJ = Vq * szJ;
     tzJ = Vq * tzJ;
-
-    cout << "rxJ = " << endl << rxJ << endl;
-    cout << "sxJ = " << endl << sxJ << endl;
-    cout << "txJ = " << endl << txJ << endl;
-    /*
-    cout << "ryJ = " << endl << ryJ << endl;
-    cout << "syJ = " << endl << syJ << endl;
-    cout << "tyJ = " << endl << tyJ << endl;
-    cout << "rzJ = " << endl << rzJ << endl;
-    cout << "szJ = " << endl << szJ << endl;
-    cout << "tzJ = " << endl << tzJ << endl;
-    */
   }
 #endif
 
-  // todo: output to c arrays
+  geo_elem_data *geo = new geo_elem_data;
+  geo->rxJ = Map<VectorXd>(rxJ.data(), rxJ.size());
+  geo->sxJ = Map<VectorXd>(sxJ.data(), sxJ.size());
+  geo->txJ = Map<VectorXd>(txJ.data(), txJ.size());
+  geo->ryJ = Map<VectorXd>(ryJ.data(), ryJ.size());
+  geo->syJ = Map<VectorXd>(syJ.data(), syJ.size());
+  geo->tyJ = Map<VectorXd>(tyJ.data(), tyJ.size());
+  geo->rzJ = Map<VectorXd>(rzJ.data(), rzJ.size());
+  geo->szJ = Map<VectorXd>(szJ.data(), szJ.size());
+  geo->tzJ = Map<VectorXd>(tzJ.data(), tzJ.size());
+  geo->nxJ = Map<VectorXd>(nxJ.data(), nxJ.size());
+  geo->nyJ = Map<VectorXd>(nyJ.data(), nyJ.size());
+  geo->nzJ = Map<VectorXd>(nzJ.data(), nzJ.size());
+  geo->J = Map<VectorXd>(J.data(), J.size());
+  geo->sJ = Map<VectorXd>(sJ.data(), sJ.size());
+  return geo;
 }
 
 // =================== begin matlab codes =======================

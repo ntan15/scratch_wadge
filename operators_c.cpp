@@ -79,7 +79,15 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   ops->VfPq = to_c(VfPq);
   ops->Vfqf = to_c(Vfqf);
 
+  Map<MatrixXd> EToVXmat(EToVX, 2 * 3, E);
+
+  geo_elem_data *geo_data = build_geofacs_2D(ref_data, EToVXmat);
+
+  cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
+  cout << "TODO Fill fmask and mapPq" << endl;
+
   delete ref_data;
+  delete geo_data;
 
   return ops;
 }
@@ -149,7 +157,15 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   ops->VfPq = to_c(VfPq);
   ops->Vfqf = to_c(Vfqf);
 
+  Map<MatrixXd> EToVXmat(EToVX, 3 * 4, E);
+
+  geo_elem_data *geo_data = build_geofacs_3D(ref_data, EToVXmat);
+
+  cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
+  cout << "TODO Fill fmask and mapPq" << endl;
+
   delete ref_data;
+  delete geo_data;
 
   return ops;
 }
