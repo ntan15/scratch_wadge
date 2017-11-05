@@ -100,12 +100,11 @@ void test_basis()
   cout << "VB4 = " << endl << VB4 << endl;
 }
 
-void build_operators_2D(int N, int Nq)
+ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq)
 {
 
   // ======= 2D case
 
-  int Nfq = (int)ceil(Nq / 2.0); // GQ face quadrature to match vol quadrature
   VectorXd r, s;
   Nodes2D(N, r, s);
 
@@ -133,7 +132,7 @@ void build_operators_2D(int N, int Nq)
   int Nfaces = 3;
   VectorXd rq1D, wq1D;
   //  cout << "Nq = " << Nq << ", Nfq = " << Nfq << endl;
-  JacobiGQ(Nfq, 0, 0, rq1D, wq1D);
+  JacobiGQ((int)ceil(Nfq / 2.0), 0, 0, rq1D, wq1D);
   MatrixXd rrfq(rq1D.rows(), Nfaces), ssfq(rq1D.rows(), Nfaces);
   VectorXd ones = MatrixXd::Ones(rq1D.rows(), 1);
   rrfq.col(0) = rq1D;
@@ -177,31 +176,37 @@ void build_operators_2D(int N, int Nq)
   MatrixXd Drq = Vq * Dr * Pq - .5 * Vq * Lq * nrJ.asDiagonal() * Vfq * Pq;
   MatrixXd Dsq = Vq * Ds * Pq - .5 * Vq * Lq * nsJ.asDiagonal() * Vfq * Pq;
 
-  cout << "for N = " << N << " and Nq = " << Nq << endl;
-  cout << "Vq = " << endl << Vq << endl;
-  cout << "Pq = " << endl << Pq << endl;
-  cout << "Drq = " << endl << Drq << endl;
-  cout << "Dsq = " << endl << Dsq << endl;
-  cout << "Lq = " << endl << Dsq << endl;
+  ref_elem_data *ref_data = new ref_elem_data;
 
-  cout << "in operators 2D building ops!" << endl;
+  ref_data->N = N;
+  ref_data->Nq = Nq;
+  ref_data->Nfaces = 3;
+  ref_data->r = r;
+  ref_data->s = s;
+  ref_data->V = V;
+  ref_data->Dr = Dr;
+  ref_data->Ds = Ds;
+
+  ref_data->rq = rq;
+  ref_data->sq = sq;
+  ref_data->wq = wq;
+  ref_data->Vq = Vq;
+
+  ref_data->rfq = rfq;
+  ref_data->sfq = sfq;
+  ref_data->wfq = wfq;
+  ref_data->Vfqf = Vfqf;
+  ref_data->Vfq = Vfq;
+
+  ref_data->nrJ = nrJ;
+  ref_data->nsJ = nsJ;
+
+  return ref_data;
 }
 
-// container for reference arrays (points, weights, interp matrices)
-struct ref_elem_data
+ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq)
 {
-  bool built;
-  int N, Nq, Nfaces;
-  VectorXd r, s, t;
-  VectorXd rfq, sfq, tfq, wfq;
-  VectorXd rq, sq, tq, wq;
-  VectorXd nrJ, nsJ, ntJ;
-  MatrixXd V, Dr, Ds, Dt;
-  MatrixXd Vq, Pq, Vfqf, Vfq, Lq;
-} ref_data;
-
-void build_ref_ops_3D(int N, int Nq, int Nfq)
-{
+  ref_elem_data *ref_data = new ref_elem_data;
   // ======= 3D case
 
   VectorXd r, s, t;
@@ -288,51 +293,45 @@ void build_ref_ops_3D(int N, int Nq, int Nfq)
   Vfqtmp = Vandermonde3D(N, rfq, sfq, tfq);
   MatrixXd Vfq = mrdivide(Vfqtmp, V);
 
-  ref_data.N = N;
-  ref_data.Nq = Nq;
-  ref_data.Nfaces = 4;
-  ref_data.r = r;
-  ref_data.s = s;
-  ref_data.t = t;
-  ref_data.V = V;
-  ref_data.Dr = Dr;
-  ref_data.Ds = Ds;
-  ref_data.Dt = Dt;
+  ref_data->N = N;
+  ref_data->Nq = Nq;
+  ref_data->Nfaces = 4;
+  ref_data->r = r;
+  ref_data->s = s;
+  ref_data->t = t;
+  ref_data->V = V;
+  ref_data->Dr = Dr;
+  ref_data->Ds = Ds;
+  ref_data->Dt = Dt;
 
-  ref_data.rq = rq;
-  ref_data.sq = sq;
-  ref_data.tq = tq;
-  ref_data.wq = wq;
-  ref_data.Vq = Vq; // interp to quad pts
+  ref_data->rq = rq;
+  ref_data->sq = sq;
+  ref_data->tq = tq;
+  ref_data->wq = wq;
+  ref_data->Vq = Vq; // interp to quad pts
 
-  ref_data.rfq = rfq;
-  ref_data.sfq = sfq;
-  ref_data.tfq = tfq;
-  ref_data.wfq = wfq;
-  ref_data.Vfqf = Vfqf; // trace dim(d-1) interpolation matrix
-  ref_data.Vfq = Vfq;   // interp to face surface nodes
+  ref_data->rfq = rfq;
+  ref_data->sfq = sfq;
+  ref_data->tfq = tfq;
+  ref_data->wfq = wfq;
+  ref_data->Vfqf = Vfqf; // trace dim(d-1) interpolation matrix
+  ref_data->Vfq = Vfq;   // interp to face surface nodes
 
-  ref_data.nrJ = nrJ; // reference element normals
-  ref_data.nsJ = nsJ;
-  ref_data.ntJ = ntJ;
+  ref_data->nrJ = nrJ; // reference element normals
+  ref_data->nsJ = nsJ;
+  ref_data->ntJ = ntJ;
 
-  ref_data.built = true;
+  return ref_data;
 }
 
-void build_geofacs_3D()
+void build_geofacs_3D(ref_elem_data *ref_data)
 {
-  if (ref_data.built == false)
-  {
-    printf("Build reference operators first.\n");
-    return;
-  }
-
   printf("Building geofacs here\n");
 
-  VectorXd r = ref_data.r;
-  VectorXd s = ref_data.s;
-  VectorXd t = ref_data.t;
-  int N = ref_data.N;
+  VectorXd r = ref_data->r;
+  VectorXd s = ref_data->s;
+  VectorXd t = ref_data->t;
+  int N = ref_data->N;
   double a = .05;
   VectorXd dr = Eigen::pow(r.array() + s.array(), N);
   VectorXd ds = Eigen::pow(s.array() + t.array(), N);
@@ -342,9 +341,9 @@ void build_geofacs_3D()
   VectorXd z = t + a / 3.0 * dt;
 
   // vol geofacs
-  MatrixXd Drq = ref_data.Vq * ref_data.Dr;
-  MatrixXd Dsq = ref_data.Vq * ref_data.Ds;
-  MatrixXd Dtq = ref_data.Vq * ref_data.Dt;
+  MatrixXd Drq = ref_data->Vq * ref_data->Dr;
+  MatrixXd Dsq = ref_data->Vq * ref_data->Ds;
+  MatrixXd Dtq = ref_data->Vq * ref_data->Dt;
   VectorXd xr, yr, zr, xs, ys, zs, xt, yt, zt;
   xr = Drq * x;
   yr = Drq * y;
@@ -374,9 +373,9 @@ void build_geofacs_3D()
       zr.array() * (xs.array() * yt.array() - ys.array() * xt.array());
 
   // surface geofacs
-  MatrixXd Drfq = ref_data.Vfq * ref_data.Dr;
-  MatrixXd Dsfq = ref_data.Vfq * ref_data.Ds;
-  MatrixXd Dtfq = ref_data.Vfq * ref_data.Dt;
+  MatrixXd Drfq = ref_data->Vfq * ref_data->Dr;
+  MatrixXd Dsfq = ref_data->Vfq * ref_data->Ds;
+  MatrixXd Dtfq = ref_data->Vfq * ref_data->Dt;
 
   xr = Drfq * x;
   yr = Drfq * y;
@@ -405,9 +404,9 @@ void build_geofacs_3D()
       yr.array() * (xs.array() * zt.array() - zs.array() * xt.array()) +
       zr.array() * (xs.array() * yt.array() - ys.array() * xt.array());
 
-  VectorXd nrJ = ref_data.nrJ;
-  VectorXd nsJ = ref_data.nsJ;
-  VectorXd ntJ = ref_data.ntJ;
+  VectorXd nrJ = ref_data->nrJ;
+  VectorXd nsJ = ref_data->nsJ;
+  VectorXd ntJ = ref_data->ntJ;
 
   VectorXd nxJ = rxJf.array() * nrJ.array() + sxJf.array() * nsJ.array() +
                  txJf.array() * ntJ.array();
@@ -428,9 +427,9 @@ void build_geofacs_3D()
   sJ = sJ.array() * Jf.array();
 
 #if 0 // interpolated conservative curl fomr
-  MatrixXd Dr = ref_data.Dr;
-  MatrixXd Ds = ref_data.Ds;
-  MatrixXd Dt = ref_data.Dt;
+  MatrixXd Dr = ref_data->Dr;
+  MatrixXd Ds = ref_data->Ds;
+  MatrixXd Dt = ref_data->Dt;
 
   xr = Dr * x;
   yr = Dr * y;
@@ -472,13 +471,13 @@ void build_geofacs_3D()
   {
 
     // step 1: compute div-free basis
-    MatrixXd WeakDiv(ref_data.Dr.rows(), 3 * ref_data.Dr.cols());
-    MatrixXd Vq = ref_data.Vq;
-    MatrixXd VqW = Vq.transpose() * ref_data.wq.asDiagonal();
+    MatrixXd WeakDiv(ref_data->Dr.rows(), 3 * ref_data->Dr.cols());
+    MatrixXd Vq = ref_data->Vq;
+    MatrixXd VqW = Vq.transpose() * ref_data->wq.asDiagonal();
     MatrixXd M = VqW * Vq;
-    MatrixXd DMr = ref_data.Dr.transpose() * M;
-    MatrixXd DMs = ref_data.Ds.transpose() * M;
-    MatrixXd DMt = ref_data.Dt.transpose() * M;
+    MatrixXd DMr = ref_data->Dr.transpose() * M;
+    MatrixXd DMs = ref_data->Ds.transpose() * M;
+    MatrixXd DMt = ref_data->Dt.transpose() * M;
     WeakDiv << DMr, DMs, DMt;
     Eigen::JacobiSVD<Eigen::MatrixXd> svd1(WeakDiv, Eigen::ComputeFullV);
     VectorXd sigma = svd1.singularValues();
@@ -493,13 +492,13 @@ void build_geofacs_3D()
     MatrixXd UD = svd2.matrixU().rightCols(UDF.rows() - UDF.cols());
 
     // step 3: compute basis for quotient space
-    int Np = (int)ref_data.r.rows();
+    int Np = (int)ref_data->r.rows();
     MatrixXd e = MatrixXd::Ones(Np, 1);
     Eigen::JacobiSVD<Eigen::MatrixXd> svd3(M * e, Eigen::ComputeFullU);
     MatrixXd Utest = svd3.matrixU().rightCols(Np - 1);
 
     // step 4: project onto div/div-free components
-    MatrixXd VfqW = ref_data.Vfq.transpose() * ref_data.wfq.asDiagonal();
+    MatrixXd VfqW = ref_data->Vfq.transpose() * ref_data->wfq.asDiagonal();
     MatrixXd MUDF = UDF.transpose() * M3 * UDF;
     MatrixXd VUDF = UDF.transpose() * kron(I3, VqW);
     MatrixXd UDFPq = UDF * mldivide(MUDF, VUDF); // div-free projection
@@ -564,72 +563,6 @@ void build_geofacs_3D()
 #endif
 
   // todo: output to c arrays
-}
-
-void build_operators_3D()
-{
-
-  if (ref_data.built == false)
-  {
-    printf("Build reference operators first.\n");
-    return;
-  }
-  int N = ref_data.N;
-  int Nq = ref_data.Nq;
-  VectorXd r = ref_data.r;
-  VectorXd s = ref_data.s;
-  VectorXd t = ref_data.t;
-
-  VectorXd rq = ref_data.rq;
-  VectorXd sq = ref_data.sq;
-  VectorXd tq = ref_data.tq;
-  VectorXd wq = ref_data.wq;
-
-  // nodal
-  MatrixXd V = ref_data.V;
-  MatrixXd Dr = ref_data.Dr;
-  MatrixXd Ds = ref_data.Ds;
-  MatrixXd Dt = ref_data.Dt;
-  MatrixXd Vq = ref_data.Vq;
-
-  VectorXd rfq = ref_data.rfq;
-  VectorXd sfq = ref_data.sfq;
-  VectorXd tfq = ref_data.tfq;
-  VectorXd wfq = ref_data.wfq;
-  VectorXd nrJ = ref_data.nrJ;
-  VectorXd nsJ = ref_data.nsJ;
-  VectorXd ntJ = ref_data.ntJ;
-  MatrixXd Vfqf = ref_data.Vfqf;
-  MatrixXd Vfq = ref_data.Vfq;
-
-  // quadrature
-  MatrixXd M = Vq.transpose() * wq.asDiagonal() * Vq;
-  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
-  MatrixXd Pq = mldivide(M, VqW);
-
-  MatrixXd Mfq = Vfq.transpose() * wfq.asDiagonal();
-  MatrixXd Lq = mldivide(M, Mfq);
-  MatrixXd VqLq = Vq * Lq;
-  MatrixXd Drq = Vq * Dr * Pq - .5 * Vq * Lq * nrJ.asDiagonal() * Vfq * Pq;
-  MatrixXd Dsq = Vq * Ds * Pq - .5 * Vq * Lq * nsJ.asDiagonal() * Vfq * Pq;
-  MatrixXd Dtq = Vq * Dt * Pq - .5 * Vq * Lq * ntJ.asDiagonal() * Vfq * Pq;
-
-  cout << "for N = " << N << " and Nq = " << Nq << endl;
-  cout << "Vq = " << endl << Vq << endl;
-  cout << "Pq = " << endl << Pq << endl;
-  cout << "Drq = " << endl << Drq << endl;
-  cout << "Dsq = " << endl << Dsq << endl;
-  cout << "Dtq = " << endl << Dtq << endl;
-  cout << "Lq = " << endl << Lq << endl;
-
-  //  VectorXd r,s,t;
-  //  Nodes3D(N, r, s, t);
-  //  VectorXd rq,sq,tq,wq;
-  //  tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd
-  //  &wq){
-  //  MatrixXd V = Vandermonde3D(N,r,s,t);
-
-  cout << "in operators 3D building ops!" << endl;
 }
 
 // =================== begin matlab codes =======================

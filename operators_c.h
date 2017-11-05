@@ -22,15 +22,15 @@ typedef struct
 
   dfloat_t *vgeo; // volume  geometric factors
   dfloat_t *fgeo; // face    geometric factors
+  dfloat_t *Jq;
 
   uintloc_t *mapPq; // mapping of face neighbor integration points
+  uintloc_t *Fmask; // extract face dofs
 
-  uintloc_t *Fmask;          // extract face dofs
   dfloat_t *nrJ, *nsJ, *ntJ; // ref elem normals
   dfloat_t *Drq, *Dsq, *Dtq; // ref elem derivative operators
 
   dfloat_t *Vq;
-  dfloat_t *Jq;
   dfloat_t *Pq;
 
   dfloat_t *VqLq;

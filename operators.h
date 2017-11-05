@@ -6,11 +6,22 @@ void test_eigen();
 void test_solve();
 void test_basis();
 
-void build_operators_2D(int N, int Nq);
+// container for reference arrays (points, weights, interp matrices)
+struct ref_elem_data
+{
+  int N, Nq, Nfaces;
+  VectorXd r, s, t;
+  VectorXd rfq, sfq, tfq, wfq;
+  VectorXd rq, sq, tq, wq;
+  VectorXd nrJ, nsJ, ntJ;
+  MatrixXd V, Dr, Ds, Dt;
+  MatrixXd Vq, Pq, Vfqf, Vfq, Lq;
+};
 
-void build_ref_ops_3D(int N, int Nq, int Nfq);
-void build_operators_3D();
-void build_geofacs_3D();
+ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq);
+
+ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq);
+void build_geofacs_3D(ref_elem_data *ref_data);
 
 // 1D
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);
