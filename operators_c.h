@@ -41,11 +41,11 @@ typedef struct
 
 host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
                                         uintloc_t *EToE, uint8_t *EToF,
-                                        uint8_t *EToO);
+                                        uint8_t *EToO, double *EToVX);
 
 host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
                                         uintloc_t *EToE, uint8_t *EToF,
-                                        uint8_t *EToO);
+                                        uint8_t *EToO, double *EToVX);
 
 void host_operators_free(host_operators_t *ops);
 

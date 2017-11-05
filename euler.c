@@ -2573,13 +2573,13 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 
   // foo(0);
 #if ELEM_TYPE == 0 // triangle
-  app->hops =
-      host_operators_new_2D(app->prefs->mesh_N, app->prefs->mesh_M, app->hm->E,
-                            app->hm->EToE, app->hm->EToF, app->hm->EToO);
+  app->hops = host_operators_new_2D(app->prefs->mesh_N, app->prefs->mesh_M,
+                                    app->hm->E, app->hm->EToE, app->hm->EToF,
+                                    app->hm->EToO, app->hm->EToVX);
 #else
-  app->hops =
-      host_operators_new_3D(app->prefs->mesh_N, app->prefs->mesh_M, app->hm->E,
-                            app->hm->EToE, app->hm->EToF, app->hm->EToO);
+  app->hops = host_operators_new_3D(app->prefs->mesh_N, app->prefs->mesh_M,
+                                    app->hm->E, app->hm->EToE, app->hm->EToF,
+                                    app->hm->EToO, app->hm->EToVX);
 #endif
 
   return app;
