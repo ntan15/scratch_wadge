@@ -15,7 +15,7 @@ static dfloat_t *to_c(VectorXd &v)
 static dfloat_t *to_c(MatrixXd &m)
 {
   dfloat_t *mdata = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * m.size());
-  Eigen::Map<Eigen::VectorXf>(mdata, m.rows(), m.cols()) = m.cast<dfloat_t>();
+  Eigen::Map<Eigen::MatrixXf>(mdata, m.rows(), m.cols()) = m.cast<dfloat_t>();
   return mdata;
 }
 
