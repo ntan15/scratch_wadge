@@ -8,7 +8,7 @@ make -j
 ```
 To build a version with debug checks and output use:
 ```sh
-make -j DEBUG=1
+make debug -j
 ```
 The code can be run in parallel simply with
 ```sh
