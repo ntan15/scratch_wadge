@@ -15,6 +15,12 @@ The code can be run in parallel simply with
 mpirun -np 2 ./euler2d prefs/euler2d_default.lua
 ```
 
+If there is problems linking with MPICH on macOS and you have macports
+installed try running
+```sh
+sudo port install ld64 +ld64_xcode
+```
+
 ## Third party code
 ### libocca
 We use [libocca](http://libocca.org) for our concurrent compute abstraction.
