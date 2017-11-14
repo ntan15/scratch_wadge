@@ -1,4 +1,5 @@
 #include <Eigen/Dense>
+#include <cstdint>
 using namespace Eigen;
 
 // testing eigen
@@ -23,13 +24,32 @@ struct geo_elem_data
   VectorXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ, nxJ, nyJ, nzJ, J, sJ;
 };
 
+typedef Matrix<uint32_t, Dynamic, Dynamic> MatrixXu32;
+typedef Matrix<uint8_t, Dynamic, Dynamic> MatrixXu8;
+typedef Matrix<uint32_t, Dynamic, 1> VectorXu32;
+typedef Matrix<uint8_t, Dynamic, 1> VectorXu8;
+
+struct map_elem_data
+{
+  VectorXu32 mapPq;
+  VectorXu32 fmask;
+};
+
 ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq);
 geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
                                 const Ref<MatrixXd> EToVX);
+map_elem_data *build_maps_2D(ref_elem_data *ref_data,
+                             const Ref<MatrixXu32> EToE,
+                             const Ref<MatrixXu8> EToF,
+                             const Ref<MatrixXu8> EToO);
 
 ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq);
 geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
                                 const Ref<MatrixXd> EToVX);
+map_elem_data *build_maps_3D(ref_elem_data *ref_data,
+                             const Ref<MatrixXu32> EToE,
+                             const Ref<MatrixXu8> EToF,
+                             const Ref<MatrixXu8> EToO);
 
 // 1D
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);

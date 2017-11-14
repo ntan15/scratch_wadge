@@ -81,13 +81,25 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
 
   Map<MatrixXd> EToVXmat(EToVX, 2 * 3, E);
 
+  if (sizeof(uintloc_t) != sizeof(uint32_t))
+  {
+    cerr << "Need to update build maps to support different integer types"
+         << endl;
+    std::abort();
+  }
+  Map<MatrixXu32> mapEToE(EToE, 3, E);
+  Map<MatrixXu8> mapEToF(EToF, 3, E);
+  Map<MatrixXu8> mapEToO(EToO, 3, E);
+
   geo_elem_data *geo_data = build_geofacs_2D(ref_data, EToVXmat);
+  map_elem_data *map_data = build_maps_2D(ref_data, mapEToE, mapEToF, mapEToO);
 
   cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
   cout << "TODO Fill fmask and mapPq" << endl;
 
   delete ref_data;
   delete geo_data;
+  delete map_data;
 
   return ops;
 }
@@ -159,13 +171,25 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
 
   Map<MatrixXd> EToVXmat(EToVX, 3 * 4, E);
 
+  if (sizeof(uintloc_t) != sizeof(uint32_t))
+  {
+    cerr << "Need to update build maps to support different integer types"
+         << endl;
+    std::abort();
+  }
+  Map<MatrixXu32> mapEToE(EToE, 4, E);
+  Map<MatrixXu8> mapEToF(EToF, 4, E);
+  Map<MatrixXu8> mapEToO(EToO, 4, E);
+
   geo_elem_data *geo_data = build_geofacs_3D(ref_data, EToVXmat);
+  map_elem_data *map_data = build_maps_3D(ref_data, mapEToE, mapEToF, mapEToO);
 
   cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
   cout << "TODO Fill fmask and mapPq" << endl;
 
   delete ref_data;
   delete geo_data;
+  delete map_data;
 
   return ops;
 }

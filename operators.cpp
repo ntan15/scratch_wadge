@@ -1,6 +1,7 @@
 #include "operators.h"
 #include "node_data.h"
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 using namespace std;
 
@@ -682,6 +683,46 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   geo->J = Map<VectorXd>(J.data(), J.size());
   geo->sJ = Map<VectorXd>(sJ.data(), sJ.size());
   return geo;
+}
+
+map_elem_data *build_maps_2D(ref_elem_data *ref_data,
+                             const Ref<MatrixXu32> EToE,
+                             const Ref<MatrixXu8> EToF,
+                             const Ref<MatrixXu8> EToO)
+{
+  map_elem_data *map = new map_elem_data;
+  return map;
+}
+
+map_elem_data *build_maps_3D(ref_elem_data *ref_data,
+                             const Ref<MatrixXu32> EToE,
+                             const Ref<MatrixXu8> EToF,
+                             const Ref<MatrixXu8> EToO)
+{
+
+  MatrixXu8 OToFV(6, 3);
+  OToFV << 0, 1, 2, // orientation 0
+      2, 0, 1,      // orientation 1
+      1, 2, 0,      // orientation 2
+      1, 0, 2,      // orientation 3
+      2, 1, 0,      // orientation 4
+      0, 2, 1;      // orientation 5
+
+  VectorXd VR(3), VS(3);
+  VR << -1.0, 1.0, -1.0;
+  VS << -1.0, -1.0, 1.0;
+
+  MatrixXd T(3, 3);
+  T << VR(1) - VR(0), VS(1) - VS(0), 0.0, //
+      VR(2) - VR(0), VS(2) - VS(0), 0.0,  //
+      VR(0), VS(0), 1.0;
+
+  for (long o = 0; o < OToFV.rows(); ++o)
+  {
+  }
+
+  map_elem_data *map = new map_elem_data;
+  return map;
 }
 
 // =================== begin matlab codes =======================
