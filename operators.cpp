@@ -697,6 +697,9 @@ map_elem_data *build_maps_2D(ref_elem_data *ref_data,
                              const Ref<MatrixXu8> EToF,
                              const Ref<MatrixXu8> EToO)
 {
+  const int N = ref_data->N;
+  const int Np = (int)ref_data->r.size();
+  const int Nfp = N + 1;
   const int Nfq = (int)ref_data->ref_rfq.size();
   const int Nfaces = ref_data->Nfaces;
   const int No = 2; // number of orientations
@@ -759,8 +762,48 @@ map_elem_data *build_maps_2D(ref_elem_data *ref_data,
     }
   }
 
+  MatrixXu32 fmask(Nfp, Nfaces);
+  VectorXd r = ref_data->r;
+  VectorXd s = ref_data->s;
+
+  {
+    int f = 0;
+    int j = 0;
+    for (int i = 0; i < Np; ++i)
+      if (fabs(1.0 + s(i)) < NODETOL)
+        fmask(j++, f) = i;
+    if (j != Nfp)
+    {
+      cerr << "Wrong number of face nodes found" << endl;
+      abort();
+    }
+
+    f = 1;
+    j = 0;
+    for (int i = 0; i < Np; ++i)
+      if (fabs(r(i) + s(i)) < NODETOL)
+        fmask(j++, f) = i;
+    if (j != Nfp)
+    {
+      cerr << "Wrong number of face nodes found" << endl;
+      abort();
+    }
+
+    f = 2;
+    j = 0;
+    for (int i = 0; i < Np; ++i)
+      if (fabs(1.0 + r(i)) < NODETOL)
+        fmask(j++, f) = i;
+    if (j != Nfp)
+    {
+      cerr << "Wrong number of face nodes found" << endl;
+      abort();
+    }
+  }
+
   map_elem_data *map = new map_elem_data;
   map->mapPq = mapPq;
+  map->fmask = fmask;
   return map;
 }
 
@@ -769,6 +812,9 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
                              const Ref<MatrixXu8> EToF,
                              const Ref<MatrixXu8> EToO)
 {
+  const int N = ref_data->N;
+  const int Np = (int)ref_data->r.size();
+  const int Nfp = (N + 1) * (N + 2) / 2;
   const int Nfq = (int)ref_data->ref_rfq.size();
   const int Nfaces = ref_data->Nfaces;
   const int No = 6; // number of orientations
@@ -851,8 +897,60 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
     }
   }
 
+  MatrixXu32 fmask(Nfp, Nfaces);
+  VectorXd r = ref_data->r;
+  VectorXd s = ref_data->s;
+  VectorXd t = ref_data->t;
+
+  {
+    int f = 0;
+    int j = 0;
+    for (int i = 0; i < Np; ++i)
+      if (fabs(1.0 + t(i)) < NODETOL)
+        fmask(j++, f) = i;
+    if (j != Nfp)
+    {
+      cerr << "Wrong number of face nodes found" << endl;
+      abort();
+    }
+
+    f = 1;
+    j = 0;
+    for (int i = 0; i < Np; ++i)
+      if (fabs(1.0 + s(i)) < NODETOL)
+        fmask(j++, f) = i;
+    if (j != Nfp)
+    {
+      cerr << "Wrong number of face nodes found" << endl;
+      abort();
+    }
+
+    f = 2;
+    j = 0;
+    for (int i = 0; i < Np; ++i)
+      if (fabs(1.0 + r(i) + s(i) + t(i)) < NODETOL)
+        fmask(j++, f) = i;
+    if (j != Nfp)
+    {
+      cerr << "Wrong number of face nodes found" << endl;
+      abort();
+    }
+
+    f = 3;
+    j = 0;
+    for (int i = 0; i < Np; ++i)
+      if (fabs(1.0 + r(i)) < NODETOL)
+        fmask(j++, f) = i;
+    if (j != Nfp)
+    {
+      cerr << "Wrong number of face nodes found" << endl;
+      abort();
+    }
+  }
+
   map_elem_data *map = new map_elem_data;
   map->mapPq = mapPq;
+  map->fmask = fmask;
   return map;
 }
 
