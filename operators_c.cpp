@@ -103,7 +103,41 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   geo_elem_data *geo_data = build_geofacs_2D(ref_data, EToVXmat);
   map_elem_data *map_data = build_maps_2D(ref_data, mapEToE, mapEToF, mapEToO);
 
-  cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
+  const int Nvgeo = 4;
+  const int Nfgeo = 3;
+  const int Nfaces = ref_data->Nfaces;
+  const int Nq = ops->Nq;
+  const int Nfq = ops->Nfq;
+  ops->vgeo =
+      (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * Nvgeo * E);
+  ops->fgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
+                                             Nfgeo * Nfaces * E);
+
+  for (uintloc_t e = 0; e < E; ++e)
+  {
+    for (int n = 0; n < Nq; ++n)
+    {
+      ops->vgeo[e * Nq * Nvgeo + 0 * Nq + n] = (dfloat_t)geo_data->rxJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 1 * Nq + n] = (dfloat_t)geo_data->ryJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 2 * Nq + n] = (dfloat_t)geo_data->sxJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 3 * Nq + n] = (dfloat_t)geo_data->syJ(n, e);
+    }
+  }
+
+  for (uintloc_t e = 0; e < E; ++e)
+  {
+    for (int n = 0; n < Nfq * Nfaces; ++n)
+    {
+      ops->fgeo[e * Nfq * Nfaces * Nfgeo + 0 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->nxJ(n, e);
+      ops->fgeo[e * Nfq * Nfaces * Nfgeo + 1 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->nyJ(n, e);
+      ops->fgeo[e * Nfq * Nfaces * Nfgeo + 2 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->sJ(n, e);
+    }
+  }
+
+  ops->Jq = to_c(geo_data->J);
 
   ops->mapPq = to_c(map_data->mapPq);
   ops->Fmask = to_c(map_data->fmask);
@@ -195,7 +229,48 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   geo_elem_data *geo_data = build_geofacs_3D(ref_data, EToVXmat);
   map_elem_data *map_data = build_maps_3D(ref_data, mapEToE, mapEToF, mapEToO);
 
-  cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
+  const int Nvgeo = 9;
+  const int Nfgeo = 4;
+  const int Nfaces = ref_data->Nfaces;
+  const int Nq = ops->Nq;
+  const int Nfq = ops->Nfq;
+  ops->vgeo =
+      (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * Nvgeo * E);
+  ops->fgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
+                                             Nfgeo * Nfaces * E);
+
+  for (uintloc_t e = 0; e < E; ++e)
+  {
+    for (int n = 0; n < Nq; ++n)
+    {
+      ops->vgeo[e * Nq * Nvgeo + 0 * Nq + n] = (dfloat_t)geo_data->rxJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 1 * Nq + n] = (dfloat_t)geo_data->ryJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 2 * Nq + n] = (dfloat_t)geo_data->rzJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 3 * Nq + n] = (dfloat_t)geo_data->sxJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 4 * Nq + n] = (dfloat_t)geo_data->syJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 5 * Nq + n] = (dfloat_t)geo_data->szJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 6 * Nq + n] = (dfloat_t)geo_data->txJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 7 * Nq + n] = (dfloat_t)geo_data->tyJ(n, e);
+      ops->vgeo[e * Nq * Nvgeo + 8 * Nq + n] = (dfloat_t)geo_data->tzJ(n, e);
+    }
+  }
+
+  for (uintloc_t e = 0; e < E; ++e)
+  {
+    for (int n = 0; n < Nfq * Nfaces; ++n)
+    {
+      ops->fgeo[e * Nfq * Nfaces * Nfgeo + 0 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->nxJ(n, e);
+      ops->fgeo[e * Nfq * Nfaces * Nfgeo + 1 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->nyJ(n, e);
+      ops->fgeo[e * Nfq * Nfaces * Nfgeo + 2 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->nzJ(n, e);
+      ops->fgeo[e * Nfq * Nfaces * Nfgeo + 3 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->sJ(n, e);
+    }
+  }
+
+  ops->Jq = to_c(geo_data->J);
 
   ops->mapPq = to_c(map_data->mapPq);
   ops->Fmask = to_c(map_data->fmask);
@@ -209,9 +284,9 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
 
 void host_operators_free(host_operators_t *ops)
 {
-  // asd_free_aligned(ops->vgeo);
-  // asd_free_aligned(ops->fgeo);
-  // asd_free_aligned(ops->Jq);
+  asd_free_aligned(ops->vgeo);
+  asd_free_aligned(ops->fgeo);
+  asd_free_aligned(ops->Jq);
 
   asd_free_aligned(ops->mapPq);
   asd_free_aligned(ops->Fmask);
