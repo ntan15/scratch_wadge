@@ -19,6 +19,15 @@ static dfloat_t *to_c(MatrixXd &m)
   return mdata;
 }
 
+static uintloc_t *to_c(MatrixXu32 &m)
+{
+  uintloc_t *mdata =
+      (uintloc_t *)asd_malloc_aligned(sizeof(uintloc_t) * m.size());
+  Eigen::Map<Eigen::Matrix<uintloc_t, Eigen::Dynamic, Eigen::Dynamic>>(
+      mdata, m.rows(), m.cols()) = m.cast<uintloc_t>();
+  return mdata;
+}
+
 host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
                                         uintloc_t *EToE, uint8_t *EToF,
                                         uint8_t *EToO, double *EToVX)
@@ -95,7 +104,9 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   map_elem_data *map_data = build_maps_2D(ref_data, mapEToE, mapEToF, mapEToO);
 
   cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
-  cout << "TODO Fill fmask and mapPq" << endl;
+
+  ops->mapPq = to_c(map_data->mapPq);
+  ops->Fmask = to_c(map_data->fmask);
 
   delete ref_data;
   delete geo_data;
@@ -185,7 +196,9 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   map_elem_data *map_data = build_maps_3D(ref_data, mapEToE, mapEToF, mapEToO);
 
   cout << "TODO Fill vgeo, fgeo, and Jq" << endl;
-  cout << "TODO Fill fmask and mapPq" << endl;
+
+  ops->mapPq = to_c(map_data->mapPq);
+  ops->Fmask = to_c(map_data->fmask);
 
   delete ref_data;
   delete geo_data;
@@ -200,8 +213,8 @@ void host_operators_free(host_operators_t *ops)
   // asd_free_aligned(ops->fgeo);
   // asd_free_aligned(ops->Jq);
 
-  // asd_free_aligned(ops->mapPq);
-  // asd_free_aligned(ops->Fmask);
+  asd_free_aligned(ops->mapPq);
+  asd_free_aligned(ops->Fmask);
 
   asd_free_aligned(ops->nrJ);
   asd_free_aligned(ops->nsJ);
