@@ -700,6 +700,7 @@ map_elem_data *build_maps_2D(ref_elem_data *ref_data,
   const int Nfq = (int)ref_data->ref_rfq.size();
   const int Nfaces = ref_data->Nfaces;
   const int No = 2; // number of orientations
+  const double NODETOL = Eigen::NumTraits<double>::epsilon() * 10;
 
   MatrixXd rM = ref_data->ref_rfq;
   MatrixXd rP = ref_data->ref_rfq;
@@ -727,7 +728,7 @@ map_elem_data *build_maps_2D(ref_elem_data *ref_data,
       int j;
       for (j = 0; j < Nfq; ++j)
       {
-        if (fabs(rM(i) - rP(j)) < Eigen::NumTraits<double>::epsilon() * 10)
+        if (fabs(rM(i) - rP(j)) < NODETOL)
         {
           OmapP(i, o) = j;
           break;
@@ -771,6 +772,7 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
   const int Nfq = (int)ref_data->ref_rfq.size();
   const int Nfaces = ref_data->Nfaces;
   const int No = 6; // number of orientations
+  const double NODETOL = Eigen::NumTraits<double>::epsilon() * 10;
 
   MatrixXd rM = ref_data->ref_rfq;
   MatrixXd sM = ref_data->ref_sfq;
@@ -818,8 +820,7 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
       int j;
       for (j = 0; j < Nfq; ++j)
       {
-        if (hypot(rM(i) - rP(j), sM(i) - sP(j)) <
-            Eigen::NumTraits<double>::epsilon() * 10)
+        if (hypot(rM(i) - rP(j), sM(i) - sP(j)) < NODETOL)
         {
           OmapP(i, o) = j;
           break;
