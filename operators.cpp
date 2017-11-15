@@ -407,14 +407,14 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
   sJ = sJ.array() * Jf.array();
 
   geo_elem_data *geo = new geo_elem_data;
-  geo->rxJ = Map<VectorXd>(rxJ.data(), rxJ.size());
-  geo->sxJ = Map<VectorXd>(sxJ.data(), sxJ.size());
-  geo->ryJ = Map<VectorXd>(ryJ.data(), ryJ.size());
-  geo->syJ = Map<VectorXd>(syJ.data(), syJ.size());
-  geo->nxJ = Map<VectorXd>(nxJ.data(), nxJ.size());
-  geo->nyJ = Map<VectorXd>(nyJ.data(), nyJ.size());
-  geo->J = Map<VectorXd>(J.data(), J.size());
-  geo->sJ = Map<VectorXd>(sJ.data(), sJ.size());
+  geo->rxJ = rxJ;
+  geo->sxJ = sxJ;
+  geo->ryJ = ryJ;
+  geo->syJ = syJ;
+  geo->nxJ = nxJ;
+  geo->nyJ = nyJ;
+  geo->J = J;
+  geo->sJ = sJ;
   return geo;
 }
 
@@ -675,20 +675,20 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 #endif
 
   geo_elem_data *geo = new geo_elem_data;
-  geo->rxJ = Map<VectorXd>(rxJ.data(), rxJ.size());
-  geo->sxJ = Map<VectorXd>(sxJ.data(), sxJ.size());
-  geo->txJ = Map<VectorXd>(txJ.data(), txJ.size());
-  geo->ryJ = Map<VectorXd>(ryJ.data(), ryJ.size());
-  geo->syJ = Map<VectorXd>(syJ.data(), syJ.size());
-  geo->tyJ = Map<VectorXd>(tyJ.data(), tyJ.size());
-  geo->rzJ = Map<VectorXd>(rzJ.data(), rzJ.size());
-  geo->szJ = Map<VectorXd>(szJ.data(), szJ.size());
-  geo->tzJ = Map<VectorXd>(tzJ.data(), tzJ.size());
-  geo->nxJ = Map<VectorXd>(nxJ.data(), nxJ.size());
-  geo->nyJ = Map<VectorXd>(nyJ.data(), nyJ.size());
-  geo->nzJ = Map<VectorXd>(nzJ.data(), nzJ.size());
-  geo->J = Map<VectorXd>(J.data(), J.size());
-  geo->sJ = Map<VectorXd>(sJ.data(), sJ.size());
+  geo->rxJ = rxJ;
+  geo->sxJ = sxJ;
+  geo->txJ = txJ;
+  geo->ryJ = ryJ;
+  geo->syJ = syJ;
+  geo->tyJ = tyJ;
+  geo->rzJ = rzJ;
+  geo->szJ = szJ;
+  geo->tzJ = tzJ;
+  geo->nxJ = nxJ;
+  geo->nyJ = nyJ;
+  geo->nzJ = nzJ;
+  geo->J = J;
+  geo->sJ = sJ;
   return geo;
 }
 
