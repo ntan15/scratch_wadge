@@ -706,27 +706,71 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
                              const Ref<MatrixXu8> EToF,
                              const Ref<MatrixXu8> EToO)
 {
+  const Eigen::Index Nfq = ref_data->ref_rfq.size();
+  const int No = 6; // number of orientations
 
-  MatrixXu8 OToFV(6, 3);
-  OToFV << 0, 1, 2, // orientation 0
-      2, 0, 1,      // orientation 1
-      1, 2, 0,      // orientation 2
-      1, 0, 2,      // orientation 3
-      2, 1, 0,      // orientation 4
-      0, 2, 1;      // orientation 5
+  MatrixXd rM = ref_data->ref_rfq;
+  MatrixXd sM = ref_data->ref_sfq;
+  MatrixXd rP = ref_data->ref_rfq;
+  MatrixXd sP = ref_data->ref_sfq;
+  VectorXd ones = MatrixXd::Ones(Nfq, 1);
 
-  VectorXd VR(3), VS(3);
-  VR << -1.0, 1.0, -1.0;
-  VS << -1.0, -1.0, 1.0;
+  Matrix<Eigen::Index, Dynamic, Dynamic> OmapP(Nfq, No);
 
-  MatrixXd T(3, 3);
-  T << VR(1) - VR(0), VS(1) - VS(0), 0.0, //
-      VR(2) - VR(0), VS(2) - VS(0), 0.0,  //
-      VR(0), VS(0), 1.0;
-
-  for (long o = 0; o < OToFV.rows(); ++o)
+  for (int o = 0; o < No; ++o)
   {
+    switch (o)
+    {
+    case 0:
+      rP = rM;
+      sP = sM;
+      break;
+    case 1:
+      rP = sM;
+      sP = -rM - sM - ones;
+      break;
+    case 2:
+      rP = -rM - sM - ones;
+      sP = rM;
+      break;
+    case 3:
+      rP = -rM - sM - ones;
+      sP = sM;
+      break;
+    case 4:
+      rP = rM;
+      sP = -rM - sM - ones;
+      break;
+    case 5:
+      rP = sM;
+      sP = rM;
+      break;
+    default:
+      cerr << "Missing node" << endl;
+      abort();
+    }
+
+    for (Eigen::Index i = 0; i < Nfq; ++i)
+    {
+      Eigen::Index j;
+      for (j = 0; j < Nfq; ++j)
+      {
+        if (hypot(rM(i) - rP(j), sM(i) - sP(j)) <
+            Eigen::NumTraits<double>::epsilon() * 10)
+        {
+          OmapP(i, o) = j;
+          break;
+        }
+      }
+      if (j == Nfq)
+      {
+        cerr << "Dropped a node: (" << rM(i) << ", " << rP(i) << ")" << endl;
+        abort();
+      }
+    }
   }
+
+  cout << "OmapP" << endl << OmapP << endl;
 
   map_elem_data *map = new map_elem_data;
   return map;
