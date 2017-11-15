@@ -697,7 +697,69 @@ map_elem_data *build_maps_2D(ref_elem_data *ref_data,
                              const Ref<MatrixXu8> EToF,
                              const Ref<MatrixXu8> EToO)
 {
+  const int Nfq = (int)ref_data->ref_rfq.size();
+  const int Nfaces = ref_data->Nfaces;
+  const int No = 2; // number of orientations
+
+  MatrixXd rM = ref_data->ref_rfq;
+  MatrixXd rP = ref_data->ref_rfq;
+  VectorXd ones = MatrixXd::Ones(Nfq, 1);
+
+  MatrixXu32 OmapP(Nfq, No);
+
+  for (int o = 0; o < No; ++o)
+  {
+    switch (o)
+    {
+    case 0:
+      rP = rM;
+      break;
+    case 1:
+      rP = -rM;
+      break;
+    default:
+      cerr << "Missing node" << endl;
+      abort();
+    }
+
+    for (int i = 0; i < Nfq; ++i)
+    {
+      int j;
+      for (j = 0; j < Nfq; ++j)
+      {
+        if (fabs(rM(i) - rP(j)) < Eigen::NumTraits<double>::epsilon() * 10)
+        {
+          OmapP(i, o) = j;
+          break;
+        }
+      }
+      if (j == Nfq)
+      {
+        cerr << "Dropped a node: (" << rM(i) << ", " << rP(i) << ")" << endl;
+        abort();
+      }
+    }
+  }
+
+  const uint32_t E = (uint32_t)EToE.cols();
+  MatrixXu32 mapPq(Nfq * Nfaces, E);
+
+  for (uint32_t e1 = 0; e1 < E; ++e1)
+  {
+    for (int f1 = 0; f1 < Nfaces; ++f1)
+    {
+      const uint32_t e2 = EToE(f1, e1);
+      const uint8_t f2 = EToF(f1, e1);
+      const uint8_t o2 = EToO(f1, e1);
+
+      const uint32_t shift = e2 * Nfq * Nfaces + f2 * Nfq;
+      for (int n = 0; n < Nfq; ++n)
+        mapPq(f1 * Nfq + n, e1) = shift + OmapP(n, o2);
+    }
+  }
+
   map_elem_data *map = new map_elem_data;
+  map->mapPq = mapPq;
   return map;
 }
 
@@ -706,7 +768,8 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
                              const Ref<MatrixXu8> EToF,
                              const Ref<MatrixXu8> EToO)
 {
-  const Eigen::Index Nfq = ref_data->ref_rfq.size();
+  const int Nfq = (int)ref_data->ref_rfq.size();
+  const int Nfaces = ref_data->Nfaces;
   const int No = 6; // number of orientations
 
   MatrixXd rM = ref_data->ref_rfq;
@@ -715,7 +778,7 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
   MatrixXd sP = ref_data->ref_sfq;
   VectorXd ones = MatrixXd::Ones(Nfq, 1);
 
-  Matrix<Eigen::Index, Dynamic, Dynamic> OmapP(Nfq, No);
+  MatrixXu32 OmapP(Nfq, No);
 
   for (int o = 0; o < No; ++o)
   {
@@ -750,9 +813,9 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
       abort();
     }
 
-    for (Eigen::Index i = 0; i < Nfq; ++i)
+    for (int i = 0; i < Nfq; ++i)
     {
-      Eigen::Index j;
+      int j;
       for (j = 0; j < Nfq; ++j)
       {
         if (hypot(rM(i) - rP(j), sM(i) - sP(j)) <
@@ -770,9 +833,25 @@ map_elem_data *build_maps_3D(ref_elem_data *ref_data,
     }
   }
 
-  cout << "OmapP" << endl << OmapP << endl;
+  const uint32_t E = (uint32_t)EToE.cols();
+  MatrixXu32 mapPq(Nfq * Nfaces, E);
+
+  for (uint32_t e1 = 0; e1 < E; ++e1)
+  {
+    for (int f1 = 0; f1 < Nfaces; ++f1)
+    {
+      const uint32_t e2 = EToE(f1, e1);
+      const uint8_t f2 = EToF(f1, e1);
+      const uint8_t o2 = EToO(f1, e1);
+
+      const uint32_t shift = e2 * Nfq * Nfaces + f2 * Nfq;
+      for (int n = 0; n < Nfq; ++n)
+        mapPq(f1 * Nfq + n, e1) = shift + OmapP(n, o2);
+    }
+  }
 
   map_elem_data *map = new map_elem_data;
+  map->mapPq = mapPq;
   return map;
 }
 

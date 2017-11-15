@@ -32,8 +32,8 @@ typedef Matrix<uint8_t, Dynamic, 1> VectorXu8;
 
 struct map_elem_data
 {
-  VectorXu32 mapPq;
-  VectorXu32 fmask;
+  MatrixXu32 mapPq;
+  MatrixXu32 fmask;
 };
 
 ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq);
