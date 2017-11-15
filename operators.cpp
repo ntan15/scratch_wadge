@@ -196,6 +196,9 @@ ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq)
   ref_data->rfq = rfq;
   ref_data->sfq = sfq;
   ref_data->wfq = wfq;
+
+  ref_data->ref_rfq = rq1D;
+
   ref_data->Vfqf = Vfqf;
   ref_data->Vfq = Vfq;
 
@@ -315,6 +318,10 @@ ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq)
   ref_data->sfq = sfq;
   ref_data->tfq = tfq;
   ref_data->wfq = wfq;
+
+  ref_data->ref_rfq = rqtri;
+  ref_data->ref_sfq = sqtri;
+
   ref_data->Vfqf = Vfqf; // trace dim(d-1) interpolation matrix
   ref_data->Vfq = Vfq;   // interp to face surface nodes
 

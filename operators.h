@@ -13,6 +13,7 @@ struct ref_elem_data
   int N, Nq, Nfaces;
   VectorXd r, s, t;
   VectorXd rfq, sfq, tfq, wfq;
+  VectorXd ref_rfq, ref_sfq;
   VectorXd rq, sq, tq, wq;
   VectorXd nrJ, nsJ, ntJ;
   MatrixXd V, Dr, Ds, Dt;
