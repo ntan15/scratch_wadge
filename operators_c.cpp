@@ -63,7 +63,7 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   ops->Nq = (int)ref_data->rq.size();
 
   ops->Nfp = N + 1;
-  ops->Nfq = (int)ref_data->rfq.size();
+  ops->Nfq = (int)ref_data->ref_rfq.size();
 
   ops->nrJ = to_c(nrJ);
   ops->nsJ = to_c(nsJ);
@@ -151,7 +151,7 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   ops->Nq = (int)ref_data->rq.size();
 
   ops->Nfp = (N + 1) * (N + 2) / 2;
-  ops->Nfq = (int)ref_data->rfq.size();
+  ops->Nfq = (int)ref_data->ref_rfq.size();
 
   ops->nrJ = to_c(nrJ);
   ops->nsJ = to_c(nsJ);
