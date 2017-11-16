@@ -106,6 +106,14 @@ static int get_occa_mode(const char *info)
 
 // {{{ Solver Info
 #define APP_NAME "euler"
+
+#if ELEM_TYPE == 0 // triangle
+#define NFIELDS 4
+#elif ELEM_TYPE == 1 // tetrahedron
+#define NFIELDS 5
+#else
+#error "Unknown/undefined element type"
+#endif
 // }}}
 
 // {{{ Utilities
