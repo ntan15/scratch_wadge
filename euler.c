@@ -2555,6 +2555,26 @@ typedef struct app
 
   host_mesh_t *hm;
   host_operators_t *hops;
+
+  occaMemory vgeo;
+  occaMemory fgeo;
+  occaMemory Jq;
+
+  occaMemory mapPq;
+  occaMemory Fmask;
+
+  occaMemory nrJ, nsJ, ntJ;
+  occaMemory Drq, Dsq, Dtq;
+
+  occaMemory Vq;
+  occaMemory Pq;
+
+  occaMemory VqLq;
+  occaMemory VqPq;
+  occaMemory VfPq;
+  occaMemory Vfqf;
+
+  occaMemory Q, Qf, rhsQ, resQ;
 } app_t;
 
 static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
@@ -2633,11 +2653,116 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                                     app->hm->EToO, app->hm->EToVX);
 #endif
 
+  // Allocate/fill data on the device
+  const uintloc_t E = app->hm->E;
+  const int Np = app->hops->Np;
+  const int Nq = app->hops->Nq;
+  const int Nfp = app->hops->Nfp;
+  const int Nfq = app->hops->Nfq;
+  const int Nfaces = app->hops->Nfaces;
+  const int Nvgeo = app->hops->Nvgeo;
+  const int Nfgeo = app->hops->Nfgeo;
+
+  app->vgeo = device_malloc(app->device, sizeof(dfloat_t) * Nq * Nvgeo * E,
+                            app->hops->vgeo);
+  app->fgeo =
+      device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nfgeo * E,
+                    app->hops->fgeo);
+  app->Jq = device_malloc(app->device, sizeof(dfloat_t) * Nq * E, NULL);
+
+  app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
+                             app->hops->mapPq);
+  app->Fmask = device_malloc(app->device, sizeof(uintloc_t) * Nfp * Nfaces,
+                             app->hops->Fmask);
+
+  app->nrJ = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces,
+                           app->hops->nrJ);
+  app->nsJ = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces,
+                           app->hops->nsJ);
+
+#if VDIM == 3
+  app->ntJ = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces,
+                           app->hops->ntJ);
+#endif
+
+  app->Drq =
+      device_malloc(app->device, sizeof(dfloat_t) * Nq * Nq, app->hops->Drq);
+  app->Dsq =
+      device_malloc(app->device, sizeof(dfloat_t) * Nq * Nq, app->hops->Dsq);
+
+#if VDIM == 3
+  app->Dtq =
+      device_malloc(app->device, sizeof(dfloat_t) * Nq * Nq, app->hops->Dtq);
+#endif
+
+  app->Vq =
+      device_malloc(app->device, sizeof(dfloat_t) * Np * Nq, app->hops->Vq);
+  app->Pq =
+      device_malloc(app->device, sizeof(dfloat_t) * Np * Nq, app->hops->Pq);
+
+  app->VqLq = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nq,
+                            app->hops->VqLq);
+  app->VqPq =
+      device_malloc(app->device, sizeof(dfloat_t) * Np * Nq, app->hops->VqPq);
+  app->VfPq = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nq,
+                            app->hops->VfPq);
+  app->Vfqf =
+      device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfp, app->hops->Vfqf);
+
+  app->Q =
+      device_malloc(app->device, sizeof(dfloat_t) * Nq * NFIELDS * E, NULL);
+  app->rhsQ =
+      device_malloc(app->device, sizeof(dfloat_t) * Nq * NFIELDS * E, NULL);
+  app->resQ =
+      device_malloc(app->device, sizeof(dfloat_t) * Nq * NFIELDS * E, NULL);
+
+  app->Qf = device_malloc(app->device,
+                          sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E, NULL);
+
+  // TODO Fill info for kernels
+
+  // TODO build kernels
+
   return app;
 }
 
 static void app_free(app_t *app)
 {
+  occaMemoryFree(app->vgeo);
+  occaMemoryFree(app->fgeo);
+  occaMemoryFree(app->Jq);
+
+  occaMemoryFree(app->mapPq);
+  occaMemoryFree(app->Fmask);
+
+  occaMemoryFree(app->nrJ);
+  occaMemoryFree(app->nsJ);
+
+  occaMemoryFree(app->Drq);
+  occaMemoryFree(app->Dsq);
+
+#if VDIM == 3
+  occaMemoryFree(app->ntJ);
+  occaMemoryFree(app->Dtq);
+#endif
+
+  occaMemoryFree(app->Vq);
+  occaMemoryFree(app->Pq);
+
+  occaMemoryFree(app->VqLq);
+  occaMemoryFree(app->VqPq);
+  occaMemoryFree(app->VfPq);
+  occaMemoryFree(app->Vfqf);
+
+  occaMemoryFree(app->Q);
+  occaMemoryFree(app->Qf);
+  occaMemoryFree(app->rhsQ);
+  occaMemoryFree(app->resQ);
+
+  // TODO free info
+
+  // TODO free kernels
+
   prefs_free(app->prefs);
   asd_free(app->prefs);
 
