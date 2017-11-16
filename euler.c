@@ -102,6 +102,49 @@ static int get_occa_mode(const char *info)
 
   return mode;
 }
+
+#define DEVICE_MEMFRAC 0.9 // fraction of device memory to use
+
+static void device_async_ptr_to_mem(occaMemory dest, void *src, size_t bytes,
+                                    size_t offset)
+{
+  if (bytes > 0)
+    occaAsyncCopyPtrToMem(dest, src, bytes, offset);
+}
+
+static void device_async_mem_to_ptr(void *dest, occaMemory src, size_t bytes,
+                                    size_t offset)
+{
+  if (bytes > 0)
+    occaAsyncCopyMemToPtr(dest, src, bytes, offset);
+}
+
+static occaMemory device_malloc(occaDevice device, size_t bytecount, void *src)
+{
+  bytecount = ASD_MAX(1, bytecount);
+  uintmax_t bytes = occaDeviceBytesAllocated(device);
+  uintmax_t total_bytes = occaDeviceMemorySize(device);
+  ASD_ABORT_IF(
+      (double)(bytes + bytecount) > DEVICE_MEMFRAC * (double)total_bytes,
+      "Over memory limit: \n"
+      "      current: allocated %ju (%.2f GiB) out of %ju (%.2f GiB)\n"
+      "      new val: allocated %ju (%.2f GiB) out of %ju (%.2f GiB)\n"
+      "      (fudge factor is: %.2f)",
+      bytes, ((double)bytes) / GiB, total_bytes, ((double)total_bytes) / GiB,
+      bytes + bytecount, ((double)(bytes + bytecount)) / GiB, total_bytes,
+      ((double)total_bytes) / GiB, DEVICE_MEMFRAC);
+  if ((double)(bytes + bytecount) > 0.9 * DEVICE_MEMFRAC * (double)total_bytes)
+    ASD_WARNING(
+        "At 90%% of memory limit: \n"
+        "      current: allocated %ju (%.2f GiB) out of %ju (%.2f GiB)\n"
+        "      new val: allocated %ju (%.2f GiB) out of %ju (%.2f GiB)\n"
+        "      (fudge factor is: %.2f)",
+        bytes, ((double)bytes) / GiB, total_bytes, ((double)total_bytes) / GiB,
+        bytes + bytecount, ((double)(bytes + bytecount)) / GiB, total_bytes,
+        ((double)total_bytes) / GiB, DEVICE_MEMFRAC);
+
+  return occaDeviceMalloc(device, bytecount, src);
+}
 // }}}
 
 // {{{ Solver Info
