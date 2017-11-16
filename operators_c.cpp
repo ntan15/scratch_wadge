@@ -74,6 +74,10 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   ops->Nfp = N + 1;
   ops->Nfq = (int)ref_data->ref_rfq.size();
 
+  ops->Nfaces = ref_data->Nfaces;
+  ops->Nvgeo = 4;
+  ops->Nfgeo = 3;
+
   ops->nrJ = to_c(nrJ);
   ops->nsJ = to_c(nsJ);
 
@@ -103,8 +107,8 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   geo_elem_data *geo_data = build_geofacs_2D(ref_data, EToVXmat);
   map_elem_data *map_data = build_maps_2D(ref_data, mapEToE, mapEToF, mapEToO);
 
-  const int Nvgeo = 4;
-  const int Nfgeo = 3;
+  const int Nvgeo = ops->Nvgeo;
+  const int Nfgeo = ops->Nfgeo;
   const int Nfaces = ref_data->Nfaces;
   const int Nq = ops->Nq;
   const int Nfq = ops->Nfq;
@@ -198,6 +202,10 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   ops->Nfp = (N + 1) * (N + 2) / 2;
   ops->Nfq = (int)ref_data->ref_rfq.size();
 
+  ops->Nfaces = ref_data->Nfaces;
+  ops->Nvgeo = 9;
+  ops->Nfgeo = 4;
+
   ops->nrJ = to_c(nrJ);
   ops->nsJ = to_c(nsJ);
   ops->ntJ = to_c(ntJ);
@@ -229,8 +237,8 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   geo_elem_data *geo_data = build_geofacs_3D(ref_data, EToVXmat);
   map_elem_data *map_data = build_maps_3D(ref_data, mapEToE, mapEToF, mapEToO);
 
-  const int Nvgeo = 9;
-  const int Nfgeo = 4;
+  const int Nvgeo = ops->Nvgeo;
+  const int Nfgeo = ops->Nfgeo;
   const int Nfaces = ref_data->Nfaces;
   const int Nq = ops->Nq;
   const int Nfq = ops->Nfq;

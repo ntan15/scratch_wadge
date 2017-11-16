@@ -20,6 +20,10 @@ typedef struct
   int Nfp; // number of face interpolation points
   int Nfq; // number of face integration   points
 
+  int Nvgeo;
+  int Nfgeo;
+  int Nfaces;
+
   dfloat_t *vgeo; // volume  geometric factors
   dfloat_t *fgeo; // face    geometric factors
   dfloat_t *Jq;
