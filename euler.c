@@ -2709,7 +2709,8 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->VfPq = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nq,
                             app->hops->VfPq);
   app->Vfqf =
-      device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfp, app->hops->Vfqf);
+      device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nfp * Nfaces,
+                    app->hops->Vfqf);
 
   app->Q =
       device_malloc(app->device, sizeof(dfloat_t) * Nq * NFIELDS * E, NULL);
