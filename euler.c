@@ -333,7 +333,6 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
   prefs->kernel_KblkU = (int)asd_lua_expr_integer(L, "app.kernel.KblkU", 2);
   prefs->kernel_KblkS = (int)asd_lua_expr_integer(L, "app.kernel.KblkS", 8);
   prefs->kernel_KblkF = (int)asd_lua_expr_integer(L, "app.kernel.KblkF", 8);
-  prefs->kernel_T = (int)asd_lua_expr_integer(L, "app.kernel.T", 256);
 
   prefs->physical_gamma =
       (dfloat_t)asd_lua_expr_number(L, "app.physical.gamma", 1.4);
@@ -391,7 +390,6 @@ static void prefs_print(prefs_t *prefs)
   ASD_ROOT_INFO("  kernel_KblkU  = %d", prefs->kernel_KblkU);
   ASD_ROOT_INFO("  kernel_KblkS  = %d", prefs->kernel_KblkS);
   ASD_ROOT_INFO("  kernel_KblkF  = %d", prefs->kernel_KblkF);
-  ASD_ROOT_INFO("  kernel_T      = %d", prefs->kernel_T);
   ASD_ROOT_INFO("");
   ASD_ROOT_INFO("  physical_gamma = %g", prefs->physical_gamma);
   ASD_ROOT_INFO("");
@@ -2771,7 +2769,9 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   occaKernelInfoAddDefine(info, "p_KblkV", occaUInt(app->prefs->kernel_KblkV));
   occaKernelInfoAddDefine(info, "p_KblkS", occaUInt(app->prefs->kernel_KblkS));
   occaKernelInfoAddDefine(info, "p_KblkF", occaUInt(app->prefs->kernel_KblkF));
-  occaKernelInfoAddDefine(info, "p_T", occaUInt(app->prefs->kernel_T));
+
+  const int T = ASD_MAX(Nq, Nfq * Nfaces);
+  occaKernelInfoAddDefine(info, "p_T", occaUInt(T));
 
   occaKernelInfoAddDefine(info, "p_gamma",
                           occaDfloat(app->prefs->physical_gamma));
