@@ -11,7 +11,7 @@
 
 typedef uint32_t uintloc_t;
 #define occaUIntloc(x) occaUInt((uintloc_t)(x))
-#define occa_uintlong_name "unsigned int"
+#define occa_uintloc_name "unsigned int"
 #define UINTLOC(x) ASD_APPEND(x, u)
 #define UINTLOC_MAX UINT32_MAX
 #define UINTLOC_MAX_DIGITS INT32_MAX_DIGITS
