@@ -269,6 +269,14 @@ typedef struct prefs
   int mesh_N; // order of the polynomial basis
   int mesh_M; // order of the polynomials that can be integrated exactly
 
+  int kernel_KblkU;
+  int kernel_KblkV;
+  int kernel_KblkF;
+  int kernel_KblkS;
+  int kernel_T;
+
+  dfloat_t physical_gamma;
+
   char *mesh_filename;
   int mesh_sfc_partition;
 
@@ -321,6 +329,15 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
   prefs->mesh_M = (int)asd_lua_expr_integer(L, "app.mesh.M", 2 * prefs->mesh_N);
 
+  prefs->kernel_KblkV = (int)asd_lua_expr_integer(L, "app.kernel.KblkV", 2);
+  prefs->kernel_KblkU = (int)asd_lua_expr_integer(L, "app.kernel.KblkU", 2);
+  prefs->kernel_KblkS = (int)asd_lua_expr_integer(L, "app.kernel.KblkS", 8);
+  prefs->kernel_KblkF = (int)asd_lua_expr_integer(L, "app.kernel.KblkF", 8);
+  prefs->kernel_T = (int)asd_lua_expr_integer(L, "app.kernel.T", 256);
+
+  prefs->physical_gamma =
+      (dfloat_t)asd_lua_expr_number(L, "app.physical.gamma", 1.4);
+
   prefs->mesh_sfc_partition =
       asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
 
@@ -369,6 +386,14 @@ static void prefs_print(prefs_t *prefs)
   ASD_ROOT_INFO("  mesh_filename = \"%s\"", prefs->mesh_filename);
   ASD_ROOT_INFO("  mesh_N        = %d", prefs->mesh_N);
   ASD_ROOT_INFO("  mesh_M        = %d", prefs->mesh_M);
+  ASD_ROOT_INFO("");
+  ASD_ROOT_INFO("  kernel_KblkV  = %d", prefs->kernel_KblkV);
+  ASD_ROOT_INFO("  kernel_KblkU  = %d", prefs->kernel_KblkU);
+  ASD_ROOT_INFO("  kernel_KblkS  = %d", prefs->kernel_KblkS);
+  ASD_ROOT_INFO("  kernel_KblkF  = %d", prefs->kernel_KblkF);
+  ASD_ROOT_INFO("  kernel_T      = %d", prefs->kernel_T);
+  ASD_ROOT_INFO("");
+  ASD_ROOT_INFO("  physical_gamma = %g", prefs->physical_gamma);
   ASD_ROOT_INFO("");
   ASD_ROOT_INFO("  output_datadir = %s", prefs->output_datadir);
   ASD_ROOT_INFO("  output_prefix  = %s", prefs->output_prefix);
