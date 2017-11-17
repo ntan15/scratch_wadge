@@ -2604,6 +2604,8 @@ typedef struct app
   occaMemory Q, Qf, rhsQ, resQ;
 
   occaKernelInfo info;
+
+  occaKernel vol;
 } app_t;
 
 static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
@@ -2789,6 +2791,11 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->info = info;
 
   // TODO build kernels
+#if ELEM_TYPE == 0 // triangle
+  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
+                                             "euler_vol_2d", info);
+#else
+#endif
 
   return app;
 }
@@ -2829,7 +2836,10 @@ static void app_free(app_t *app)
   // free info
   occaKernelInfoFree(app->info);
 
-  // TODO free kernels
+  // free kernels
+#if ELEM_TYPE == 0 // triangle
+  occaKernelFree(app->vol);
+#endif
 
   prefs_free(app->prefs);
   asd_free(app->prefs);
