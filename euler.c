@@ -2786,6 +2786,8 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   // having multiple processes trying to use the same kernel source.
   occaKernelInfoAddDefine(info, "p_RANK", occaInt(app->prefs->rank));
 
+  app->info = info;
+
   // TODO build kernels
 
   return app;
@@ -2824,7 +2826,8 @@ static void app_free(app_t *app)
   occaMemoryFree(app->rhsQ);
   occaMemoryFree(app->resQ);
 
-  // TODO free info
+  // free info
+  occaKernelInfoFree(app->info);
 
   // TODO free kernels
 
