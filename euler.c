@@ -105,6 +105,7 @@ static int get_occa_mode(const char *info)
 
 #define DEVICE_MEMFRAC 0.9 // fraction of device memory to use
 
+#if 0
 static void device_async_ptr_to_mem(occaMemory dest, void *src, size_t bytes,
                                     size_t offset)
 {
@@ -118,6 +119,7 @@ static void device_async_mem_to_ptr(void *dest, occaMemory src, size_t bytes,
   if (bytes > 0)
     occaAsyncCopyMemToPtr(dest, src, bytes, offset);
 }
+#endif
 
 static occaMemory device_malloc(occaDevice device, size_t bytecount, void *src)
 {
