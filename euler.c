@@ -2602,6 +2602,8 @@ typedef struct app
   occaMemory Vfqf;
 
   occaMemory Q, Qf, rhsQ, resQ;
+
+  occaKernelInfo info;
 } app_t;
 
 static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
@@ -2747,7 +2749,42 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->Qf = device_malloc(app->device,
                           sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E, NULL);
 
-  // TODO Fill info for kernels
+  // Fill info for kernels
+  occaKernelInfo info = occaCreateKernelInfo();
+  occaKernelInfoAddDefine(info, "uintloc_t", occaString(occa_uintloc_name));
+  const char *const dfloat =
+      (sizeof(double) == sizeof(dfloat_t)) ? "double" : "float";
+  occaKernelInfoAddDefine(info, "dfloat", occaString(dfloat));
+  if (sizeof(double) == sizeof(dfloat_t))
+    occaKernelInfoAddDefine(info, "p_DFLOAT_DOUBLE", occaInt(1));
+  else
+    occaKernelInfoAddDefine(info, "p_DFLOAT_FLOAT", occaInt(1));
+
+  occaKernelInfoAddDefine(info, "p_DFLOAT_MAX", occaDfloat(DFLOAT_MAX));
+
+  occaKernelInfoAddDefine(info, "p_KblkU", occaUInt(app->prefs->kernel_KblkU));
+  occaKernelInfoAddDefine(info, "p_KblkV", occaUInt(app->prefs->kernel_KblkV));
+  occaKernelInfoAddDefine(info, "p_KblkS", occaUInt(app->prefs->kernel_KblkS));
+  occaKernelInfoAddDefine(info, "p_KblkF", occaUInt(app->prefs->kernel_KblkF));
+  occaKernelInfoAddDefine(info, "p_T", occaUInt(app->prefs->kernel_T));
+
+  occaKernelInfoAddDefine(info, "p_gamma",
+                          occaDfloat(app->prefs->physical_gamma));
+
+  occaKernelInfoAddDefine(info, "p_Np", occaUInt(Np));
+  occaKernelInfoAddDefine(info, "p_Nq", occaUInt(Nq));
+  occaKernelInfoAddDefine(info, "p_NfqNfaces", occaUInt(Nfq * Nfaces));
+  occaKernelInfoAddDefine(info, "p_NfpNfaces", occaUInt(Nfp * Nfaces));
+  occaKernelInfoAddDefine(info, "p_Nvgeo", occaUInt(Nvgeo));
+  occaKernelInfoAddDefine(info, "p_Nfgeo", occaUInt(Nfgeo));
+  occaKernelInfoAddDefine(info, "p_Nfaces", occaUInt(Nfaces));
+  occaKernelInfoAddDefine(info, "p_Nfields", occaUInt(NFIELDS));
+  occaKernelInfoAddDefine(info, "p_Nfq", occaUInt(Nfq));
+  occaKernelInfoAddDefine(info, "p_Nfp", occaUInt(Nfp));
+
+  // Add rank to the kernels as a workaround for occa cache issues of
+  // having multiple processes trying to use the same kernel source.
+  occaKernelInfoAddDefine(info, "p_RANK", occaInt(app->prefs->rank));
 
   // TODO build kernels
 
