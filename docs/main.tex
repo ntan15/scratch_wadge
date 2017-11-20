@@ -634,9 +634,13 @@ The first approach is to limit the conservative variable $\bm{u}$
 \]
 where $\Theta$ is some diagonal matrix with entries in $[0,1]$.  The choice of $\Theta$ is adaptively guided by the pointwise change in entropy between $S(\bm{u}_v)$ and $S(\bm{u})$.  We can use the fact that $S(\bm{u})$ is convex, such that
 \[
-S(\bm{u}) - S(\bm{u}_v) \geq \pd{S}{\bm{u}}(\bm{u}_v)^T (\bm{u}-\bm{u}_v) = \Pi_N\bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v).  
+\pd{S}{\bm{u}}(\bm{u}_v)^T (\bm{u}-\bm{u}_v) = \Pi_N\bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v) \leq S(\bm{u}) - S(\bm{u}_v).  
 \]
-We can examine the components of the RHS: if the mathematical entropy increases (i.e. $S(\bm{u}_v) > S(\bm{u})$, then some components will be negative, indicating what $\Theta$ should be.  \note{Todo: figure out proper scaling the diagonal elements of $\Theta$.}
+Similarly,
+\[
+S(\bm{u}) - S(\bm{u}_v) \leq \bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v).   
+\]
+We can examine the components of the RHS: if the mathematical entropy increases (i.e. $S(\bm{u}) \leq S(\bm{u}_v)$, then some components will be negative, indicating what $\Theta$ should be.  \note{Todo: figure out proper scaling the diagonal elements of $\Theta$.}  
 
 Another approach is to change the time-step size based on the difference between $\bm{u}$ and $\bm{u}_v$.  This would be similar to local time-stepping (high order interpolation of the numerical fluxes and multiple evaluations of )
 
@@ -664,7 +668,7 @@ The semi-discrete evolution equation is as follows
 \LRs{
 \begin{array}{cc}
 \bm{f}_{S}(\bm{u},\bm{u}_f) & \bm{f}_{S}(\bm{u},\bm{u}_f)\\
- \bm{f}_{S}(\bm{u},\bm{u}_f) &  \bm{f}_S(\bm{u}_f,\bm{u}_f)
+ \bm{f}_{S}(\bm{u},\bm{u}_f) &  \bm{f}_S(\bm{u}_f^+,\bm{u}_f)
 \end{array} 
 }\bm{1}}.
 \]

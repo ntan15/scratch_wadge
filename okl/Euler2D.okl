@@ -22,20 +22,20 @@
 #define rhoeV(V1,V2,V3,V4) pow((p_gamma-1.f)/pow(-V4,p_gamma),1.f/(p_gamma-1.f))*exp(-sV(V1,V2,V3,V4)/(p_gamma-1.f))
 
 // occa function
-  dfloat logmean(dfloat aL,dfloat aR){
-    const dfloat xi = aL/aR;
-    const dfloat f = (xi-1.f)/(xi+1.f);
-    const dfloat u = f*f;
-    const dfloat u2 = u*u;
+dfloat logmean(dfloat aL,dfloat aR){
+  const dfloat xi = aL/aR;
+  const dfloat f = (xi-1.f)/(xi+1.f);
+  const dfloat u = f*f;
+  const dfloat u2 = u*u;
   
-    dfloat F;
-    if (fabs(u)<1e-4){
-      F = 1 + u/3.f + u2/5.f + u2*u/7.f;
-    }else{
-      F = log(xi)/2.f/f;
-    }
-    return (aL+aR)/(2.f*F);
+  dfloat F;
+  if (fabs(u)<1e-4){
+    F = 1 + u/3.f + u2/5.f + u2*u/7.f;
+  }else{
+    F = log(xi)/2.f/f;
   }
+  return (aL+aR)/(2.f*F);
+}
 
 
 //  =============== RK kernels ===============
@@ -84,7 +84,7 @@ kernel void euler_vol_2d(const int K,
 
           // load geometric factors into shared memory
           int ii = i;
-          while(ii<p_Nvgeo){
+          while(ii < p_Nvgeo){
 	    sG[k2][ii] = vgeo[ii+p_Nvgeo*k];
 	    ii += p_Nq;
           }
@@ -701,6 +701,19 @@ kernel void euler_update_2d(const int K,
 
 
 // interp entropy vars -> conservation vars at face qpts (maybe also use for MPI?)
+kernel void test_kernel(const int K){
+  for(int k1=0; k1 < K; ++k1;outer0){
+    
+    shared dfloat var[10];
+    
+    for(int i = 0; i < 10; ++i; inner0){
+      int j = i + 10;
+      printf("on thread %d, j = %d\n",i,j);      
+    }
+  }
+}
+
+
 kernel void euler_face_2d(const int K,
 			  const dfloat * restrict Vfqf,
 			  dfloat * restrict Qf){

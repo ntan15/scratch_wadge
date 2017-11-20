@@ -1,5 +1,5 @@
 
-if     ELEM_TYPE == 0 then meshname = "meshes/hole_tri.msh"
+if     ELEM_TYPE == 0 then meshname = "meshes/tri2.msh"
 elseif ELEM_TYPE == 1 then meshname = "meshes/hole_tet.msh"
 else
   print("Unknown element type")
@@ -33,8 +33,8 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 3,
-    M = 6,
+    N = 1,
+    M = 2,
     sfc_partition = true
   },
   output = {
