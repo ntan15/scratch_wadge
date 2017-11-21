@@ -2820,7 +2820,7 @@ static void app_test(app_t *app)
 
   printf("Testing app...\n");
 
-  occaKernelRun(app->test, 10);
+  occaKernelRun(app->test, occaInt(10));
 }
 
 static void app_free(app_t *app)
