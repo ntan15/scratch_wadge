@@ -2607,7 +2607,7 @@ typedef struct app
   occaKernel surf;
   occaKernel update;
   occaKernel face;
-  occaKernel test;  
+  occaKernel test;
 } app_t;
 
 static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
@@ -2797,17 +2797,17 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 
   // TODO build kernels
 #if ELEM_TYPE == 0 // triangle
- 
+
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-					     "euler_vol_2d", info);
+                                             "euler_vol_2d", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-					      "euler_surf_2d", info);
+                                              "euler_surf_2d", info);
   app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-  						"euler_update_2d", info);  
+                                                "euler_update_2d", info);
   app->face = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-					      "euler_face_2d", info);
+                                              "euler_face_2d", info);
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-					      "test_kernel", info);
+                                              "test_kernel", info);
   printf("built kernels!\n");
 #else
 #endif
@@ -2815,13 +2815,12 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   return app;
 }
 
-static void app_test(app_t *app){
+static void app_test(app_t *app)
+{
 
   printf("Testing app...\n");
-  
-  occaKernelRun(app->test, 10);
-  
 
+  occaKernelRun(app->test, 10);
 }
 
 static void app_free(app_t *app)
@@ -2969,7 +2968,7 @@ int main(int argc, char *argv[])
   // run
   //
   app_test(app);
-  
+
   //
   // cleanup
   //
