@@ -632,15 +632,40 @@ The first approach is to limit the conservative variable $\bm{u}$
 \[
 \tilde{\bm{u}} = \bar{\bm{u}} + \Theta (\bm{u} - \bar{\bm{u}})
 \]
-where $\Theta$ is some diagonal matrix with entries in $[0,1]$.  The choice of $\Theta$ is adaptively guided by the pointwise change in entropy between $S(\bm{u}_v)$ and $S(\bm{u})$.  We can use the fact that $S(\bm{u})$ is convex, such that
+where $\Theta$ is some diagonal matrix with entries in $[0,1]$.  We want to ensure that $\rho, E-\frac{\rho u^2}{2} > 0$.  
+
+The entropy for the compressible Euler equations is 
 \[
-\pd{S}{\bm{u}}(\bm{u}_v)^T (\bm{u}-\bm{u}_v) = \Pi_N\bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v) \leq S(\bm{u}) - S(\bm{u}_v).  
+U(\bm{u}) = -\frac{\rho s}{\gamma-1},
 \]
-Similarly,
+where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy.  The entropy variables under this choice of entropy are then
+\begin{align*}
+v_1 = \frac{\gamma-s}{\gamma-1} - \frac{\rho u^2}{2p}, \qquad v_2 = \frac{\rho u}{\rho e}, \qquad v_3 = -\frac{\rho}{\rho e}.
+\end{align*}
+where the internal energy $\rho e = E - u^2/2$.
+
+The inverse mapping is given by 
 \[
-S(\bm{u}) - S(\bm{u}_v) \leq \bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v).   
+\rho = -(\rho e) v_3, \qquad m = (\rho e) v_2, \qquad E = (\rho e)\LRp{1 - \frac{v_2^2}{2 v_3}},
 \]
-We can examine the components of the RHS: if the mathematical entropy increases (i.e. $S(\bm{u}) \leq S(\bm{u}_v)$, then some components will be negative, indicating what $\Theta$ should be.  \note{Todo: figure out proper scaling the diagonal elements of $\Theta$.}  
+where $\rho e$ and $s$ in terms of the entropy variables are 
+\[
+\rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_3}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{v_2^2}{2v_3}.
+\]
+The mapping is invertible so long as $\rho, E-\frac{\rho u^2}{2} > 0$, which can be ensured using standard limiters.  However, we have to ensure also that $\rho(\Pi_N\bm{v}) > 0$ (similarly for internal energy).  This boils down to ensuring that $\Pi_N v_3(x) < 0$, which guarantees that $(\rho e) > 0$ as well.   
+
+It can be helpful to ensure a stronger condition, that $\Pi_N v_3(x) \leq \max_{x} v_3(x)$.  This guarantees a bound constraint on the conservative variables evaluated using the projected entropy variables.  
+
+
+%The choice of $\Theta$ is adaptively guided by the pointwise change in entropy between $S(\bm{u}_v)$ and $S(\bm{u})$.  We can use the fact that $S(\bm{u})$ is convex, such that
+%\[
+%\pd{S}{\bm{u}}(\bm{u}_v)^T (\bm{u}-\bm{u}_v) = \Pi_N\bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v) \leq S(\bm{u}) - S(\bm{u}_v).  
+%\]
+%Similarly,
+%\[
+%S(\bm{u}) - S(\bm{u}_v) \leq \bm{v}(\bm{u})^T (\bm{u}-\bm{u}_v).   
+%\]
+%We can examine the components of the RHS: if the mathematical entropy increases (i.e. $S(\bm{u}) \leq S(\bm{u}_v)$, then some components will be negative, indicating what $\Theta$ should be.  \note{Todo: figure out proper scaling the diagonal elements of $\Theta$.}  
 
 Another approach is to change the time-step size based on the difference between $\bm{u}$ and $\bm{u}_v$.  This would be similar to local time-stepping (high order interpolation of the numerical fluxes and multiple evaluations of )
 

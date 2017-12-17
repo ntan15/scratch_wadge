@@ -2599,7 +2599,7 @@ typedef struct app
   occaMemory VfPq;
   occaMemory Vfqf;
 
-  occaMemory Q, Qf, rhsQ, resQ;
+  occaMemory Q, Qf, rhsQf, rhsQ, resQ;
 
   occaKernelInfo info;
 
@@ -2751,6 +2751,9 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->resQ =
       device_malloc(app->device, sizeof(dfloat_t) * Nq * NFIELDS * E, NULL);
 
+  // rhsQf = temp storage
+  app->rhsQf = device_malloc(app->device,
+			     sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E, NULL);
   app->Qf = device_malloc(app->device,
                           sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E, NULL);
 
@@ -2798,14 +2801,15 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   // TODO build kernels
 #if ELEM_TYPE == 0 // triangle
 
+  printf("building kernels\n");
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                              "euler_vol_2d", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                               "euler_surf_2d", info);
   app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-                                                "euler_update_2d", info);
-  app->face = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-                                              "euler_face_2d", info);
+						"euler_update_2d", info);
+  //  app->face = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
+  //                                              "euler_face_2d", info);
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                               "test_kernel", info);
   printf("built kernels!\n");
@@ -2820,7 +2824,23 @@ static void app_test(app_t *app)
 
   printf("Testing app...\n");
 
-  occaKernelRun(app->test, occaInt(10));
+  //occaKernelRun(app->test, occaInt(app->hm->E));
+  occaKernelRun(app->vol,
+		occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
+		app->Drq, app->Dsq, app->VqLq, app->VfPq,
+		app->Q, app->Qf, app->rhsQ,app->rhsQf); 
+  occaKernelRun(app->surf,
+		occaInt(app->hm->E), app->vgeo, app->fgeo,
+		app->nrJ, app->nsJ,
+		app->mapPq, app->VqLq,
+		app->Qf, app->rhsQ, app->rhsQf);
+  occaKernelRun(app->update,
+		occaInt(app->hm->E), 
+		app->VqLq, app->VfPq,
+		occaFloat(1.f),occaFloat(1.f),occaFloat(1.f),
+		app->rhsQ, app->resQ,
+		app->Q, app->Qf);
+  
 }
 
 static void app_free(app_t *app)
@@ -2861,10 +2881,11 @@ static void app_free(app_t *app)
 
   // free kernels
 #if ELEM_TYPE == 0 // triangle
+  occaKernelFree(app->test);
   occaKernelFree(app->vol);
-  occaKernelFree(app->surf);
-  occaKernelFree(app->update);
-  occaKernelFree(app->face);
+  //  occaKernelFree(app->surf);
+  //  occaKernelFree(app->update);
+  //  occaKernelFree(app->face);
 #endif
 
   prefs_free(app->prefs);
