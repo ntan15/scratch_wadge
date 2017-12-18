@@ -439,7 +439,7 @@ kernel void euler_surf_2d(const int K, const dfloat *restrict vgeo,
           const dfloat lamP = sqrt(uP * uP + vP * vP) +
                               sqrt(p_gamma * pfun(rhoP, uP, vP, EP) / rhoP);
           const dfloat Lfc =
-              .25f * max(lamM, lamP); // local max wavespeed estimate
+	    .25f * max(lamM, lamP); // local max wavespeed estimate - assumes tau = 1
 
           // add in rhsQf contribution
           int id = i + k * p_Nfields * p_NfqNfaces;

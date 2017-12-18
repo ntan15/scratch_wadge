@@ -2573,6 +2573,11 @@ static host_mesh_t *partition(MPI_Comm comm, const host_mesh_t *om,
 // {{{ App
 typedef struct app
 {
+
+  double rk4a[5];
+  double rk4b[5];
+  double rk4c[6];  
+  
   prefs_t *prefs;
   occaDevice device;
   occaStream copy;
@@ -2697,12 +2702,31 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   const int Nvgeo = app->hops->Nvgeo;
   const int Nfgeo = app->hops->Nfgeo;
 
+  app->rk4a[0] =              0.0;
+  app->rk4a[1] =  -567301805773.0 / 1357537059087.0;
+  app->rk4a[2] = -2404267990393.0 / 2016746695238.0;
+  app->rk4a[3] = -3550918686646.0 / 2091501179385.0;
+  app->rk4a[4] = -1275806237668.0 /  842570457699.0;
+
+  app->rk4b[0] =  1432997174477.0 /  9575080441755.0;
+  app->rk4b[1] =  5161836677717.0 / 13612068292357.0;
+  app->rk4b[2] =  1720146321549.0 /  2090206949498.0;
+  app->rk4b[3] =  3134564353537.0 /  4481467310338.0;
+  app->rk4b[4] =  2277821191437.0 / 14882151754819.0;
+
+  app->rk4c[0] =              0.0;
+  app->rk4c[1] =  1432997174477.0 / 9575080441755.0;
+  app->rk4c[2] =  2526269341429.0 / 6820363962896.0;
+  app->rk4c[3] =  2006345519317.0 / 3224310063776.0;
+  app->rk4c[4] =  2802321613138.0 / 2924317926251.0;
+  app->rk4c[5] =              1.0;
+
   app->vgeo = device_malloc(app->device, sizeof(dfloat_t) * Nq * Nvgeo * E,
                             app->hops->vgeo);
   app->fgeo =
       device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nfgeo * E,
                     app->hops->fgeo);
-  app->Jq = device_malloc(app->device, sizeof(dfloat_t) * Nq * E, NULL);
+  app->Jq = device_malloc(app->device, sizeof(dfloat_t) * Nq * E, app->hops->Jq);
 
   app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
                              app->hops->mapPq);
@@ -2819,6 +2843,73 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   return app;
 }
 
+static double get_hmin(app_t *app){
+
+  const uintloc_t E = app->hm->E;
+  const int Nq = app->hops->Nq;
+  const int Nfq = app->hops->Nfq;
+  const int Nfaces = app->hops->Nfaces;
+  const int Nfgeo = app->hops->Nfgeo;
+
+
+  double hmin = 1e9;
+  for (uintloc_t e = 0; e < E; ++e){
+    double Jmin = 1e9;
+    for (int i = 0; i < Nq; ++i){
+      Jmin = fmin(Jmin, app->hops->Jq[i+Nq*e]);
+    }
+
+    double sJmax = 0.f;
+    for (int i = 0; i < Nfq*Nfaces; ++i){
+      sJmax = fmax(sJmax, app->hops->fgeo[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*Nfgeo]);
+    }
+    hmin = fmin(hmin, Jmin/sJmax);	
+  }
+  
+  return hmin;
+
+}
+
+static void rk_step(app_t *app, double rka, double rkb, double dt){
+
+  printf("running an RK step\n");
+  occaKernelRun(app->vol,
+		occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
+		app->Drq, app->Dsq, app->VqLq, app->VfPq,
+		app->Q, app->Qf, app->rhsQ,app->rhsQf); 
+  occaKernelRun(app->surf,
+		occaInt(app->hm->E), app->vgeo, app->fgeo,
+		app->nrJ, app->nsJ,
+		app->mapPq, app->VqLq,
+		app->Qf, app->rhsQ, app->rhsQf);
+  occaKernelRun(app->update,
+		occaInt(app->hm->E), 
+		app->VqLq, app->VfPq,
+		occaFloat((dfloat_t) rka),
+		occaFloat((dfloat_t) rkb),
+		occaFloat((dfloat_t) dt),		
+		app->rhsQ, app->resQ,
+		app->Q, app->Qf);
+
+}
+
+
+static void rk_run(app_t *app, double dt, double FinalTime){
+  printf("Running...\n");
+
+  int Nsteps = ceil(FinalTime/dt);
+  dt = (double) FinalTime/Nsteps;
+
+  for (int tstep = 0; tstep < Nsteps; ++tstep){
+    for (int INTRK = 0; INTRK < 5; ++INTRK){
+      const double rka = app->rk4a[INTRK];
+      const double rkb = app->rk4b[INTRK];
+      rk_step(app,rka,rkb,dt);
+    }
+  }
+}
+
+
 static void app_test(app_t *app)
 {
 
@@ -2840,6 +2931,8 @@ static void app_test(app_t *app)
 		occaFloat(1.f),occaFloat(1.f),occaFloat(1.f),
 		app->rhsQ, app->resQ,
 		app->Q, app->Qf);
+
+  printf("Done testing app\n");
   
 }
 
@@ -2988,7 +3081,149 @@ int main(int argc, char *argv[])
   //
   // run
   //
-  app_test(app);
+  //  app_test(app); // testing
+
+
+  // set initial condition
+  const uintloc_t E = app->hm->E;
+  const int Nq = app->hops->Nq;
+  const int Nfq = app->hops->Nfq;
+  const int Nfaces = app->hops->Nfaces;
+  dfloat_t * Q = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * E);
+  dfloat_t * Qvq = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * E);
+  dfloat_t * Qvf = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E);    
+  for (uintloc_t e = 0; e < E; ++e){
+    for (int i = 0; i < Nq; ++i){
+      dfloat_t x = app->hops->xyzq[i + 0*Nq + e*Nq*3];
+      dfloat_t y = app->hops->xyzq[i + 1*Nq + e*Nq*3];
+
+      dfloat_t rho = 1.0;
+      dfloat_t u = 0.0;
+      dfloat_t v = 0.0;
+      dfloat_t E = 1.0;            
+      
+      Q[i + 0*Nq + e*Nq*NFIELDS] = rho;
+      Q[i + 1*Nq + e*Nq*NFIELDS] = rho*u;
+      Q[i + 2*Nq + e*Nq*NFIELDS] = rho*v;
+      Q[i + 3*Nq + e*Nq*NFIELDS] = E;
+    }
+
+    // project Q onto polynomial basis
+    dfloat_t * Qe = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS);
+    for (int fld = 0; fld < NFIELDS; ++fld){
+      for (int i = 0; i < Nq; ++i){
+	dfloat_t qi = 0.0;
+	for (int j = 0; j < Nq; ++j){
+	  dfloat_t Qj = Q[j + fld*Nq + e*Nq*NFIELDS];  
+	  dfloat_t VqPq_ij = app->hops->VqPq[i + j*Nq];
+	  qi += VqPq_ij*Qj;
+	}
+	Qe[i + fld*Nq] = qi; 
+      }
+      // copy back projected init cond to global array
+      for (int i = 0; i < Nq; ++i){
+	Q[i + fld*Nq + e*Nq*NFIELDS] = Qe[i + fld*Nq];
+      }
+    }
+
+    // also initialize rhsQ, rhsQf to u(VqPq*v) and u(VfPq*v)
+    for (int i = 0; i < Nq; ++i){
+      dfloat_t rho = Q[i + 0*Nq + e*Nq*NFIELDS];
+      dfloat_t rhou = Q[i + 1*Nq + e*Nq*NFIELDS];
+      dfloat_t rhov = Q[i + 2*Nq + e*Nq*NFIELDS];
+      dfloat_t E = Q[i + 3*Nq + e*Nq*NFIELDS];      
+
+      // compute entropy vars
+      dfloat_t gamma = app->prefs->physical_gamma;
+      dfloat_t rhoe = E - .5 * (rhou * rhou + rhov * rhov) / rho;
+      dfloat_t s =   log((gamma - 1.0) * rhoe / pow(rho, gamma));
+      dfloat_t v1 = (-E+rhoe*(gamma+1.0 - s))/rhoe;
+      dfloat_t v2 = rhou/rhoe;
+      dfloat_t v3 = rhov/rhoe;      
+      dfloat_t v4 = (-rho)/rhoe;
+      
+      Qe[i + 0*Nq] = v1;
+      Qe[i + 1*Nq] = v2;
+      Qe[i + 2*Nq] = v3;
+      Qe[i + 3*Nq] = v4;            
+    }
+    // project entropy vars, eval at qpts    
+    for (int i = 0; i < Nq; ++i){
+      dfloat_t V1 = 0.0;
+      dfloat_t V2 = 0.0;
+      dfloat_t V3 = 0.0;
+      dfloat_t V4 = 0.0;      
+      for (int j = 0; j < Nq; ++j){
+	dfloat_t VqPq_ij = app->hops->VqPq[i + j*Nq];
+	V1 += VqPq_ij*Qe[j + 0*Nq];
+	V2 += VqPq_ij*Qe[j + 1*Nq];
+	V3 += VqPq_ij*Qe[j + 2*Nq];
+	V4 += VqPq_ij*Qe[j + 3*Nq];	
+      }
+      dfloat_t gamma = app->prefs->physical_gamma;
+      dfloat_t s = gamma - V1 + (V2 * V2 + V3 * V3) / (2.0 * V4);
+      dfloat_t rhoe = pow((gamma - 1.f) / pow(-V4, gamma), 1.f / (gamma - 1.f)) * exp(-s / (gamma - 1.f));
+      dfloat_t rho = rhoe * (-V4);
+      dfloat_t rhou = rhoe * (V2);
+      dfloat_t rhov = rhoe * (V3);
+      dfloat_t E = rhoe * (1 - (V2 * V2 + V3 * V3) / (2.f * V4));
+      Qvq[i + 0*Nq + e*Nq*NFIELDS] = rho;
+      Qvq[i + 1*Nq + e*Nq*NFIELDS] = rhou;
+      Qvq[i + 2*Nq + e*Nq*NFIELDS] = rhov;
+      Qvq[i + 3*Nq + e*Nq*NFIELDS] = E;      
+    }
+
+    // project entropy vars, eval at face qpts
+    for (int i = 0; i < Nfq*Nfaces; ++i){
+      dfloat_t V1 = 0.0;
+      dfloat_t V2 = 0.0;
+      dfloat_t V3 = 0.0;
+      dfloat_t V4 = 0.0;      
+      for (int j = 0; j < Nq; ++j){
+	dfloat_t VfPq_ij = app->hops->VfPq[i + j*Nfq*Nfaces];
+	V1 += VfPq_ij*Qe[j + 0*Nq];
+	V2 += VfPq_ij*Qe[j + 1*Nq];
+	V3 += VfPq_ij*Qe[j + 2*Nq];
+	V4 += VfPq_ij*Qe[j + 3*Nq];	
+      }
+
+      dfloat_t gamma = app->prefs->physical_gamma;
+
+      dfloat_t s = gamma - V1 + (V2 * V2 + V3 * V3) / (2.0 * V4);
+      dfloat_t rhoe = pow((gamma-1.0) / pow(-V4, gamma), 1.0/(gamma-1.0)) * exp(-s / (gamma-1.0));
+      dfloat_t rho = rhoe * (-V4);
+      dfloat_t rhou = rhoe * (V2);
+      dfloat_t rhov = rhoe * (V3);
+      dfloat_t E = rhoe * (1 - (V2 * V2 + V3 * V3) / (2.f * V4));
+      //      printf("V(%d) = %f, %f, %f, %f\n",i,V1,V2,V3,V4);
+      //      printf("U(%d) = %f, %f, %f, %f\n",i,rho,rhou,rhov,E);
+      
+      Qvf[i + 0*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = rho;
+      Qvf[i + 1*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = rhou;
+      Qvf[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = rhov;
+      Qvf[i + 3*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = E;      
+    }        
+  }
+
+  // TODO: set app->Q, Qf, rhsQ using Q, Qvq, Qvf
+  
+
+  // estimate time-step
+  double hmin = get_hmin(app);
+  double CFL = .25;
+  double N = (double) app->prefs->mesh_N;
+  double CN; // trace constant
+#if VDIM==2
+  CN = (N+1)*(N+2)/2;
+#else
+  CN = (N+1)*(N+3)/3;
+#endif  
+  double dt = CFL * hmin/CN;
+ 
+  printf("hmin = %f, dt = %f\n",hmin,dt);
+
+  double FinalTime = 1.0;  
+  rk_run(app, dt, FinalTime);
 
   //
   // cleanup

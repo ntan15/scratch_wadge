@@ -23,6 +23,7 @@ struct ref_elem_data
 struct geo_elem_data
 {
   MatrixXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ, nxJ, nyJ, nzJ, J, sJ;
+  MatrixXd xq,yq,zq;
 };
 
 typedef Matrix<uint32_t, Dynamic, Dynamic> MatrixXu32;

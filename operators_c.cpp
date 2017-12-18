@@ -112,8 +112,11 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   const int Nfaces = ref_data->Nfaces;
   const int Nq = ops->Nq;
   const int Nfq = ops->Nfq;
+
+  ops->xyzq =
+    (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * 3 * E);
   ops->vgeo =
-      (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * Nvgeo * E);
+    (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * Nvgeo * E);
   ops->fgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
                                              Nfgeo * Nfaces * E);
 
@@ -121,6 +124,10 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   {
     for (int n = 0; n < Nq; ++n)
     {
+      ops->xyzq[n + 0*Nq + e*Nq*3] = (dfloat_t)geo_data->xq(n,e);
+      ops->xyzq[n + 1*Nq + e*Nq*3] = (dfloat_t)geo_data->yq(n,e);
+      //ops->xyzq[n + 2*Nq + e*Nq*3] = (dfloat_t)geo_data->zq(n,e);      
+      
       ops->vgeo[e * Nq * Nvgeo + 0 * Nq + n] = (dfloat_t)geo_data->rxJ(n, e);
       ops->vgeo[e * Nq * Nvgeo + 1 * Nq + n] = (dfloat_t)geo_data->ryJ(n, e);
       ops->vgeo[e * Nq * Nvgeo + 2 * Nq + n] = (dfloat_t)geo_data->sxJ(n, e);

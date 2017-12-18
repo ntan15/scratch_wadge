@@ -407,6 +407,9 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
   sJ = sJ.array() * Jf.array();
 
   geo_elem_data *geo = new geo_elem_data;
+  geo->xq = ref_data->Vq*x;
+  geo->yq = ref_data->Vq*y;
+
   geo->rxJ = rxJ;
   geo->sxJ = sxJ;
   geo->ryJ = ryJ;
