@@ -112,6 +112,8 @@ ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq)
   VectorXd rq, sq, wq;
   tri_cubature(Nq, rq, sq, wq);
 
+  //cout << "rq = " << rq << endl;
+
   // nodal
   MatrixXd V = Vandermonde2D(N, r, s);
   MatrixXd Vr, Vs;

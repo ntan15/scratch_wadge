@@ -2696,6 +2696,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   const uintloc_t E = app->hm->E;
   const int Np = app->hops->Np;
   const int Nq = app->hops->Nq;
+  //printf("Nq = %d\n",Nq);
   const int Nfp = app->hops->Nfp;
   const int Nfq = app->hops->Nfq;
   const int Nfaces = app->hops->Nfaces;
@@ -2728,6 +2729,15 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                     app->hops->fgeo);
   app->Jq = device_malloc(app->device, sizeof(dfloat_t) * Nq * E, app->hops->Jq);
 
+  // modify mapPq for NFIELDS
+  for (uintloc_t e = 0; e < E; ++e){
+    for (int i = 0; i < Nfq*Nfaces; ++i){
+      int idP = app->hops->mapPq[i + e*Nfq*Nfaces];
+      int enbr = idP/(Nfq*Nfaces);
+      app->hops->mapPq[i + e*Nfq*Nfaces]  = (idP - Nfq*Nfaces*enbr) + enbr*Nfq*Nfaces*NFIELDS;
+    }
+  }
+  
   app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
                              app->hops->mapPq);
   app->Fmask = device_malloc(app->device, sizeof(uintloc_t) * Nfp * Nfaces,
@@ -2806,6 +2816,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                           occaDfloat(app->prefs->physical_gamma));
 
   occaKernelInfoAddDefine(info, "p_Np", occaUInt(Np));
+  
   occaKernelInfoAddDefine(info, "p_Nq", occaUInt(Nq));
   occaKernelInfoAddDefine(info, "p_NfqNfaces", occaUInt(Nfq * Nfaces));
   occaKernelInfoAddDefine(info, "p_NfpNfaces", occaUInt(Nfp * Nfaces));
@@ -2916,22 +2927,27 @@ static void app_test(app_t *app)
   printf("Testing app...\n");
 
   //occaKernelRun(app->test, occaInt(app->hm->E));
+  occaKernelRun(app->test,
+		occaInt(app->hm->E),app->Q, app->Qf, app->rhsQ, app->rhsQf);
   occaKernelRun(app->vol,
 		occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
 		app->Drq, app->Dsq, app->VqLq, app->VfPq,
 		app->Q, app->Qf, app->rhsQ,app->rhsQf); 
   occaKernelRun(app->surf,
-		occaInt(app->hm->E), app->vgeo, app->fgeo,
+		occaInt(app->hm->E),
+		app->vgeo, app->fgeo,
 		app->nrJ, app->nsJ,
-		app->mapPq, app->VqLq,
+		app->mapPq,
+		app->VqLq,
 		app->Qf, app->rhsQ, app->rhsQf);
+  /*  
   occaKernelRun(app->update,
 		occaInt(app->hm->E), 
 		app->VqLq, app->VfPq,
 		occaFloat(1.f),occaFloat(1.f),occaFloat(1.f),
 		app->rhsQ, app->resQ,
 		app->Q, app->Qf);
-
+  */
   printf("Done testing app\n");
   
 }
@@ -3081,8 +3097,6 @@ int main(int argc, char *argv[])
   //
   // run
   //
-  //  app_test(app); // testing
-
 
   // set initial condition
   const uintloc_t E = app->hm->E;
@@ -3194,20 +3208,25 @@ int main(int argc, char *argv[])
       dfloat_t rho = rhoe * (-V4);
       dfloat_t rhou = rhoe * (V2);
       dfloat_t rhov = rhoe * (V3);
-      dfloat_t E = rhoe * (1 - (V2 * V2 + V3 * V3) / (2.f * V4));
-      //      printf("V(%d) = %f, %f, %f, %f\n",i,V1,V2,V3,V4);
-      //      printf("U(%d) = %f, %f, %f, %f\n",i,rho,rhou,rhov,E);
-      
+      dfloat_t EE = rhoe * (1.f - (V2 * V2 + V3 * V3) / (2.f * V4));
+      //printf("V(%d) = %f, %f, %f, %f\n",i,V1,V2,V3,V4);
+      printf("Uv(%d) = %f, %f, %f, %f\n",i,rho,rhou,rhov,EE);
+
       Qvf[i + 0*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = rho;
       Qvf[i + 1*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = rhou;
       Qvf[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = rhov;
-      Qvf[i + 3*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = E;      
+      Qvf[i + 3*Nfq*Nfaces + e*Nfq*Nfaces*NFIELDS] = EE;      
     }        
   }
 
   // TODO: set app->Q, Qf, rhsQ using Q, Qvq, Qvf
+  occaCopyPtrToMem(app->Q, Q, Nq*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);
+  occaCopyPtrToMem(app->rhsQ, Qvq, Nq*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);
+  occaCopyPtrToMem(app->Qf, Qvf, Nfq*Nfaces*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);  
   
-
+  app_test(app); // testing
+  
+  /*
   // estimate time-step
   double hmin = get_hmin(app);
   double CFL = .25;
@@ -3224,7 +3243,8 @@ int main(int argc, char *argv[])
 
   double FinalTime = 1.0;  
   rk_run(app, dt, FinalTime);
-
+  */
+  
   //
   // cleanup
   //

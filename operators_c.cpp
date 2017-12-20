@@ -71,6 +71,8 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   ops->Np = (int)ref_data->r.size();
   ops->Nq = (int)ref_data->rq.size();
 
+  //printf("Num cubature points Nq = %d\n",ops->Nq);
+
   ops->Nfp = N + 1;
   ops->Nfq = (int)ref_data->ref_rfq.size();
 
@@ -135,6 +137,14 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
     }
   }
 
+  /*
+  for (uintloc_t e = 0; e < E; ++e){
+    for (int n = 0; n < Nq*Nvgeo; ++n){
+      printf("vgeo[%d] = %f\n",n,ops->vgeo[n + e*Nq*Nvgeo]);
+    }
+  }
+  */
+
   for (uintloc_t e = 0; e < E; ++e)
   {
     for (int n = 0; n < Nfq * Nfaces; ++n)
@@ -151,6 +161,20 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   ops->Jq = to_c(geo_data->J);
 
   ops->mapPq = to_c(map_data->mapPq);
+
+  // JC: FIX LATER
+  ops->mapPq[0] = 7;
+  ops->mapPq[1] = 6;
+  ops->mapPq[2] = 9;
+  ops->mapPq[3] = 8;
+  ops->mapPq[6] = 1;
+  ops->mapPq[7] = 0;
+  ops->mapPq[8] = 3;
+  ops->mapPq[9] = 2;
+
+  //  for(int i = 0; i < Nfq*Nfaces*E; ++i){
+  //    printf("mapPq(%d) = %d\n",i,ops->mapPq[i]);
+  //  }
   ops->Fmask = to_c(map_data->fmask);
 
   delete ref_data;
