@@ -2940,14 +2940,13 @@ static void app_test(app_t *app)
 		app->mapPq,
 		app->VqLq,
 		app->Qf, app->rhsQ, app->rhsQf);
-  /*  
   occaKernelRun(app->update,
 		occaInt(app->hm->E), 
-		app->VqLq, app->VfPq,
+		app->VqPq, app->VfPq,
 		occaFloat(1.f),occaFloat(1.f),occaFloat(1.f),
 		app->rhsQ, app->resQ,
 		app->Q, app->Qf);
-  */
+
   printf("Done testing app\n");
   
 }
@@ -3105,7 +3104,15 @@ int main(int argc, char *argv[])
   const int Nfaces = app->hops->Nfaces;
   dfloat_t * Q = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * E);
   dfloat_t * Qvq = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * E);
-  dfloat_t * Qvf = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E);    
+  dfloat_t * Qvf = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E);
+  dfloat_t * resQ = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * E);
+  for (uintloc_t e = 0; e < E; ++e){
+    for (int fld = 0; fld < NFIELDS; ++fld){
+      for (int i = 0; i < Nq; ++i){
+	resQ[i + fld*Nq + e*Nq*NFIELDS] = 0.f;
+      }
+    }
+  }      
   for (uintloc_t e = 0; e < E; ++e){
     for (int i = 0; i < Nq; ++i){
       dfloat_t x = app->hops->xyzq[i + 0*Nq + e*Nq*3];
@@ -3222,7 +3229,8 @@ int main(int argc, char *argv[])
   // TODO: set app->Q, Qf, rhsQ using Q, Qvq, Qvf
   occaCopyPtrToMem(app->Q, Q, Nq*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);
   occaCopyPtrToMem(app->rhsQ, Qvq, Nq*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);
-  occaCopyPtrToMem(app->Qf, Qvf, Nfq*Nfaces*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);  
+  occaCopyPtrToMem(app->Qf, Qvf, Nfq*Nfaces*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);
+  occaCopyPtrToMem(app->resQ, resQ, Nq*NFIELDS*E*sizeof(dfloat_t),occaNoOffset);  
   
   app_test(app); // testing
   
