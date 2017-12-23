@@ -112,7 +112,7 @@ ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq)
   VectorXd rq, sq, wq;
   tri_cubature(Nq, rq, sq, wq);
 
-  //cout << "rq = " << rq << endl;
+  // cout << "rq = " << rq << endl;
 
   // nodal
   MatrixXd V = Vandermonde2D(N, r, s);
@@ -349,6 +349,7 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
   VectorXd y = s + a / 2.0 * ds;
 #else
   // TODO double check the order here
+  // a b c, a c b, c a b,
   MatrixXd vxa = EToVX.row(0);
   MatrixXd vya = EToVX.row(1);
 
@@ -409,8 +410,11 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
   sJ = sJ.array() * Jf.array();
 
   geo_elem_data *geo = new geo_elem_data;
-  geo->xq = ref_data->Vq*x;
-  geo->yq = ref_data->Vq*y;
+  geo->xq = ref_data->Vq * x;
+  geo->yq = ref_data->Vq * y;
+
+  geo->xf = ref_data->Vfq * x;
+  geo->yf = ref_data->Vfq * y;
 
   geo->rxJ = rxJ;
   geo->sxJ = sxJ;

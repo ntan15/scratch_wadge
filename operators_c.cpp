@@ -8,14 +8,22 @@ using namespace std;
 static dfloat_t *to_c(VectorXd &v)
 {
   dfloat_t *vdata = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * v.size());
+#if USE_DFLOAT_DOUBLE==1
+  Eigen::Map<Eigen::VectorXd>(vdata, v.size()) = v.cast<dfloat_t>();
+#else
   Eigen::Map<Eigen::VectorXf>(vdata, v.size()) = v.cast<dfloat_t>();
+#endif
   return vdata;
 }
 
 static dfloat_t *to_c(MatrixXd &m)
 {
   dfloat_t *mdata = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * m.size());
+#if USE_DFLOAT_DOUBLE==1
+  Eigen::Map<Eigen::MatrixXd>(mdata, m.rows(), m.cols()) = m.cast<dfloat_t>();
+#else
   Eigen::Map<Eigen::MatrixXf>(mdata, m.rows(), m.cols()) = m.cast<dfloat_t>();
+#endif
   return mdata;
 }
 
@@ -117,6 +125,8 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
 
   ops->xyzq =
     (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * 3 * E);
+  ops->xyzf =
+    (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq*ops->Nfaces * 3 * E);
   ops->vgeo =
     (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * Nvgeo * E);
   ops->fgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
@@ -135,6 +145,11 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
       ops->vgeo[e * Nq * Nvgeo + 2 * Nq + n] = (dfloat_t)geo_data->sxJ(n, e);
       ops->vgeo[e * Nq * Nvgeo + 3 * Nq + n] = (dfloat_t)geo_data->syJ(n, e);
     }
+
+    for (int n = 0; n < Nfq*Nfaces;++n){
+      ops->xyzf[n + 0*Nfq*Nfaces + e*Nfq*Nfaces*3] = (dfloat_t)geo_data->xf(n,e);
+      ops->xyzf[n + 1*Nfq*Nfaces + e*Nfq*Nfaces*3] = (dfloat_t)geo_data->yf(n,e);      
+    }
   }
 
   /*
@@ -144,6 +159,7 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
     }
   }
   */
+  //cout << "sJ = " << endl << geo_data->sJ << endl;
 
   for (uintloc_t e = 0; e < E; ++e)
   {
@@ -159,10 +175,10 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   }
 
   ops->Jq = to_c(geo_data->J);
-
   ops->mapPq = to_c(map_data->mapPq);
-
-  // JC: FIX LATER
+  
+  /*
+  // JC: FIX LATER - only valid for tri2.msh
   ops->mapPq[0] = 7;
   ops->mapPq[1] = 6;
   ops->mapPq[2] = 9;
@@ -170,8 +186,9 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   ops->mapPq[6] = 1;
   ops->mapPq[7] = 0;
   ops->mapPq[8] = 3;
-  ops->mapPq[9] = 2;
-
+  ops->mapPq[9] = 2;  
+  */
+  
   //  for(int i = 0; i < Nfq*Nfaces*E; ++i){
   //    printf("mapPq(%d) = %d\n",i,ops->mapPq[i]);
   //  }

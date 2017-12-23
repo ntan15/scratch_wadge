@@ -24,7 +24,8 @@ typedef struct
   int Nfgeo;
   int Nfaces;
 
-  dfloat_t *xyzq; // volume quad points (initialize sol)
+  dfloat_t *xyzq; // volume quad points (to initialize sol)
+  dfloat_t *xyzf; // surface quad points 
   dfloat_t *vgeo; // volume  geometric factors
   dfloat_t *fgeo; // face    geometric factors
   dfloat_t *Jq;

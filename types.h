@@ -30,6 +30,7 @@ typedef uint64_t uintglo_t;
 #define UINTGLO_PRI PRIu64
 #define UINTGLO_SCN SCNu64
 
+#define USE_DFLOAT_DOUBLE 1
 #ifdef USE_DFLOAT_DOUBLE
 typedef double dfloat_t;
 #define occaDfloat occaDouble
@@ -39,6 +40,9 @@ typedef double dfloat_t;
 #define DFLOAT_MPI MPI_DOUBLE
 #define DFLOAT_SQRT sqrt
 #define DFLOAT_STRTOD strtod
+#define POWDF pow
+#define LOGDF log
+#define EXPDF exp
 #else
 typedef float dfloat_t;
 #define occaDfloat occaFloat
@@ -48,6 +52,9 @@ typedef float dfloat_t;
 #define DFLOAT_MPI MPI_FLOAT
 #define DFLOAT_SQRT sqrtf
 #define DFLOAT_STRTOD strtof
+#define POWDF powf
+#define LOGDF logf
+#define EXPDF expf
 #endif
 
 #endif
