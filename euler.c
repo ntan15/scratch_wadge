@@ -2765,7 +2765,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->VqLq = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nq,
                             app->hops->VqLq);
   app->VqPq =
-      device_malloc(app->device, sizeof(dfloat_t) * Np * Nq, app->hops->VqPq);
+      device_malloc(app->device, sizeof(dfloat_t) * Nq * Nq, app->hops->VqPq);
   app->VfPq = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nq,
                             app->hops->VfPq);
   app->Vfqf =
@@ -3028,20 +3028,23 @@ static void euler_vortex(app_t *app, dfloat_t x, dfloat_t y, dfloat_t t,
 
 static void rk_step(app_t *app, double rka, double rkb, double dt)
 {
-
+  
 #if 1
   occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
                 app->Drq, app->Dsq, app->VqLq, app->VfPq, app->Q, app->Qf,
                 app->rhsQ, app->rhsQf);
+  
 #endif
 #if 1
   occaKernelRun(app->surf, occaInt(app->hm->E), app->vgeo, app->fgeo, app->nrJ,
 		app->nsJ, app->mapPq, app->VqLq, app->Qf, app->rhsQf,
 		app->rhsQ);
+
 #endif
   occaKernelRun(app->update, occaInt(app->hm->E), app->Jq, app->VqPq, app->VfPq,
                 occaDfloat((dfloat_t)rka), occaDfloat((dfloat_t)rkb),
                 occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q, app->Qf);
+  
 }
 
 static void rk_run(app_t *app, double dt, double FinalTime)
@@ -3075,22 +3078,8 @@ static void app_test(app_t *app)
 
   printf("Testing app...\n");
 
-  // occaKernelRun(app->test, occaInt(app->hm->E));
   occaKernelRun(app->test, occaInt(app->hm->E), app->Q, app->Qf, app->rhsQ,
                 app->rhsQf);
-  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
-                app->Drq, app->Dsq, app->VqLq, app->VfPq, app->Q, app->Qf,
-                app->rhsQ, app->rhsQf);
-  occaKernelRun(app->surf, occaInt(app->hm->E), app->vgeo, app->fgeo, app->nrJ,
-                app->nsJ, app->mapPq, app->VqLq, app->Qf, app->rhsQ,
-                app->rhsQf);
-  occaKernelRun(app->update, occaInt(app->hm->E), app->Jq, app->VqPq, app->VfPq,
-                occaDfloat(1.0),occaDfloat(1.0),occaDfloat(1.0),
-		app->rhsQ, app->resQ, app->Q, app->Qf);
-
-  
-
-  printf("Done testing app\n");
 }
 
 static void app_free(app_t *app)
@@ -3281,14 +3270,15 @@ int main(int argc, char *argv[])
       dfloat_t x = app->hops->xyzq[i + 0 * Nq + e * Nq * 3];
       dfloat_t y = app->hops->xyzq[i + 1 * Nq + e * Nq * 3];
 
-      // vortex solution
+      // const sol for testing
       dfloat_t rho = 1.0;
       dfloat_t rhou = 2.0;
       dfloat_t rhov = 5.0;
       dfloat_t E = 1.0 + .5f*(rhou*rhou+rhov*rhov)/rho;
 
+      // vortex solution
       // start at time t = 0
-      //euler_vortex(app, x, y, 0.0, &rho, &rhou, &rhov, &E);
+      euler_vortex(app, x, y, 0.0, &rho, &rhou, &rhov, &E);
 
       Q[i + 0 * Nq + e * Nq * NFIELDS] = rho;
       Q[i + 1 * Nq + e * Nq * NFIELDS] = rhou;
@@ -3352,7 +3342,7 @@ int main(int argc, char *argv[])
       }
       dfloat_t rho, rhou, rhov, E;
       UV(app, V1, V2, V3, V4, &rho, &rhou, &rhov, &E);
-      printf("initalized entropy-projected rho,rhou,rhov,E(%d,%d) = %f, %f, %f, %f\n",i,e,rho,rhou,rhov,E);
+      //printf("initalized entropy-projected rho,rhou,rhov,E(%d,%d) = %f, %f, %f, %f\n",i,e,rho,rhou,rhov,E);
 
       //rho = 0.0; rhou = 0.0; rhov = 0.0; E = 0.0;
       Qvq[i + 0 * Nq + e * Nq * NFIELDS] = rho;
@@ -3378,7 +3368,7 @@ int main(int argc, char *argv[])
 
       dfloat_t rho, rhou, rhov, E;
       UV(app, V1, V2, V3, V4, &rho, &rhou, &rhov, &E);
-      printf("initalized entropy-projected rhof,rhouf,rhovf,Ef(%d,%d) = %f, %f, %f, %f\n",i,e,rho,rhou,rhov,E);
+      //printf("initalized entropy-projected rhof,rhouf,rhovf,Ef(%d,%d) = %f, %f, %f, %f\n",i,e,rho,rhou,rhov,E);
 
       Qvf[i + 0 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = rho;
       Qvf[i + 1 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = rhou;
@@ -3411,6 +3401,7 @@ int main(int argc, char *argv[])
     }
   }
   printf("max initial err = %f\n", err0);
+  return 0;
 #endif
   
   // TODO: set app->Q, Qf, rhsQ using Q, Qvq, Qvf
@@ -3427,7 +3418,7 @@ int main(int argc, char *argv[])
 
   // estimate time-step
   double hmin = get_hmin(app);
-  double CFL = .125;
+  double CFL = .5;
   double N = (double) app->prefs->mesh_N;
   double CN; // trace constant
 #if VDIM == 2
@@ -3436,19 +3427,22 @@ int main(int argc, char *argv[])
   CN = (N + 1) * (N + 3) / 3;
 #endif
   double dt = CFL * hmin / CN;
-  double FinalTime = 1.0;//20*dt;
+  double FinalTime = .5;//20*dt;
   printf("hmin = %f, dt = %f, Final Time = %f\n", hmin, dt,FinalTime);
 
-  //app_test(app);
-#if 1
+#if 0
+  //  app_test(app);
+  const double rka = app->rk4a[0];
+  const double rkb = app->rk4b[0];  
+  rk_step(app,rka,rkb,dt);
+#else
   printf("Running...\n");
   rk_run(app, dt, FinalTime);
   printf("At end of simulation, sol is:\n");
   app_test(app);
 #endif
   
-
-#if 0
+#if 1
   occaCopyMemToPtr(Q, app->Q, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
   dfloat_t err = 0.0;
@@ -3468,15 +3462,22 @@ int main(int argc, char *argv[])
       dfloat_t rhoex, rhouex, rhovex, Eex;
       euler_vortex(app, x, y, FinalTime, &rhoex, &rhouex, &rhovex, &Eex);
 
-      err = fmax(err, fabs(rho - rhoex));
+      dfloat_t wJq = (app->hops->wq[i])*(app->hops->Jq[i+e*Nq]);
+      dfloat_t err1 = (rho - rhoex);
+      dfloat_t err2 = (rhou - rhouex);
+      dfloat_t err3 = (rhov - rhovex);
+      dfloat_t err4 = (E - Eex);
+      //      printf("wJq, err = %f, %f, %f, %f, %f\n",wJq,err1,err2,err3,err4);
+      //printf("wJq, sol = %f, %f, %f, %f, %f\n",wJq,rho,rhou,rhov,E);
+      err += (err1*err1 + err2*err2 + err3*err3 + err4*err4)*wJq;
 
-      printf("xq(%d,%d) = %f; yq(%d,%d) = %f; ", i + 1, e + 1, x, i + 1, e + 1,
-             y);
-      printf("rho(%d,%d) = %f; rhoex(%d,%d) = %f;\n", i + 1, e + 1, rho, i + 1,
-             e + 1, rhoex);
+      //      printf("xq(%d,%d) = %f; yq(%d,%d) = %f; ", i + 1, e + 1, x, i + 1, e + 1,
+      //             y);
+      //      printf("rho(%d,%d) = %f; rhoex(%d,%d) = %f;\n", i + 1, e + 1, rho, i + 1,
+      //             e + 1, rhoex);
     }
   }
-  printf("max err = %f\n", err);
+  printf("max err = %f\n", sqrt(err));
 #endif
   
   //

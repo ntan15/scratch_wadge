@@ -70,7 +70,7 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   MatrixXd VfPq = Vfq * Pq;
   MatrixXd Drq = Vq * Dr * Pq - .5 * Vq * Lq * nrJ.asDiagonal() * Vfq * Pq;
   MatrixXd Dsq = Vq * Ds * Pq - .5 * Vq * Lq * nsJ.asDiagonal() * Vfq * Pq;
-
+  
   ops->dim = 2;
 
   ops->N = N;
@@ -88,6 +88,7 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   ops->Nvgeo = 4;
   ops->Nfgeo = 3;
 
+  ops->wq  = to_c(wq);      
   ops->nrJ = to_c(nrJ);
   ops->nsJ = to_c(nsJ);
 
@@ -254,6 +255,7 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   ops->Nvgeo = 9;
   ops->Nfgeo = 4;
 
+  ops->wq  = to_c(wq);  
   ops->nrJ = to_c(nrJ);
   ops->nsJ = to_c(nsJ);
   ops->ntJ = to_c(ntJ);

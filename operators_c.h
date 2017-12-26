@@ -33,6 +33,7 @@ typedef struct
   uintloc_t *mapPq; // mapping of face neighbor integration points
   uintloc_t *Fmask; // extract face dofs
 
+  dfloat_t *wq; // volume quadrature weights  
   dfloat_t *nrJ, *nsJ, *ntJ; // ref elem normals
   dfloat_t *Drq, *Dsq, *Dtq; // ref elem derivative operators
 

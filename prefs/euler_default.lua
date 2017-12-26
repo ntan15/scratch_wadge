@@ -33,8 +33,8 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 2,
-    M = 4,
+    N = 3,
+    M = 6,
     sfc_partition = true
   },
   output = {
