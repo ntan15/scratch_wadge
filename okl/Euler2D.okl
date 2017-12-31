@@ -1,4 +1,4 @@
-#define USE_DOUBLE 1 // JC: FIX and add this to kernel initialization
+#define USE_DOUBLE 0 // JC: FIX and add this to kernel initialization
 
 #if USE_DOUBLE
 #define dfloat double
@@ -437,10 +437,9 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
 }
 
 // split part of kernel
-kernel void euler_surf_2d(const int K, const dfloat *restrict vgeo,
+kernel void euler_surf_2d(const int K, 
                           const dfloat *restrict fgeo,
-                          const dfloat *restrict nrJ,
-                          const dfloat *restrict nsJ, const int *restrict mapPq,
+			  const int *restrict mapPq,
                           const dfloat *restrict VqLq,
                           const dfloat *restrict Qf,			 
                           const dfloat *restrict rhsQf,

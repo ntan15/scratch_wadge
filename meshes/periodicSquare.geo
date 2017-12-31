@@ -18,5 +18,5 @@ Line(4) = {4, 1};
 Line Loop(1) = {4, 1, 2, 3};
 Plane Surface(1) = {1};
     
-//Periodic Line {2} = {-4};
-//Periodic Line {1} = {-3};
+Periodic Line {2} = {-4};
+Periodic Line {1} = {-3};
