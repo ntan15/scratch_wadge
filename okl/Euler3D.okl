@@ -1,0 +1,907 @@
+#define USE_DOUBLE 0 // JC: FIX and add this to kernel initialization
+
+#if USE_DOUBLE
+#define dfloat double
+#define dfloat4 double4
+#define LOGDF log
+#define POWDF pow
+#define EXPDF exp
+#else
+#define dfloat float
+#define dfloat4 float4
+#define LOGDF logf
+#define POWDF powf
+#define EXPDF expf
+#endif
+
+// helpful functions
+#define avg(a, b) .5f * (a + b)
+#define pfun(rho, u, v, w, E) ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v + w*w)))
+#define beta(rho, u, v, w, E) (rho / (2.f * pfun(rho, u, v, w, E))) // inverse temp
+
+// map conservation to entropy vars
+#define pfun(rho, u, v, w, E) ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v + w*w)))
+#define rhoeU(rho, rhou, rhov, rhow, E) (E - .5f * (rhou * rhou + rhov * rhov + rhow*rhow) / rho)
+#define sU(rho, rhou, rhov, rhow, E)					\
+  (LOGDF((p_gamma - 1.f) * rhoeU(rho, rhou, rhov, rhow, E) / POWDF(rho, p_gamma)))
+
+// map entropy to conservation vars
+#define sV(V1, V2, V3, V4, V5) (p_gamma - V1 + (V2 * V2 + V3 * V3 + V4*V4) / (2.f * V5))
+#define rhoeV(V1, V2, V3, V4, V5)						\
+  (POWDF((p_gamma - 1.f) / POWDF(-V5, p_gamma), 1.f / (p_gamma - 1.f)) *	\
+   EXPDF(-sV(V1, V2, V3, V4, V5) / (p_gamma - 1.f)))
+
+// occa function
+dfloat logmean(dfloat aL, dfloat aR)
+{
+  const dfloat xi = aL / aR;
+  const dfloat f = (xi - 1.f) / (xi + 1.f);
+  const dfloat u = f * f;
+  const dfloat u2 = u * u;
+
+  dfloat F = LOGDF(xi) / 2.f / f;
+  if (fabs(u) < 1.fe-3)
+  {
+    F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f + u2 * u2 / 9.f;
+  }
+  return (aL + aR) / (2.f * F);
+}
+
+void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat rhow, dfloat E,
+	dfloat &V1, dfloat &V2, dfloat &V3, dfloat &V4, dfloat &V5)
+{
+
+  const dfloat rhoe = rhoeU(rho, rhou, rhov, rhow, E);
+  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, rhow, E))) / rhoe;
+  V2 = rhou / rhoe;
+  V3 = rhov / rhoe;
+  V4 = rhow / rhoe;  
+  V5 = (-rho) / rhoe;
+}
+
+void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4, dfloat V5,
+	dfloat &rho, dfloat &rhou, dfloat &rhov, dfloat &rhow, dfloat &E)
+{
+
+  const dfloat rhoe = rhoeV(V1, V2, V3, V4, V5);
+  rho = rhoe * (-V5);
+  rhou = rhoe * (V2);
+  rhov = rhoe * (V3);
+  rhow = rhoe * (V4);  
+  E = rhoe * (1 - (V2 * V2 + V3 * V3 +V4*V4) / (2.f * V5));
+}
+
+void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
+                  dfloat v_i, dfloat v_j, dfloat w_i, dfloat w_j,
+		  dfloat E_i, dfloat E_j, dfloat beta_i, dfloat beta_j,
+		  dfloat &FxS1, dfloat &FyS1, dfloat &FzS1,
+		  dfloat &FxS2, dfloat &FyS2, dfloat &FzS2,
+		  dfloat &FxS3, dfloat &FyS3, dfloat &FzS3,
+		  dfloat &FxS4, dfloat &FyS4, dfloat &FzS4,
+		  dfloat &FxS5, dfloat &FyS5, dfloat &FzS5)
+{
+
+  const dfloat rholog = logmean(rho_i, rho_j);
+  const dfloat rhoavg = avg(rho_i, rho_j);
+  const dfloat uavg = avg(u_i, u_j);
+  const dfloat vavg = avg(v_i, v_j);
+  const dfloat vavg = avg(w_i, w_j);  
+  const dfloat vnavg = 2.f * (uavg * uavg + vavg * vavg + wavg*wavg) -
+                       (avg(u_i * u_i, u_j * u_j) + avg(v_i * v_i, v_j * v_j) + avg(w_i * w_i, w_j * w_j));
+  const dfloat beta_avg = avg(beta_i, beta_j);
+
+  const dfloat pa = rhoavg / (2.f * beta_avg);
+  const dfloat f4aux =
+      rholog / (2.f * (p_gamma - 1.f) * logmean(beta_i, beta_j)) + pa +
+      .5f * rholog * vnavg;
+
+  FxS1 = rholog * uavg;
+  FyS1 = rholog * vavg;
+  FzS1 = rholog * wavg;  
+
+  FxS2 = FxS1 * uavg + pa;
+  FyS2 = FyS1 * uavg;
+  FzS2 = FzS1 * uavg;  
+
+  FxS3 = FxS1 * vavg;
+  FyS3 = FyS1 * vavg + pa;
+  FzS3 = FzS1 * vavg;  
+
+  FxS4 = FxS1 * wavg;
+  FyS4 = FyS1 * wavg;
+  FzS4 = FzS1 * wavg + pa;  
+
+  FxS5 = f4aux * uavg;
+  FyS5 = f4aux * vavg;
+  FzS5 = f4aux * wavg;  
+}
+
+kernel void test_kernel(const int K, dfloat *restrict Q, dfloat *restrict Qf,
+                        dfloat *restrict rhsQ, dfloat *restrict rhsQf)
+{
+
+  for (int k = 0; k < K; ++k; outer0)
+  {
+    for (int i = 0; i < p_T; ++i; inner0)
+    {
+      if (i < p_Nq)
+      {
+        dfloat rho = Q[i + 0 * p_Nq + k * p_Nq * p_Nfields];
+        dfloat rhou = Q[i + 1 * p_Nq + k * p_Nq * p_Nfields];
+        dfloat rhov = Q[i + 2 * p_Nq + k * p_Nq * p_Nfields];
+        dfloat rhow = Q[i + 3 * p_Nq + k * p_Nq * p_Nfields];	
+        dfloat E = Q[i + 4 * p_Nq + k * p_Nq * p_Nfields];
+	if (k==0 & i==0){
+	  printf("Q(%d) = %f, %f, %f, %f, %f\n", i, rho, rhou, rhov, rhow, E);
+	}
+      }
+    } // inner0
+  }
+  barrier(globalMemFence);
+
+  for (int k = 0; k < K; ++k; outer0)
+  {
+    for (int i = 0; i < p_T; ++i; inner0)
+    {
+      if (i < p_Nq)
+      {
+        dfloat rho = rhsQ[i + 0 * p_Nq + k * p_Nq * p_Nfields];
+        dfloat rhou = rhsQ[i + 1 * p_Nq + k * p_Nq * p_Nfields];
+        dfloat rhov = rhsQ[i + 2 * p_Nq + k * p_Nq * p_Nfields];
+        dfloat rhow = rhsQ[i + 3 * p_Nq + k * p_Nq * p_Nfields];	
+        dfloat E = rhsQ[i + 4 * p_Nq + k * p_Nq * p_Nfields];
+        if (k==0 & i==0){
+	  printf("Qv(%d) = %f, %f, %f, %f, %f\n", i, rho, rhou, rhov, rhow,E);
+	}
+      }
+    } // inner0
+  }
+  barrier(globalMemFence);
+
+  for (int k = 0; k < K; ++k; outer0)
+  {
+    for (int i = 0; i < p_T; ++i; inner0)
+    {
+      if (i < p_NfqNfaces)
+      {
+        int id = i + k * p_NfqNfaces * p_Nfields;
+        int offset = p_NfqNfaces;
+        dfloat rho = Qf[id + 0 * offset];
+        dfloat rhou = Qf[id + 1 * offset];
+        dfloat rhov = Qf[id + 2 * offset];
+        dfloat rhow = Qf[id + 3 * offset];	
+        dfloat E = Qf[id + 4 * offset];
+	if (k==0 & i==0){
+	  printf("Qvf(%d) = %f, %f, %f, %f, %f\n", i, rho, rhou, rhov, rhow, E);
+	}
+      }
+    } // inner0
+  }   // outer0
+}
+
+//  =============== RK kernels ===============
+
+kernel void euler_vol_3d(const int K, const dfloat *restrict vgeo,
+                         const dfloat *restrict nrJ, // ref elem normals
+                         const dfloat *restrict nsJ, //
+                         const dfloat *restrict ntJ, //			 
+                         const dfloat *restrict Drq,
+			 const dfloat *restrict Dsq,
+			 const dfloat *restrict Dtq,			 
+                         const dfloat *restrict VqLq,
+                         const dfloat *restrict VfPq,
+			 const dfloat *restrict Q,
+                         const dfloat *restrict Qf,
+			 dfloat *restrict rhsQ,
+                         dfloat *restrict rhsQf)
+{
+
+  // loop over elements
+  for (int k1 = 0; k1 < (K + p_KblkV - 1) / p_KblkV; ++k1; outer0)
+  {
+
+    shared dfloat srho[p_KblkV][p_Nq];
+    shared dfloat srhou[p_KblkV][p_Nq];
+    shared dfloat srhov[p_KblkV][p_Nq];
+    shared dfloat srhow[p_KblkV][p_Nq];    
+    shared dfloat sE[p_KblkV][p_Nq];
+
+    // surface quadrature values
+    // can reduce smem usage w/multiple reads and reusing?
+    shared dfloat srhof[p_KblkV][p_NfqNfaces];
+    shared dfloat srhouf[p_KblkV][p_NfqNfaces];
+    shared dfloat srhovf[p_KblkV][p_NfqNfaces];
+    shared dfloat srhowf[p_KblkV][p_NfqNfaces];    
+    shared dfloat sEf[p_KblkV][p_NfqNfaces];
+
+    // geofacs
+    shared dfloat sG[p_KblkV][p_Nvgeo];
+    shared dfloat s_nrJ[p_Nfaces];
+    shared dfloat s_nsJ[p_Nfaces];
+    shared dfloat s_ntJ[p_Nfaces];    
+
+    for (int k2 = 0; k2 < p_KblkV; ++k2; inner1)
+    {
+      for (int i = 0; i < p_T; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkV + k2;
+
+        if (k < K)
+        {
+
+          // load geometric factors into shared memory
+          int ii = i;
+          while (ii < p_Nvgeo)
+          {
+            // pick out first geofac in Nq list
+            sG[k2][ii] = vgeo[ii * p_Nq + k * p_Nq * p_Nvgeo];
+            ii += p_T;
+          }
+
+          // load reference normals
+          if (i < p_Nfaces)
+          {
+            s_nrJ[i] = nrJ[i * p_Nfq];
+            s_nsJ[i] = nsJ[i * p_Nfq];
+            s_ntJ[i] = ntJ[i * p_Nfq];	    
+          }
+
+          // load p into shared memory for element k
+          // using rhsQ to store u(Pq*v)
+          if (i < p_Nq)
+          {
+            int id = i + k * p_Nq * p_Nfields;
+            srho[k2][i] = rhsQ[id];
+            id += p_Nq;
+            srhou[k2][i] = rhsQ[id];
+            id += p_Nq;
+            srhov[k2][i] = rhsQ[id];
+            id += p_Nq;
+            srhow[k2][i] = rhsQ[id];
+            id += p_Nq;
+            sE[k2][i] = rhsQ[id];
+          }
+
+          // load face values into smem
+          if (i < p_NfqNfaces)
+          {
+            int id = i + k * p_NfqNfaces * p_Nfields;
+            srhof[k2][i] = Qf[id + 0 * p_NfqNfaces];
+            srhouf[k2][i] = Qf[id + 1 * p_NfqNfaces];
+            srhovf[k2][i] = Qf[id + 2 * p_NfqNfaces];
+            srhowf[k2][i] = Qf[id + 3 * p_NfqNfaces];	    
+            sEf[k2][i] = Qf[id + 4 * p_NfqNfaces];
+          }
+        }
+      }
+    }
+    barrier(localMemFence);
+
+#define rxJ sG[k2][0]
+#define ryJ sG[k2][1]
+#define rzJ sG[k2][2]    
+#define sxJ sG[k2][3]
+#define syJ sG[k2][4]
+#define szJ sG[k2][5]    
+#define txJ sG[k2][6]
+#define tyJ sG[k2][7]
+#define tzJ sG[k2][8]    
+
+    for (int k2 = 0; k2 < p_KblkV; ++k2; inner1)
+    {
+      for (int i = 0; i < p_T; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkV + k2;
+
+        if (k < K)
+        {
+
+          if (i < p_Nq)
+          {
+            dfloat divF1 = 0.f;
+            dfloat divF2 = 0.f;
+            dfloat divF3 = 0.f;
+            dfloat divF4 = 0.f;
+            dfloat divF5 = 0.f;	    
+
+            // apply Drq, Dsq
+            const dfloat rho_i = srho[k2][i];
+            const dfloat u_i = srhou[k2][i] / rho_i;
+            const dfloat v_i = srhov[k2][i] / rho_i;
+            const dfloat w_i = srhow[k2][i] / rho_i;	    
+            const dfloat E_i = sE[k2][i];
+            const dfloat beta_i = beta(rho_i, u_i, v_i, E_i);
+
+	    //	    if (k==0 & i==0){
+	    //	      printf("rho,u,v,E,beta = %f, %f, %f, %f, %f\n",rho_i,u_i,v_i,E_i,beta_i);
+	    //	    }
+
+            for (int j = 0; j < p_Nq; ++j)
+            { // ILP
+
+              const int jid = i + j * p_Nq;
+              const dfloat Drq_ij = Drq[jid];
+              const dfloat Dsq_ij = Dsq[jid];
+              const dfloat Dtq_ij = Dtq[jid];	      
+
+              const dfloat rho_j = srho[k2][j];
+              const dfloat u_j = srhou[k2][j] / rho_j;
+              const dfloat v_j = srhov[k2][j] / rho_j;
+              const dfloat w_j = srhow[k2][j] / rho_j;	      
+              const dfloat E_j = sE[k2][j];
+              const dfloat beta_j = beta(rho_j, u_j, v_j, E_j);
+
+              dfloat FxS1, FyS1, FzS1;
+	      dfloat FxS2, FyS2, FzS2;
+	      dfloat FxS3, FyS3, FzS3;
+	      dfloat FxS4, FyS4, FzS4;
+	      dfloat FxS5, FyS5, FzS5;	      	      
+              euler3d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, w_i, w_j, E_i, E_j, beta_i,
+                           beta_j,
+			   FxS1, FyS1, FzS1,
+			   FxS2, FyS2, FzS2,
+			   FxS3, FyS3, FzS3,
+			   FxS4, FyS4, FzS4,
+			   FxS5, FyS5, FzS5);
+	      /*	      if (k==0 & i==0){
+		printf("xfluxes = %f, %f, %f, %f\n",FxS1,FxS2,FxS3,FxS4);
+		printf("yfluxes = %f, %f, %f, %f\n",FyS1,FyS2,FyS3,FyS4);		
+		}*/
+
+              divF1 += Drq_ij * (FxS1 * rxJ + FyS1 * ryJ + FzS1 * rzJ) +
+                       Dsq_ij * (FxS1 * sxJ + FyS1 * syJ + FzS1 * szJ) +
+                       Dtq_ij * (FxS1 * txJ + FyS1 * tyJ + FzS1 * tzJ);
+              divF2 += Drq_ij * (FxS2 * rxJ + FyS2 * ryJ + FzS2 * rzJ) +
+                       Dsq_ij * (FxS2 * sxJ + FyS2 * syJ + FzS2 * szJ) +
+                       Dtq_ij * (FxS2 * txJ + FyS2 * tyJ + FzS2 * tzJ);
+              divF3 += Drq_ij * (FxS3 * rxJ + FyS3 * ryJ + FzS3 * rzJ) +
+                       Dsq_ij * (FxS3 * sxJ + FyS3 * syJ + FzS3 * szJ) +
+                       Dtq_ij * (FxS3 * txJ + FyS3 * tyJ + FzS3 * tzJ);
+              divF4 += Drq_ij * (FxS4 * rxJ + FyS4 * ryJ + FzS4 * rzJ) +
+                       Dsq_ij * (FxS4 * sxJ + FyS4 * syJ + FzS4 * szJ) +
+                       Dtq_ij * (FxS4 * txJ + FyS4 * tyJ + FzS4 * tzJ);
+              divF5 += Drq_ij * (FxS5 * rxJ + FyS5 * ryJ + FzS5 * rzJ) +
+                       Dsq_ij * (FxS5 * sxJ + FyS5 * syJ + FzS5 * szJ) +
+                       Dtq_ij * (FxS5 * txJ + FyS5 * tyJ + FzS5 * tzJ);
+
+            }
+
+	    //	    if (k==0){
+	    //	      printf("vol terms divF(%d,%d): %16.16f, %16.16f, %16.16f, %16.16f\n",i,k,divF1,divF2,divF3,divF4);
+	    //	    }
+	    
+            // apply VqLq (keep rho_i, etc from before)
+            for (int j = 0; j < p_NfqNfaces; ++j)
+            {
+              const dfloat VqLq_ij = .5f * VqLq[i + j * p_Nq];
+              // printf("VqLq(%d,%d) = %f\n",i,j,VqLq_ij);
+
+              const dfloat rho_j = srhof[k2][j];
+              const dfloat u_j = srhouf[k2][j] / rho_j;
+              const dfloat v_j = srhovf[k2][j] / rho_j;
+              const dfloat w_j = srhowf[k2][j] / rho_j;	      
+              const dfloat E_j = sEf[k2][j];
+              const dfloat beta_j = beta(rho_j, u_j, v_j, E_j);
+
+              dfloat FxS1, FyS1, FzS1;
+	      dfloat FxS2, FyS2, FzS2;
+	      dfloat FxS3, FyS3, FzS3;
+	      dfloat FxS4, FyS4, FzS4;
+	      dfloat FxS5, FyS5, FzS5;	      	      
+              euler3d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, w_i, w_j, E_i, E_j, beta_i,
+                           beta_j,
+			   FxS1, FyS1, FzS1,
+			   FxS2, FyS2, FzS2,
+			   FxS3, FyS3, FzS3,
+			   FxS4, FyS4, FzS4,
+			   FxS5, FyS5, FzS5);
+
+              const int f = j / p_Nfq;
+              const dfloat nrJf = s_nrJ[f];
+              const dfloat nsJf = s_nsJ[f];
+	      const dfloat ntJf = s_ntJ[f];	      
+
+              const dfloat F1 = ((FxS1 * rxJ + FyS1 * ryJ + FzS1 * rzJ) * nrJf +
+                                 (FxS1 * sxJ + FyS1 * syJ + FzS1 * szJ) * nsJf +
+				 (FxS1 * txJ + FyS1 * tyJ + FzS1 * tzJ) * ntJf);
+              const dfloat F2 = ((FxS2 * rxJ + FyS2 * ryJ + FzS2 * rzJ) * nrJf +
+                                 (FxS2 * sxJ + FyS2 * syJ + FzS2 * szJ) * nsJf +
+				 (FxS2 * txJ + FyS2 * tyJ + FzS2 * tzJ) * ntJf);
+              const dfloat F3 = ((FxS3 * rxJ + FyS3 * ryJ + FzS3 * rzJ) * nrJf +
+                                 (FxS3 * sxJ + FyS3 * syJ + FzS3 * szJ) * nsJf +
+				 (FxS3 * txJ + FyS3 * tyJ + FzS3 * tzJ) * ntJf);
+              const dfloat F4 = ((FxS4 * rxJ + FyS4 * ryJ + FzS4 * rzJ) * nrJf +
+                                 (FxS4 * sxJ + FyS4 * syJ + FzS4 * szJ) * nsJf +
+				 (FxS4 * txJ + FyS4 * tyJ + FzS4 * tzJ) * ntJf);
+              const dfloat F5 = ((FxS5 * rxJ + FyS5 * ryJ + FzS5 * rzJ) * nrJf +
+                                 (FxS5 * sxJ + FyS5 * syJ + FzS5 * szJ) * nsJf +
+				 (FxS5 * txJ + FyS5 * tyJ + FzS5 * tzJ) * ntJf);
+              divF1 += VqLq_ij * F1;
+              divF2 += VqLq_ij * F2;
+              divF3 += VqLq_ij * F3;
+              divF4 += VqLq_ij * F4;
+              divF5 += VqLq_ij * F5;
+            }
+
+	    //	    if (k==0){
+	    //	      printf("divF(%d,%d): %16.16f, %16.16f, %16.16f, %16.16f\n",i,k,divF1,divF2,divF3,divF4);
+	    //	    }
+	    
+
+            int id = i + k * p_Nfields * p_Nq;
+            rhsQ[id] = divF1;
+            id += p_Nq;
+            rhsQ[id] = divF2;
+            id += p_Nq;
+            rhsQ[id] = divF3;
+            id += p_Nq;
+            rhsQ[id] = divF4;
+            id += p_Nq;
+            rhsQ[id] = divF5;
+          }
+
+          // now apply VfPq
+          if (i < p_NfqNfaces)
+          {
+
+            dfloat divF1 = 0.f;
+            dfloat divF2 = 0.f;
+            dfloat divF3 = 0.f;
+            dfloat divF4 = 0.f;
+            dfloat divF5 = 0.f;	    
+
+            // redefine rho_i, etc...
+            const dfloat rho_i = srhof[k2][i];
+            const dfloat u_i = srhouf[k2][i] / rho_i;
+            const dfloat v_i = srhovf[k2][i] / rho_i;
+            const dfloat w_i = srhowf[k2][i] / rho_i;	    
+            const dfloat E_i = sEf[k2][i];
+            const dfloat beta_i = beta(rho_i, u_i, v_i, E_i);
+
+            const int f = i / p_Nfq;
+            const dfloat nrJf = s_nrJ[f];
+            const dfloat nsJf = s_nsJ[f];
+            const dfloat ntJf = s_ntJ[f];	    
+
+            for (int j = 0; j < p_Nq; ++j)
+            {
+              const dfloat VfPq_ij = -.5f * VfPq[i + j * p_NfqNfaces];
+
+              const dfloat rho_j = srho[k2][j];
+              const dfloat u_j = srhou[k2][j] / rho_j;
+              const dfloat v_j = srhov[k2][j] / rho_j;
+              const dfloat w_j = srhow[k2][j] / rho_j;	      
+              const dfloat E_j = sE[k2][j];
+              const dfloat beta_j = beta(rho_j, u_j, v_j, E_j);
+
+              dfloat FxS1, FyS1, FzS1;
+	      dfloat FxS2, FyS2, FzS2;
+	      dfloat FxS3, FyS3, FzS3;
+	      dfloat FxS4, FyS4, FzS4;
+	      dfloat FxS5, FyS5, FzS5;	      	      
+              euler3d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, w_i, w_j, E_i, E_j, beta_i,
+                           beta_j,
+			   FxS1, FyS1, FzS1,
+			   FxS2, FyS2, FzS2,
+			   FxS3, FyS3, FzS3,
+			   FxS4, FyS4, FzS4,
+			   FxS5, FyS5, FzS5);
+
+              const dfloat F1 = ((FxS1 * rxJ + FyS1 * ryJ + FzS1 * rzJ) * nrJf +
+                                 (FxS1 * sxJ + FyS1 * syJ + FzS1 * szJ) * nsJf +
+				 (FxS1 * txJ + FyS1 * tyJ + FzS1 * tzJ) * ntJf);
+              const dfloat F2 = ((FxS2 * rxJ + FyS2 * ryJ + FzS2 * rzJ) * nrJf +
+                                 (FxS2 * sxJ + FyS2 * syJ + FzS2 * szJ) * nsJf +
+				 (FxS2 * txJ + FyS2 * tyJ + FzS2 * tzJ) * ntJf);
+              const dfloat F3 = ((FxS3 * rxJ + FyS3 * ryJ + FzS3 * rzJ) * nrJf +
+                                 (FxS3 * sxJ + FyS3 * syJ + FzS3 * szJ) * nsJf +
+				 (FxS3 * txJ + FyS3 * tyJ + FzS3 * tzJ) * ntJf);
+              const dfloat F4 = ((FxS4 * rxJ + FyS4 * ryJ + FzS4 * rzJ) * nrJf +
+                                 (FxS4 * sxJ + FyS4 * syJ + FzS4 * szJ) * nsJf +
+				 (FxS4 * txJ + FyS4 * tyJ + FzS4 * tzJ) * ntJf);
+              const dfloat F5 = ((FxS5 * rxJ + FyS5 * ryJ + FzS5 * rzJ) * nrJf +
+                                 (FxS5 * sxJ + FyS5 * syJ + FzS5 * szJ) * nsJf +
+				 (FxS5 * txJ + FyS5 * tyJ + FzS5 * tzJ) * ntJf);
+
+              divF1 += VfPq_ij * F1;
+              divF2 += VfPq_ij * F2;
+              divF3 += VfPq_ij * F3;
+              divF4 += VfPq_ij * F4;
+	      divF5 += VfPq_ij * F5;	      
+            }
+
+	    //if (k==0){
+	    //	      printf("surf divF(%d,%d): %16.16f, %16.16f, %16.16f, %16.16f\n",i,k,divF1,divF2,divF3,divF4);
+	    //	    }
+	    
+            int idf = i + k * p_Nfields * p_NfqNfaces;
+            rhsQf[idf] = divF1;
+            idf += p_NfqNfaces;
+            rhsQf[idf] = divF2;
+            idf += p_NfqNfaces;
+            rhsQf[idf] = divF3;
+            idf += p_NfqNfaces;
+            rhsQf[idf] = divF4;	  
+            idf += p_NfqNfaces;
+            rhsQf[idf] = divF5;	  
+
+          } // if i < p_NfqNfaces
+
+        } // k < K
+      }   // inner0
+    }     // inner1
+  }
+}
+
+// split part of kernel
+kernel void euler_surf_2d(const int K, 
+                          const dfloat *restrict fgeo,
+			  const int *restrict mapPq,
+                          const dfloat *restrict VqLq,
+                          const dfloat *restrict Qf,			 
+                          const dfloat *restrict rhsQf,
+			  dfloat *restrict rhsQ)
+{
+  
+  // loop over elements
+  for (int k1 = 0; k1 < (K + p_KblkS - 1) / p_KblkS; ++k1; outer0)
+  {
+
+    shared dfloat sfS1[p_KblkS][p_NfqNfaces];
+    shared dfloat sfS2[p_KblkS][p_NfqNfaces];
+    shared dfloat sfS3[p_KblkS][p_NfqNfaces];
+    shared dfloat sfS4[p_KblkS][p_NfqNfaces];
+
+    for (int k2 = 0; k2 < p_KblkS; ++k2; inner1)
+    {
+      for (int i = 0; i < p_T; ++i; inner0)
+      {
+        const int k = k1 * p_KblkS + k2;
+
+        // read traces
+        if ((k < K) & (i < p_NfqNfaces))
+        {
+
+          int idM = i + k * p_NfqNfaces * p_Nfields;
+          int idP = mapPq[i + k * p_NfqNfaces];
+          const int isBoundary = idM == idP;
+
+          int fid = i + p_Nfgeo * p_NfqNfaces * k;
+          const dfloat nxJ = fgeo[fid + 0 * p_NfqNfaces];
+          const dfloat nyJ = fgeo[fid + 1 * p_NfqNfaces];
+          const dfloat sJ = fgeo[fid + 2 * p_NfqNfaces];
+
+          const dfloat rhoM = Qf[idM + 0 * p_NfqNfaces];
+          const dfloat rhouM = Qf[idM + 1 * p_NfqNfaces];
+          const dfloat rhovM = Qf[idM + 2 * p_NfqNfaces];
+          const dfloat EM = Qf[idM + 3 * p_NfqNfaces];
+
+          const dfloat rhoP = Qf[idP + 0 * p_NfqNfaces];
+          const dfloat rhouP = Qf[idP + 1 * p_NfqNfaces];
+          const dfloat rhovP = Qf[idP + 2 * p_NfqNfaces];
+          const dfloat EP = Qf[idP + 3 * p_NfqNfaces];
+
+          const dfloat uM = rhouM / rhoM;
+          const dfloat vM = rhovM / rhoM;
+          const dfloat uP = rhouP / rhoP;
+          const dfloat vP = rhovP / rhoP;
+          const dfloat betaM = beta(rhoM, uM, vM, EM);
+          const dfloat betaP = beta(rhoP, uP, vP, EP);
+
+          if (isBoundary)
+          {
+            // add BCs here - assume periodic for now
+          }
+
+          dfloat FxS1, FyS1, FxS2, FyS2, FxS3, FyS3, FxS4, FyS4;
+          euler2d_flux(rhoM, rhoP, uM, uP, vM, vP, EM, EP, betaM, betaP, FxS1,
+                       FyS1, FxS2, FyS2, FxS3, FyS3, FxS4, FyS4);
+
+          // entropy conservative fluxes + LF penalties
+          const dfloat lamM = sqrt(uM * uM + vM * vM) +
+                              sqrt(p_gamma * pfun(rhoM, uM, vM, EM) / rhoM);
+          const dfloat lamP = sqrt(uP * uP + vP * vP) +
+                              sqrt(p_gamma * pfun(rhoP, uP, vP, EP) / rhoP);
+          const dfloat Lfc_sJ =
+              .25f * max(lamM, lamP) * sJ; // local max wavespeed estimate - assumes tau = 1
+
+          // add in rhsQf contribution
+          int id = i + k * p_Nfields * p_NfqNfaces;
+          const dfloat rhsQf1 = rhsQf[id];
+          id += p_NfqNfaces;
+          const dfloat rhsQf2 = rhsQf[id];
+          id += p_NfqNfaces;
+          const dfloat rhsQf3 = rhsQf[id];
+          id += p_NfqNfaces;
+          const dfloat rhsQf4 = rhsQf[id];
+
+	  const dfloat drho = rhoP-rhoM;
+	  const dfloat drhou = rhouP-rhouM;
+	  const dfloat drhov = rhovP-rhovM;
+	  const dfloat dE = EP-EM;
+
+	  const dfloat fn1 = .5f * (FxS1 * nxJ + FyS1 * nyJ);
+	  const dfloat fn2 = .5f * (FxS2 * nxJ + FyS2 * nyJ);
+	  const dfloat fn3 = .5f * (FxS3 * nxJ + FyS3 * nyJ);
+	  const dfloat fn4 = .5f * (FxS4 * nxJ + FyS4 * nyJ);	  
+	  //	  if (k==0){
+	  //	    printf("fn+rhsQf = %16.16f, %16.16f, %16.16f, %16.16f\n",fn1+rhsQf1,fn2+rhsQf2,fn3+rhsQf3,fn4+rhsQf4);
+	  //	  }
+
+          sfS1[k2][i] = fn1 + rhsQf1 - Lfc_sJ * drho;
+          sfS2[k2][i] = fn2 + rhsQf2 - Lfc_sJ * drhou;
+          sfS3[k2][i] = fn3 + rhsQf3 - Lfc_sJ * drhov;
+          sfS4[k2][i] = fn4 + rhsQf4 - Lfc_sJ * dE;
+
+        } // if k < K and i < NfqNfaces
+      }
+    }
+    barrier(localMemFence);
+
+    // apply lift to accumulated flux
+    for (int k2 = 0; k2 < p_KblkS; ++k2; inner1)
+    {
+      for (int i = 0; i < p_T; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkS + k2;
+        if (k < K & i < p_Nq)
+        {
+
+          // accumulate lifted contributions into vol rhs
+          dfloat val1 = 0.f, val2 = 0.f, val3 = 0.f, val4 = 0.f;
+
+          for (int j = 0; j < p_NfqNfaces; ++j)
+          {
+            const dfloat VqLq_ij = VqLq[i + j * p_Nq];
+
+            val1 += VqLq_ij * sfS1[k2][j];
+            val2 += VqLq_ij * sfS2[k2][j];
+            val3 += VqLq_ij * sfS3[k2][j];
+            val4 += VqLq_ij * sfS4[k2][j];
+          }
+
+	  //printf("surface terms: %f, %f, %f, %f\n", val1,val2,val3,val4);
+
+          int id = i + k * p_Nfields * p_Nq;
+          rhsQ[id + 0 * p_Nq] += val1;
+          rhsQ[id + 1 * p_Nq] += val2;
+          rhsQ[id + 2 * p_Nq] += val3;
+          rhsQ[id + 3 * p_Nq] += val4;
+        }
+      }
+    }
+  }
+}
+
+// Nq loop - non-curved. For WADG, add Vq*Pq step
+kernel void euler_update_2d(const int K, const dfloat *restrict Jq,
+                            const dfloat *restrict VqPq, // eval at qpts
+                            const dfloat *restrict VfPq, // eval at fpts
+                            const dfloat fa, const dfloat fb, const dfloat fdt,
+                            dfloat *restrict rhsQ, dfloat *restrict resQ,
+                            dfloat *restrict Q, dfloat *restrict Qf)
+{
+
+  for (int k1 = 0; k1 < (K + p_KblkU - 1) / p_KblkU; ++k1; outer0)
+  {
+
+    shared dfloat srho[p_KblkU][p_Nq];
+    shared dfloat srhou[p_KblkU][p_Nq];
+    shared dfloat srhov[p_KblkU][p_Nq];
+    shared dfloat sE[p_KblkU][p_Nq];
+
+    // use double smem instead of register
+    // since we're not storing trace dofs?
+    shared dfloat sV1[p_KblkU][p_Nq];
+    shared dfloat sV2[p_KblkU][p_Nq];
+    shared dfloat sV3[p_KblkU][p_Nq];
+    shared dfloat sV4[p_KblkU][p_Nq];
+
+    // load in RHS to project
+    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
+    {
+      for (int i = 0; i < p_Nq; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkU + k2;
+
+        if (k < K)
+        {
+          int id = i + k * p_Nq * p_Nfields;
+          srho[k2][i] = rhsQ[id + 0 * p_Nq];
+          srhou[k2][i] = rhsQ[id + 1 * p_Nq];
+          srhov[k2][i] = rhsQ[id + 2 * p_Nq];
+          sE[k2][i] = rhsQ[id + 3 * p_Nq];
+        }
+      }
+    }
+    barrier(localMemFence);
+
+    // project RHS and increment U
+    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
+    {
+      for (int i = 0; i < p_Nq; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkU + k2;
+
+        if (k < K)
+        {
+          // prefetch Jacobian
+          const dfloat Jqi = Jq[i + k * p_Nq];
+
+          dfloat r1 = 0.f;
+          dfloat r2 = 0.f;
+          dfloat r3 = 0.f;
+          dfloat r4 = 0.f;
+          for (int j = 0; j < p_Nq; ++j)
+          {
+
+            // note 2*rhs = from flux differencing formulation
+            const dfloat VqPq_ij = -2.f * VqPq[i + j * p_Nq];
+            r1 += VqPq_ij * srho[k2][j];
+            r2 += VqPq_ij * srhou[k2][j];
+            r3 += VqPq_ij * srhov[k2][j];
+            r4 += VqPq_ij * sE[k2][j];
+          }
+          r1 /= Jqi;
+          r2 /= Jqi;
+          r3 /= Jqi;
+          r4 /= Jqi;
+
+	  //printf("r = %f, %f, %f, %f\n",r1,r2,r3,r4);
+
+          // retrieve res arrays
+          dfloat resx, resy, resz, resw;
+          int id = i + k * p_Nq * p_Nfields;
+          resx = resQ[id + 0 * p_Nq];
+          resy = resQ[id + 1 * p_Nq];
+          resz = resQ[id + 2 * p_Nq];
+          resw = resQ[id + 3 * p_Nq];
+
+          // update res arrays
+          id = i + k * p_Nq * p_Nfields;
+          resx = fa * resx + fdt * r1;
+          resy = fa * resy + fdt * r2;
+          resz = fa * resz + fdt * r3;
+          resw = fa * resw + fdt * r4;
+
+          // store res arrays
+          id = i + k * p_Nq * p_Nfields;
+          resQ[id] = resx;
+          id += p_Nq;
+          resQ[id] = resy;
+          id += p_Nq;
+          resQ[id] = resz;
+          id += p_Nq;
+          resQ[id] = resw;
+
+          // update soln vars
+          id = i + k * p_Nq * p_Nfields;
+          dfloat rho = Q[id + 0 * p_Nq];
+          dfloat rhou = Q[id + 1 * p_Nq];
+          dfloat rhov = Q[id + 2 * p_Nq];
+          dfloat E = Q[id + 3 * p_Nq];
+
+          rho += fb * resx;
+          rhou += fb * resy;
+          rhov += fb * resz;
+          E += fb * resw;
+
+	  /*	  if (k==0){
+	    printf("updated U: %f, %f, %f, %f\n",rho,rhou,rhov,E);
+	    }*/
+	  
+          Q[id + 0 * p_Nq] = rho;
+          Q[id + 1 * p_Nq] = rhou;
+          Q[id + 2 * p_Nq] = rhov;
+          Q[id + 3 * p_Nq] = E;
+
+          // printf("rho,rhou,rhov,E = %f, %f, %f, %f\n",rho,rhou,rhov,E);
+
+          // evaluate entropy variables at updated vars
+          dfloat V1, V2, V3, V4;
+          VU(rho, rhou, rhov, E, V1, V2, V3, V4);
+
+	  //	  if (k==0){
+	  //	    printf("Vu = %f, %f, %f, %f\n", V1,V2,V3,V4);
+	  //	  }
+
+          // smem transfer
+          sV1[k2][i] = V1;
+          sV2[k2][i] = V2;
+          sV3[k2][i] = V3;
+          sV4[k2][i] = V4;
+        }
+
+      } // inner 0
+    }   // inner1
+
+    barrier(localMemFence);
+
+    // project to nodal dofs
+    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
+    {
+      for (int i = 0; i < p_Nq; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkU + k2;
+
+        if (k < K)
+        {
+
+          // this can be made more efficient
+          int ii = i;
+          while (ii < p_NfqNfaces)
+          {
+            dfloat V1 = 0.f;
+            dfloat V2 = 0.f;
+            dfloat V3 = 0.f;
+            dfloat V4 = 0.f;
+            for (int j = 0; j < p_Nq; ++j)
+            {
+              const dfloat VfPq_ij = VfPq[ii + j * p_NfqNfaces];
+              V1 += VfPq_ij * sV1[k2][j];
+              V2 += VfPq_ij * sV2[k2][j];
+              V3 += VfPq_ij * sV3[k2][j];
+              V4 += VfPq_ij * sV4[k2][j];
+            }
+
+            const int id = ii + k * p_NfqNfaces * p_Nfields;
+
+            // eval conserv vars in terms of entropy vars
+            dfloat rho, rhou, rhov, E;
+            UV(V1, V2, V3, V4, rho, rhou, rhov, E);
+
+	    //	    if (k==0){
+	    //	      printf("Uvf = %f, %f, %f, %f\n",rho,rhou,rhov,E);
+	    //	    }
+
+            Qf[id + 0 * p_NfqNfaces] = rho;
+            Qf[id + 1 * p_NfqNfaces] = rhou;
+            Qf[id + 2 * p_NfqNfaces] = rhov;
+            Qf[id + 3 * p_NfqNfaces] = E;
+            ii += p_Nq;
+          }
+
+          // entropy variable projection
+          dfloat V1 = 0.f;
+          dfloat V2 = 0.f;
+          dfloat V3 = 0.f;
+          dfloat V4 = 0.f;
+          for (int j = 0; j < p_Nq; ++j)
+          {
+            const dfloat VqPq_ij = VqPq[i + j * p_Nq];
+	    //	    if (k==0){
+	      //	      printf("VqPq(%d,%d) = %f\n",i+1,j+1,VqPq_ij);
+	    //	    }
+            V1 += VqPq_ij * sV1[k2][j];
+            V2 += VqPq_ij * sV2[k2][j];
+            V3 += VqPq_ij * sV3[k2][j];
+            V4 += VqPq_ij * sV4[k2][j];
+          }
+
+          // evaluate U(P*V) and write out
+          dfloat rho, rhou, rhov, E;
+          UV(V1, V2, V3, V4, rho, rhou, rhov, E);
+
+	  //	  if (k==0){
+	    //	    printf("Uv = %f, %f, %f, %f\n",rho,rhou,rhov,E);
+	  //	  }
+
+          const int id = i + k * p_Nq * p_Nfields;
+          rhsQ[id + 0 * p_Nq] = rho;
+          rhsQ[id + 1 * p_Nq] = rhou;
+          rhsQ[id + 2 * p_Nq] = rhov;
+          rhsQ[id + 3 * p_Nq] = E;
+
+        } // end if
+
+      } // inner0
+    }   // inner1
+
+  } // outer 0
+}
