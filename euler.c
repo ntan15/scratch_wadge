@@ -2847,11 +2847,18 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   // having multiple processes trying to use the same kernel source.
   occaKernelInfoAddDefine(info, "p_RANK", occaInt(app->prefs->rank));
 
+  if (sizeof(dfloat_t)==4){  
+    occaKernelInfoAddDefine(info, "USE_DOUBLE", occaInt(0));
+  }else{
+    occaKernelInfoAddDefine(info, "USE_DOUBLE", occaInt(1));
+  }
+
   app->info = info;
 
 // TODO build kernels
-  printf("building kernels\n");  
+
 #if VDIM == 2 // triangle
+  printf("building 2D kernels\n");  
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                              "euler_vol_2d", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
@@ -2859,8 +2866,9 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                                 "euler_update_2d", info);
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-                                              "test_kernel", info);
+                                              "test_kernel_2d", info);
 #else
+  printf("building 3D kernels\n");  
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                              "euler_vol_3d", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
@@ -3008,7 +3016,6 @@ static double modify_mapP(app_t *app, int usePeriodic)
             app->hops->mapPq[idB[i]] = idB[j];
 	    zcnt++;
 	  }
-
 #endif
         }
       }
@@ -3164,10 +3171,10 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t E = p / gm1 + .5 * (rho) * (u * u + v * v);
 
   // const sol for testing
-  //      dfloat_t rho = 1.0;
-  //      dfloat_t rhou = 2.0;
-  //      dfloat_t rhov = 5.0;
-  //      dfloat_t E = 1.0 + .5f*(rhou*rhou+rhov*rhov)/rho;
+  rho = 1.0;
+  rhou = 2.0;
+  rhov = 5.0;
+  E = 1.0 + .5f*(rhou*rhou+rhov*rhov)/rho;
   
   U->U1 = rho;
   U->U2 = rhou;
@@ -3182,6 +3189,7 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t xt = x - x0;
   dfloat_t yt = y - y0 - t;
   dfloat_t zt = z - z0;
+
   // cross(X,[0,0,1]) = [-y,x,0]
   dfloat_t rx = -yt;
   dfloat_t ry = xt;
@@ -3201,19 +3209,29 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t E = p0 / gm1 * (1.0 + POWDF(tmp, gamma)) +
                .5 * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;
 
+
   // for testing
   rho = 1.0;
   rhou = 2.0;
   rhov = 3.0;
   rhow = 4.0;
   E = 1.0 + .5*(rhou*rhou+rhov*rhov+rhow*rhow)/rho;
-  
+
   U->U1 = rho;
   U->U2 = rhou;
   U->U3 = rhov;
   U->U4 = rhow;
   U->U5 = E;
 #endif
+}
+
+static void app_test(app_t *app)
+{
+
+  printf("Testing app...\n");
+
+  occaKernelRun(app->test, occaInt(app->hm->E), app->Q, app->Qf, app->rhsQ,
+                app->rhsQf);
 }
 
 static void rk_step(app_t *app, double rka, double rkb, double dt)
@@ -3266,7 +3284,7 @@ static void rk_run(app_t *app, double dt, double FinalTime)
       const double rka = app->rk4a[INTRK];
       const double rkb = app->rk4b[INTRK];
       rk_step(app, rka, rkb, dt);
-
+      //app_test(app);
       
     }
     if (tstep % interval == 0)
@@ -3274,15 +3292,6 @@ static void rk_run(app_t *app, double dt, double FinalTime)
       printf("on timestep %d out of %d\n", tstep, Nsteps);
     }
   }
-}
-
-static void app_test(app_t *app)
-{
-
-  printf("Testing app...\n");
-
-  occaKernelRun(app->test, occaInt(app->hm->E), app->Q, app->Qf, app->rhsQ,
-                app->rhsQf);
 }
 
 static void app_free(app_t *app)
@@ -3470,8 +3479,8 @@ int main(int argc, char *argv[])
   dfloat_t *Qvf = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nfq *
                                                  Nfaces * NFIELDS * K);
   dfloat_t *resQ =
-      (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * K);
-
+    (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * K);
+  
   for (int i = 0; i < K * NFIELDS * Nq; ++i)
   {
     resQ[i] = 0.0;
@@ -3495,10 +3504,8 @@ int main(int argc, char *argv[])
       Q[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
       Q[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
       Q[i + 2 * Nq + e * Nq * NFIELDS] = U.U3;
-#if VDIM == 2
       Q[i + 3 * Nq + e * Nq * NFIELDS] = U.U4;
-#else
-      Q[i + 3 * Nq + e * Nq * NFIELDS] = U.U4;
+#if VDIM==3
       Q[i + 4 * Nq + e * Nq * NFIELDS] = U.U5;
 #endif
     }
@@ -3576,8 +3583,7 @@ int main(int argc, char *argv[])
       V.U5 = V5;
 #endif
       UV(app, V, &U);
-      // printf("initalized entropy-projected rho,rhou,rhov,E(%d,%d) = %f, %f,
-      // %f, %f\n",i,e,rho,rhou,rhov,E);
+      //      printf("initalized entropy-projected rhoq,rhouq,rhovq,Eq(%d,%d) = %f, %f, %f, %f\n",i,e,U.U1,U.U2,U.U3,U.U4);
 
       Qvq[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
       Qvq[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
@@ -3616,8 +3622,7 @@ int main(int argc, char *argv[])
       V.U5 = V5;
 #endif
       UV(app, V, &U);
-      // printf("initalized entropy-projected rhof,rhouf,rhovf,Ef(%d,%d) = %f,
-      // %f, %f, %f\n",i,e,rho,rhou,rhov,E);
+      //printf("initalized entropy-projected rhof,rhouf,rhovf,Ef(%d,%d) = %f, %f, %f, %f\n",i,e,U.U1,U.U2,U.U3,U.U4);
 
       Qvf[i + 0 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U1;
       Qvf[i + 1 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U2;
@@ -3662,20 +3667,22 @@ int main(int argc, char *argv[])
       dfloat_t err3 = rhov - Uex.U3;
 #if VDIM == 2
       dfloat_t err4 = E - Uex.U4;
+      err0 += wJq * (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4);
 #else
       dfloat_t err4 = rhow - Uex.U4;
       dfloat_t err5 = E - Uex.U5;
+      err0 += wJq * (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4 + err5*err5);
 #endif
-      err0 += wJq * (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4);
+
     }
   }
   printf("L2 initial err = %f\n", sqrt(err0));
-  return 0;
+  //  return 0;
 #endif
 
-  // TODO: set app->Q, Qf, rhsQ using Q, Qvq, Qvf
+  // copy mem to device
   occaCopyPtrToMem(app->Q, Q, Nq * NFIELDS * K * sizeof(dfloat_t),
-                   occaNoOffset);
+                   occaNoOffset); 
   occaCopyPtrToMem(app->rhsQ, Qvq, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
   occaCopyPtrToMem(app->Qf, Qvf, Nfq * Nfaces * NFIELDS * K * sizeof(dfloat_t),
@@ -3683,11 +3690,13 @@ int main(int argc, char *argv[])
   occaCopyPtrToMem(app->resQ, resQ, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
 
-  // app_test(app); // testing
+  //  app_test(app); // testing
+  //  return 0;
+  
 
   // estimate time-step
   double hmin = get_hmin(app);
-  double CFL = .5;
+  double CFL = .125;
   double N = (double)app->prefs->mesh_N;
   double CN; // trace constant
 #if VDIM == 2
@@ -3696,7 +3705,7 @@ int main(int argc, char *argv[])
   CN = (N + 1) * (N + 3) / 3;
 #endif
   double dt = CFL * hmin / CN;
-  double FinalTime = 2.0; // 20*dt;
+  double FinalTime = 50.0; // 20*dt;
   printf("hmin = %f, dt = %f, Final Time = %f\n", hmin, dt, FinalTime);
 
 #if 0
@@ -3704,14 +3713,15 @@ int main(int argc, char *argv[])
   const double rka = app->rk4a[0];
   const double rkb = app->rk4b[0];  
   rk_step(app,rka,rkb,dt);
+  app_test(app);
 #else
   printf("Running...\n");
   rk_run(app, dt, FinalTime);
-  printf("At end of simulation, sol is:\n");
+  //printf("At end of simulation, sol is:\n");
   app_test(app);
 #endif
 
-#if 0
+#if 1
   occaCopyMemToPtr(Q, app->Q, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
   dfloat_t err = 0.0;
