@@ -25,7 +25,7 @@ typedef struct
   int Nfaces;
 
   dfloat_t *xyzq; // volume quad points (to initialize sol)
-  dfloat_t *xyzf; // surface quad points 
+  dfloat_t *xyzf; // surface quad points
   dfloat_t *vgeo; // volume  geometric factors
   dfloat_t *fgeo; // face    geometric factors
   dfloat_t *Jq;
@@ -33,7 +33,7 @@ typedef struct
   uintloc_t *mapPq; // mapping of face neighbor integration points
   uintloc_t *Fmask; // extract face dofs
 
-  dfloat_t *wq; // volume quadrature weights  
+  dfloat_t *wq;              // volume quadrature weights
   dfloat_t *nrJ, *nsJ, *ntJ; // ref elem normals
   dfloat_t *Drq, *Dsq, *Dtq; // ref elem derivative operators
 

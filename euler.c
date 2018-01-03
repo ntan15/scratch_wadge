@@ -2847,9 +2847,12 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   // having multiple processes trying to use the same kernel source.
   occaKernelInfoAddDefine(info, "p_RANK", occaInt(app->prefs->rank));
 
-  if (sizeof(dfloat_t)==4){  
+  if (sizeof(dfloat_t) == 4)
+  {
     occaKernelInfoAddDefine(info, "USE_DOUBLE", occaInt(0));
-  }else{
+  }
+  else
+  {
     occaKernelInfoAddDefine(info, "USE_DOUBLE", occaInt(1));
   }
 
@@ -2858,7 +2861,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 // TODO build kernels
 
 #if VDIM == 2 // triangle
-  printf("building 2D kernels\n");  
+  printf("building 2D kernels\n");
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                              "euler_vol_2d", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
@@ -2868,7 +2871,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                               "test_kernel_2d", info);
 #else
-  printf("building 3D kernels\n");  
+  printf("building 3D kernels\n");
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                              "euler_vol_3d", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
@@ -2879,7 +2882,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                                               "test_kernel", info);
 
 #endif
-  printf("built kernels!\n");  
+  printf("built kernels!\n");
 
   return app;
 }
@@ -2927,13 +2930,15 @@ static double modify_mapP(app_t *app, int usePeriodic)
     printf("vx max/min = [%f,%f], vy max/min = [%f, %f]\n", vxmin, vxmax, vymin,
            vymax);
 #else
-    printf("vx max/min = [%f,%f], vy max/min = [%f, %f], vz max/min = [%f, %f]\n", vxmin, vxmax, vymin,vymax, vzmin,vzmax);
+    printf(
+        "vx max/min = [%f,%f], vy max/min = [%f, %f], vz max/min = [%f, %f]\n",
+        vxmin, vxmax, vymin, vymax, vzmin, vzmax);
 #endif
 
     // find boundary nodes
     dfloat_t *xB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
     dfloat_t *yB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
-    dfloat_t *zB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);    
+    dfloat_t *zB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
     int *idB = asd_malloc_aligned(sizeof(int) * Nfq * Nfaces * E);
     int sk = 0;
     for (uintloc_t e = 0; e < E; ++e)
@@ -2946,9 +2951,10 @@ static double modify_mapP(app_t *app, int usePeriodic)
         {
           xB[sk] = app->hops->xyzf[i + 0 * Nfq * Nfaces + e * Nfq * Nfaces * 3];
           yB[sk] = app->hops->xyzf[i + 1 * Nfq * Nfaces + e * Nfq * Nfaces * 3];
-#if VDIM==3
-	  zB[sk] = app->hops->xyzf[i + 2 * Nfq * Nfaces + e * Nfq * Nfaces * 3];
-	  //printf("xb(%d) = %f; yb(%d) = %f; zb(%d) = %f\n",sk+1,xB[sk],sk+1,yB[sk],sk+1,zB[sk]);
+#if VDIM == 3
+          zB[sk] = app->hops->xyzf[i + 2 * Nfq * Nfaces + e * Nfq * Nfaces * 3];
+// printf("xb(%d) = %f; yb(%d) = %f; zb(%d) =
+// %f\n",sk+1,xB[sk],sk+1,yB[sk],sk+1,zB[sk]);
 #endif
           idB[sk] = idM;
           ++sk;
@@ -2957,7 +2963,7 @@ static double modify_mapP(app_t *app, int usePeriodic)
     }
 
     // find periodic node matches
-    int xcnt = 0, ycnt = 0, zcnt = 0;        
+    int xcnt = 0, ycnt = 0, zcnt = 0;
     double tol = 1e-5;
     int num_boundary_nodes = sk;
     printf("num boundary nodes = %d\n", num_boundary_nodes);
@@ -2965,7 +2971,7 @@ static double modify_mapP(app_t *app, int usePeriodic)
     {
       dfloat_t xi = xB[i];
       dfloat_t yi = yB[i];
-#if VDIM==3
+#if VDIM == 3
       dfloat_t zi = zB[i];
 #endif
 
@@ -2973,13 +2979,13 @@ static double modify_mapP(app_t *app, int usePeriodic)
       {
         dfloat_t xj = xB[j];
         dfloat_t yj = yB[j];
-#if VDIM==3
-	dfloat_t zj = zB[j];
+#if VDIM == 3
+        dfloat_t zj = zB[j];
 #endif
-	
+
         if (i != j)
         {
-#if VDIM==2
+#if VDIM == 2
           // if match on x faces
           if ((fabs(xi - vxmin) < tol | fabs(xi - vxmax) < tol) &
               (fabs(yi - yj) < tol))
@@ -2993,34 +2999,41 @@ static double modify_mapP(app_t *app, int usePeriodic)
             app->hops->mapPq[idB[i]] = idB[j];
           }
 #else
-	  // if on
-	  int on_xmin = fabs(xi-vxmin) < tol;
-	  int on_ymin = fabs(yi-vymin) < tol;
-	  int on_zmin = fabs(zi-vzmin) < tol;
-	  int on_xmax = fabs(xi-vxmax) < tol;
-	  int on_ymax = fabs(yi-vymax) < tol;
-	  int on_zmax = fabs(zi-vzmax) < tol;
+          // if on
+          int on_xmin = fabs(xi - vxmin) < tol;
+          int on_ymin = fabs(yi - vymin) < tol;
+          int on_zmin = fabs(zi - vzmin) < tol;
+          int on_xmax = fabs(xi - vxmax) < tol;
+          int on_ymax = fabs(yi - vymax) < tol;
+          int on_zmax = fabs(zi - vzmax) < tol;
 
-	  // match on x face
-	  if ((on_xmin | on_xmax) & (fabs(yi-yj)<tol) & (fabs(zi-zj)<tol)){
+          // match on x face
+          if ((on_xmin | on_xmax) & (fabs(yi - yj) < tol) &
+              (fabs(zi - zj) < tol))
+          {
             app->hops->mapPq[idB[i]] = idB[j];
-	    xcnt++;
-	  }
-	  // match on y face
-	  if ((on_ymin | on_ymax) & (fabs(xi-xj)<tol) & (fabs(zi-zj)<tol)){
+            xcnt++;
+          }
+          // match on y face
+          if ((on_ymin | on_ymax) & (fabs(xi - xj) < tol) &
+              (fabs(zi - zj) < tol))
+          {
             app->hops->mapPq[idB[i]] = idB[j];
-	    ycnt++;
-	  }
-	  // match on z face
-	  if ((on_zmin | on_zmax) & (fabs(xi-xj)<tol) & (fabs(yi-yj)<tol)){
+            ycnt++;
+          }
+          // match on z face
+          if ((on_zmin | on_zmax) & (fabs(xi - xj) < tol) &
+              (fabs(yi - yj) < tol))
+          {
             app->hops->mapPq[idB[i]] = idB[j];
-	    zcnt++;
-	  }
+            zcnt++;
+          }
 #endif
         }
       }
     }
-    printf("# of xbpts = %d, # of ybpts = %d, # of zbpts = %d\n",xcnt,ycnt,zcnt);
+    printf("# of xbpts = %d, # of ybpts = %d, # of zbpts = %d\n", xcnt, ycnt,
+           zcnt);
 
   } // end periodic stuff
 
@@ -3033,7 +3046,7 @@ static double modify_mapP(app_t *app, int usePeriodic)
       int idP = app->hops->mapPq[i + e * Nfq * Nfaces];
       int enbr = idP / (Nfq * Nfaces);
       app->hops->mapPq[i + e * Nfq * Nfaces] =
-	(idP - Nfq * Nfaces * enbr) + enbr * Nfq * Nfaces * NFIELDS;
+          (idP - Nfq * Nfaces * enbr) + enbr * Nfq * Nfaces * NFIELDS;
     }
   }
   app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
@@ -3174,8 +3187,8 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   rho = 1.0;
   rhou = 2.0;
   rhov = 5.0;
-  E = 1.0 + .5f*(rhou*rhou+rhov*rhov)/rho;
-  
+  E = 1.0 + .5f * (rhou * rhou + rhov * rhov) / rho;
+
   U->U1 = rho;
   U->U2 = rhou;
   U->U3 = rhov;
@@ -3201,7 +3214,7 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t Lmax = .4;
 
   dfloat_t L = Lmax * EXPDF(.5 * (1.0 - r2));
-  dfloat_t tmp = POWDF(1.0 - .5 * gm1 * Lmax * Lmax, 1.0 / gm1);
+  dfloat_t tmp = POWDF(1.0 - .5 * gm1 * L * L, 1.0 / gm1);
   dfloat_t rho = rho0 * tmp;
   dfloat_t rhou = rho * (0.0 + rx * L);
   dfloat_t rhov = rho * (1.0 + ry * L);
@@ -3209,13 +3222,14 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t E = p0 / gm1 * (1.0 + POWDF(tmp, gamma)) +
                .5 * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;
 
-
+  /*
   // for testing
   rho = 1.0;
   rhou = 2.0;
   rhov = 3.0;
   rhow = 4.0;
   E = 1.0 + .5*(rhou*rhou+rhov*rhov+rhow*rhow)/rho;
+  */
 
   U->U1 = rho;
   U->U2 = rhou;
@@ -3237,7 +3251,7 @@ static void app_test(app_t *app)
 static void rk_step(app_t *app, double rka, double rkb, double dt)
 {
 
-#if VDIM==2
+#if VDIM == 2
   occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
                 app->Drq, app->Dsq, app->VqLq, app->VfPq, app->Q, app->Qf,
                 app->rhsQ, app->rhsQf);
@@ -3250,9 +3264,9 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
                 occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q,
                 app->Qf);
 #else
-  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,app->ntJ,
-                app->Drq, app->Dsq,app->Dtq, app->VqLq, app->VfPq, app->Q, app->Qf,
-                app->rhsQ, app->rhsQf);
+  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
+                app->ntJ, app->Drq, app->Dsq, app->Dtq, app->VqLq, app->VfPq,
+                app->Q, app->Qf, app->rhsQ, app->rhsQf);
 
   occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
                 app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
@@ -3261,7 +3275,7 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
                 occaDfloat((dfloat_t)rka), occaDfloat((dfloat_t)rkb),
                 occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q,
                 app->Qf);
-  
+
 #endif
 }
 
@@ -3284,8 +3298,7 @@ static void rk_run(app_t *app, double dt, double FinalTime)
       const double rka = app->rk4a[INTRK];
       const double rkb = app->rk4b[INTRK];
       rk_step(app, rka, rkb, dt);
-      //app_test(app);
-      
+      // app_test(app);
     }
     if (tstep % interval == 0)
     {
@@ -3330,8 +3343,8 @@ static void app_free(app_t *app)
   // free info
   occaKernelInfoFree(app->info);
 
-// free kernels
-//#if ELEM_TYPE == 0 // triangle
+  // free kernels
+  //#if ELEM_TYPE == 0 // triangle
   occaKernelFree(app->test);
   occaKernelFree(app->vol);
   occaKernelFree(app->surf);
@@ -3438,8 +3451,8 @@ int main(int argc, char *argv[])
 
   int usePeriodic = 1;
   modify_mapP(app, usePeriodic);
-  //return 0;
-  
+  // return 0;
+
   //
   // run
   //
@@ -3456,12 +3469,12 @@ int main(int argc, char *argv[])
     for (int i = 0; i < Nfq*Nfaces; ++i){
       dfloat_t x = app->hops->xyzf[i + 0*Nfq*Nfaces + e*Nfq*Nfaces*3];
       dfloat_t y = app->hops->xyzf[i + 1*Nfq*Nfaces + e*Nfq*Nfaces*3];
-#if VDIM==3
+#if VDIM == 3
       dfloat_t z = app->hops->xyzf[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*3];
 #endif
       int idP = app->hops->mapPq[i + e*Nfq*Nfaces];
 
-#if VDIM==2
+#if VDIM == 2
       printf("xf(%d,%d) = %f; yf(%d,%d) = %f; mapPq(%d,%d) = %d;\n",i+1,e+1,x,i+1,e+1,y,i+1,e+1,idP+1);
 #else
       printf("xf(%d,%d) = %f; yf(%d,%d) = %f; zf(%d,%d) = %f; mapPq(%d,%d) = %d;\n",i+1,e+1,x,i+1,e+1,y,i+1,e+1,z,i+1,e+1,idP+1);
@@ -3479,8 +3492,8 @@ int main(int argc, char *argv[])
   dfloat_t *Qvf = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nfq *
                                                  Nfaces * NFIELDS * K);
   dfloat_t *resQ =
-    (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * K);
-  
+      (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * K);
+
   for (int i = 0; i < K * NFIELDS * Nq; ++i)
   {
     resQ[i] = 0.0;
@@ -3505,7 +3518,7 @@ int main(int argc, char *argv[])
       Q[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
       Q[i + 2 * Nq + e * Nq * NFIELDS] = U.U3;
       Q[i + 3 * Nq + e * Nq * NFIELDS] = U.U4;
-#if VDIM==3
+#if VDIM == 3
       Q[i + 4 * Nq + e * Nq * NFIELDS] = U.U5;
 #endif
     }
@@ -3541,7 +3554,7 @@ int main(int argc, char *argv[])
       U.U2 = Q[i + 1 * Nq + e * Nq * NFIELDS];
       U.U3 = Q[i + 2 * Nq + e * Nq * NFIELDS];
       U.U4 = Q[i + 3 * Nq + e * Nq * NFIELDS];
-#if VDIM==3
+#if VDIM == 3
       U.U5 = Q[i + 4 * Nq + e * Nq * NFIELDS];
 #endif
 
@@ -3551,7 +3564,7 @@ int main(int argc, char *argv[])
       Qe[i + 1 * Nq] = V.U2;
       Qe[i + 2 * Nq] = V.U3;
       Qe[i + 3 * Nq] = V.U4;
-#if VDIM==3
+#if VDIM == 3
       Qe[i + 4 * Nq] = V.U5;
 #endif
     }
@@ -3562,7 +3575,7 @@ int main(int argc, char *argv[])
       dfloat_t V2 = 0.0;
       dfloat_t V3 = 0.0;
       dfloat_t V4 = 0.0;
-      dfloat_t V5 = 0.0;      
+      dfloat_t V5 = 0.0;
       for (int j = 0; j < Nq; ++j)
       {
         dfloat_t VqPq_ij = app->hops->VqPq[i + j * Nq];
@@ -3570,7 +3583,7 @@ int main(int argc, char *argv[])
         V2 += VqPq_ij * Qe[j + 1 * Nq];
         V3 += VqPq_ij * Qe[j + 2 * Nq];
         V4 += VqPq_ij * Qe[j + 3 * Nq];
-#if VDIM==3
+#if VDIM == 3
         V5 += VqPq_ij * Qe[j + 4 * Nq];
 #endif
       }
@@ -3579,17 +3592,18 @@ int main(int argc, char *argv[])
       V.U2 = V2;
       V.U3 = V3;
       V.U4 = V4;
-#if VDIM==3
+#if VDIM == 3
       V.U5 = V5;
 #endif
       UV(app, V, &U);
-      //      printf("initalized entropy-projected rhoq,rhouq,rhovq,Eq(%d,%d) = %f, %f, %f, %f\n",i,e,U.U1,U.U2,U.U3,U.U4);
+      //      printf("initalized entropy-projected rhoq,rhouq,rhovq,Eq(%d,%d) =
+      //      %f, %f, %f, %f\n",i,e,U.U1,U.U2,U.U3,U.U4);
 
       Qvq[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
       Qvq[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
       Qvq[i + 2 * Nq + e * Nq * NFIELDS] = U.U3;
       Qvq[i + 3 * Nq + e * Nq * NFIELDS] = U.U4;
-#if VDIM==3
+#if VDIM == 3
       Qvq[i + 4 * Nq + e * Nq * NFIELDS] = U.U5;
 #endif
     }
@@ -3608,8 +3622,8 @@ int main(int argc, char *argv[])
         V2 += VfPq_ij * Qe[j + 1 * Nq];
         V3 += VfPq_ij * Qe[j + 2 * Nq];
         V4 += VfPq_ij * Qe[j + 3 * Nq];
-#if VDIM==3
-        V5 += VfPq_ij * Qe[j + 4 * Nq];	
+#if VDIM == 3
+        V5 += VfPq_ij * Qe[j + 4 * Nq];
 #endif
       }
 
@@ -3618,17 +3632,18 @@ int main(int argc, char *argv[])
       V.U2 = V2;
       V.U3 = V3;
       V.U4 = V4;
-#if VDIM==3
+#if VDIM == 3
       V.U5 = V5;
 #endif
       UV(app, V, &U);
-      //printf("initalized entropy-projected rhof,rhouf,rhovf,Ef(%d,%d) = %f, %f, %f, %f\n",i,e,U.U1,U.U2,U.U3,U.U4);
+      // printf("initalized entropy-projected rhof,rhouf,rhovf,Ef(%d,%d) = %f,
+      // %f, %f, %f\n",i,e,U.U1,U.U2,U.U3,U.U4);
 
       Qvf[i + 0 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U1;
       Qvf[i + 1 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U2;
       Qvf[i + 2 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U3;
       Qvf[i + 3 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U4;
-#if VDIM==3
+#if VDIM == 3
       Qvf[i + 4 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U5;
 #endif
     }
@@ -3682,7 +3697,7 @@ int main(int argc, char *argv[])
 
   // copy mem to device
   occaCopyPtrToMem(app->Q, Q, Nq * NFIELDS * K * sizeof(dfloat_t),
-                   occaNoOffset); 
+                   occaNoOffset);
   occaCopyPtrToMem(app->rhsQ, Qvq, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
   occaCopyPtrToMem(app->Qf, Qvf, Nfq * Nfaces * NFIELDS * K * sizeof(dfloat_t),
@@ -3692,7 +3707,6 @@ int main(int argc, char *argv[])
 
   //  app_test(app); // testing
   //  return 0;
-  
 
   // estimate time-step
   double hmin = get_hmin(app);
@@ -3705,7 +3719,7 @@ int main(int argc, char *argv[])
   CN = (N + 1) * (N + 3) / 3;
 #endif
   double dt = CFL * hmin / CN;
-  double FinalTime = 50.0; // 20*dt;
+  double FinalTime = .50; // 20*dt;
   printf("hmin = %f, dt = %f, Final Time = %f\n", hmin, dt, FinalTime);
 
 #if 0
@@ -3717,13 +3731,14 @@ int main(int argc, char *argv[])
 #else
   printf("Running...\n");
   rk_run(app, dt, FinalTime);
-  //printf("At end of simulation, sol is:\n");
+  // printf("At end of simulation, sol is:\n");
   app_test(app);
 #endif
 
 #if 1
   occaCopyMemToPtr(Q, app->Q, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
+
   dfloat_t err = 0.0;
   for (uintloc_t e = 0; e < K; ++e)
   {
@@ -3755,6 +3770,27 @@ int main(int argc, char *argv[])
   }
   printf("L2 err = %f\n", sqrt(err));
 #endif
+
+// ============== print solution in matlab ===================
+#if 0
+  for (uintloc_t e = 0; e < K; ++e)
+    {
+      for (int i = 0; i < Nq; ++i)
+	{
+	  dfloat_t x = app->hops->xyzq[i + 0 * Nq + e * Nq * 3];
+	  dfloat_t y = app->hops->xyzq[i + 1 * Nq + e * Nq * 3];
+	  dfloat_t z = app->hops->xyzq[i + 2 * Nq + e * Nq * 3];      
+	  dfloat_t rho = Q[i + 0 * Nq + e * Nq * NFIELDS];
+
+	  euler_fields Uex;
+	  coord X; X.x = x; X.y = y; X.z = z;
+	  euler_vortex(app, X, FinalTime, &Uex);
+	  
+	  printf("x(%d,%d) = %f; y(%d,%d) = %f; z(%d,%d) = %f; rho(%d,%d) = %f; rhoex(%d,%d) = %f;\n",i+1,e+1,x,i+1,e+1,y,i+1,e+1,z,i+1,e+1,rho,i+1,e+1,Uex.U1);
+	}
+    }
+#endif
+  // ===========================================================
 
   //
   // cleanup

@@ -686,13 +686,12 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   geo_elem_data *geo = new geo_elem_data;
   geo->xq = ref_data->Vq * x;
   geo->yq = ref_data->Vq * y;
-  geo->zq = ref_data->Vq * z;  
+  geo->zq = ref_data->Vq * z;
 
   geo->xf = ref_data->Vfq * x;
   geo->yf = ref_data->Vfq * y;
-  geo->zf = ref_data->Vfq * z;  
+  geo->zf = ref_data->Vfq * z;
 
-  
   geo->rxJ = rxJ;
   geo->sxJ = sxJ;
   geo->txJ = txJ;

@@ -1,6 +1,6 @@
 
 if     ELEM_TYPE == 0 then meshname = "meshes/tri2.msh"
-elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube0.msh"
+elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube2.msh"
 else
   print("Unknown element type")
 end
@@ -33,8 +33,8 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 1,
-    M = 2,
+    N = 2,
+    M = 4,
     sfc_partition = true
   },
   output = {

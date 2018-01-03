@@ -26,7 +26,7 @@
 // map entropy to conservation vars
 #define sV(V1, V2, V3, V4) (p_gamma - V1 + (V2 * V2 + V3 * V3) / (2.f * V4))
 #define rhoeV(V1, V2, V3, V4)                                                  \
-  (POWDF((p_gamma - 1.f) / POWDF(-V4, p_gamma), 1.f / (p_gamma - 1.f)) *	\
+  (POWDF((p_gamma - 1.f) / POWDF(-V4, p_gamma), 1.f / (p_gamma - 1.f)) *       \
    EXPDF(-sV(V1, V2, V3, V4) / (p_gamma - 1.f)))
 
 // occa function
@@ -98,7 +98,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 }
 
 kernel void test_kernel_2d(const int K, dfloat *restrict Q, dfloat *restrict Qf,
-			   dfloat *restrict rhsQ, dfloat *restrict rhsQf)
+                           dfloat *restrict rhsQ, dfloat *restrict rhsQf)
 {
 
   for (int k = 0; k < K; ++k; outer0)
@@ -111,10 +111,12 @@ kernel void test_kernel_2d(const int K, dfloat *restrict Q, dfloat *restrict Qf,
         dfloat rhou = Q[i + 1 * p_Nq + k * p_Nq * p_Nfields];
         dfloat rhov = Q[i + 2 * p_Nq + k * p_Nq * p_Nfields];
         dfloat E = Q[i + 3 * p_Nq + k * p_Nq * p_Nfields];
-	if (k==0 & i==0){
-	  //printf("p_Nq = %d, p_Nfields = %d, K = %d\n",p_Nq,p_Nfields,K);
-	  printf("Q(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou, rhov, E);
-	}
+        if (k == 0 & i == 0)
+        {
+          // printf("p_Nq = %d, p_Nfields = %d, K = %d\n",p_Nq,p_Nfields,K);
+          printf("Q(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou,
+                 rhov, E);
+        }
       }
     } // inner0
   }
@@ -130,9 +132,11 @@ kernel void test_kernel_2d(const int K, dfloat *restrict Q, dfloat *restrict Qf,
         dfloat rhou = rhsQ[i + 1 * p_Nq + k * p_Nq * p_Nfields];
         dfloat rhov = rhsQ[i + 2 * p_Nq + k * p_Nq * p_Nfields];
         dfloat E = rhsQ[i + 3 * p_Nq + k * p_Nq * p_Nfields];
-        if (k==0 & i==0){
-	  printf("Qv(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou, rhov, E);
-	}
+        if (k == 0 & i == 0)
+        {
+          printf("Qv(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou,
+                 rhov, E);
+        }
       }
     } // inner0
   }
@@ -150,9 +154,11 @@ kernel void test_kernel_2d(const int K, dfloat *restrict Q, dfloat *restrict Qf,
         dfloat rhou = Qf[id + 1 * offset];
         dfloat rhov = Qf[id + 2 * offset];
         dfloat E = Qf[id + 3 * offset];
-	if (k==0 & i==0){
-	  printf("Qvf(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou, rhov, E);
-	}
+        if (k == 0 & i == 0)
+        {
+          printf("Qvf(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou,
+                 rhov, E);
+        }
       }
     } // inner0
   }   // outer0
@@ -296,10 +302,10 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
               euler2d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, E_i, E_j, beta_i,
                            beta_j, FxS1, FyS1, FxS2, FyS2, FxS3, FyS3, FxS4,
                            FyS4);
-	      /*	      if (k==0 & i==0){
-		printf("xfluxes = %f, %f, %f, %f\n",FxS1,FxS2,FxS3,FxS4);
-		printf("yfluxes = %f, %f, %f, %f\n",FyS1,FyS2,FyS3,FyS4);		
-		}*/
+              /*	      if (k==0 & i==0){
+                printf("xfluxes = %f, %f, %f, %f\n",FxS1,FxS2,FxS3,FxS4);
+                printf("yfluxes = %f, %f, %f, %f\n",FyS1,FyS2,FyS3,FyS4);
+                }*/
 
               divF1 += Drq_ij * (FxS1 * rxJ + FyS1 * ryJ) +
                        Dsq_ij * (FxS1 * sxJ + FyS1 * syJ);
@@ -311,7 +317,6 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
                        Dsq_ij * (FxS4 * sxJ + FyS4 * syJ);
             }
 
-    
             // apply VqLq (keep rho_i, etc from before)
             for (int j = 0; j < p_NfqNfaces; ++j)
             {
@@ -348,11 +353,14 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
             }
 
 #if 1
-	    if (k==0){
-	      printf("divF(%d,%d): %16.16f, %16.16f, %16.16f, %16.16f\n",i,k,divF1,divF2,divF3,divF4);
-	      //printf("divF(%d,%d): %g, %g, %g, %g\n",i,k,divF1,divF2,divF3,divF4);
-	    }
-#endif	    
+            if (k == 0)
+            {
+              printf("divF(%d,%d): %16.16f, %16.16f, %16.16f, %16.16f\n", i, k,
+                     divF1, divF2, divF3, divF4);
+              // printf("divF(%d,%d): %g, %g, %g,
+              // %g\n",i,k,divF1,divF2,divF3,divF4);
+            }
+#endif
 
             int id = i + k * p_Nfields * p_Nq;
             rhsQ[id] = divF1;
@@ -414,10 +422,11 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
               divF4 += VfPq_ij * F4;
             }
 
-	    //if (k==0){
-	    //	      printf("surf divF(%d,%d): %16.16f, %16.16f, %16.16f, %16.16f\n",i,k,divF1,divF2,divF3,divF4);
-	    //	    }
-	    
+            // if (k==0){
+            //	      printf("surf divF(%d,%d): %16.16f, %16.16f, %16.16f,
+            //%16.16f\n",i,k,divF1,divF2,divF3,divF4);
+            //	    }
+
             int idf = i + k * p_Nfields * p_NfqNfaces;
             rhsQf[idf] = divF1;
             idf += p_NfqNfaces;
@@ -425,7 +434,7 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
             idf += p_NfqNfaces;
             rhsQf[idf] = divF3;
             idf += p_NfqNfaces;
-            rhsQf[idf] = divF4;	  
+            rhsQf[idf] = divF4;
 
           } // if i < p_NfqNfaces
 
@@ -436,15 +445,13 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
 }
 
 // split part of kernel
-kernel void euler_surf_2d(const int K, 
-                          const dfloat *restrict fgeo,
-			  const int *restrict mapPq,
+kernel void euler_surf_2d(const int K, const dfloat *restrict fgeo,
+                          const int *restrict mapPq,
                           const dfloat *restrict VqLq,
-                          const dfloat *restrict Qf,			 
-                          const dfloat *restrict rhsQf,
-			  dfloat *restrict rhsQ)
+                          const dfloat *restrict Qf,
+                          const dfloat *restrict rhsQf, dfloat *restrict rhsQ)
 {
-  
+
   // loop over elements
   for (int k1 = 0; k1 < (K + p_KblkS - 1) / p_KblkS; ++k1; outer0)
   {
@@ -505,7 +512,8 @@ kernel void euler_surf_2d(const int K,
           const dfloat lamP = sqrt(uP * uP + vP * vP) +
                               sqrt(p_gamma * pfun(rhoP, uP, vP, EP) / rhoP);
           const dfloat Lfc_sJ =
-              .25f * max(lamM, lamP) * sJ; // local max wavespeed estimate - assumes tau = 1
+              .25f * max(lamM, lamP) *
+              sJ; // local max wavespeed estimate - assumes tau = 1
 
           // add in rhsQf contribution
           int id = i + k * p_Nfields * p_NfqNfaces;
@@ -517,18 +525,19 @@ kernel void euler_surf_2d(const int K,
           id += p_NfqNfaces;
           const dfloat rhsQf4 = rhsQf[id];
 
-	  const dfloat drho = rhoP-rhoM;
-	  const dfloat drhou = rhouP-rhouM;
-	  const dfloat drhov = rhovP-rhovM;
-	  const dfloat dE = EP-EM;
+          const dfloat drho = rhoP - rhoM;
+          const dfloat drhou = rhouP - rhouM;
+          const dfloat drhov = rhovP - rhovM;
+          const dfloat dE = EP - EM;
 
-	  const dfloat fn1 = .5f * (FxS1 * nxJ + FyS1 * nyJ);
-	  const dfloat fn2 = .5f * (FxS2 * nxJ + FyS2 * nyJ);
-	  const dfloat fn3 = .5f * (FxS3 * nxJ + FyS3 * nyJ);
-	  const dfloat fn4 = .5f * (FxS4 * nxJ + FyS4 * nyJ);	  
-	  //	  if (k==0){
-	  //	    printf("fn+rhsQf = %16.16f, %16.16f, %16.16f, %16.16f\n",fn1+rhsQf1,fn2+rhsQf2,fn3+rhsQf3,fn4+rhsQf4);
-	  //	  }
+          const dfloat fn1 = .5f * (FxS1 * nxJ + FyS1 * nyJ);
+          const dfloat fn2 = .5f * (FxS2 * nxJ + FyS2 * nyJ);
+          const dfloat fn3 = .5f * (FxS3 * nxJ + FyS3 * nyJ);
+          const dfloat fn4 = .5f * (FxS4 * nxJ + FyS4 * nyJ);
+          //	  if (k==0){
+          //	    printf("fn+rhsQf = %16.16f, %16.16f, %16.16f,
+          //%16.16f\n",fn1+rhsQf1,fn2+rhsQf2,fn3+rhsQf3,fn4+rhsQf4);
+          //	  }
 
           sfS1[k2][i] = fn1 + rhsQf1 - Lfc_sJ * drho;
           sfS2[k2][i] = fn2 + rhsQf2 - Lfc_sJ * drhou;
@@ -563,7 +572,7 @@ kernel void euler_surf_2d(const int K,
             val4 += VqLq_ij * sfS4[k2][j];
           }
 
-	  //printf("surface terms: %f, %f, %f, %f\n", val1,val2,val3,val4);
+          // printf("surface terms: %f, %f, %f, %f\n", val1,val2,val3,val4);
 
           int id = i + k * p_Nfields * p_Nq;
           rhsQ[id + 0 * p_Nq] += val1;
@@ -652,7 +661,7 @@ kernel void euler_update_2d(const int K, const dfloat *restrict Jq,
           r3 /= Jqi;
           r4 /= Jqi;
 
-	  //printf("r = %f, %f, %f, %f\n",r1,r2,r3,r4);
+          // printf("r = %f, %f, %f, %f\n",r1,r2,r3,r4);
 
           // retrieve res arrays
           dfloat resx, resy, resz, resw;
@@ -691,10 +700,10 @@ kernel void euler_update_2d(const int K, const dfloat *restrict Jq,
           rhov += fb * resz;
           E += fb * resw;
 
-	  /*	  if (k==0){
-	    printf("updated U: %f, %f, %f, %f\n",rho,rhou,rhov,E);
-	    }*/
-	  
+          /*	  if (k==0){
+            printf("updated U: %f, %f, %f, %f\n",rho,rhou,rhov,E);
+            }*/
+
           Q[id + 0 * p_Nq] = rho;
           Q[id + 1 * p_Nq] = rhou;
           Q[id + 2 * p_Nq] = rhov;
@@ -706,9 +715,9 @@ kernel void euler_update_2d(const int K, const dfloat *restrict Jq,
           dfloat V1, V2, V3, V4;
           VU(rho, rhou, rhov, E, V1, V2, V3, V4);
 
-	  //	  if (k==0){
-	  //	    printf("Vu = %f, %f, %f, %f\n", V1,V2,V3,V4);
-	  //	  }
+          //	  if (k==0){
+          //	    printf("Vu = %f, %f, %f, %f\n", V1,V2,V3,V4);
+          //	  }
 
           // smem transfer
           sV1[k2][i] = V1;
@@ -756,9 +765,9 @@ kernel void euler_update_2d(const int K, const dfloat *restrict Jq,
             dfloat rho, rhou, rhov, E;
             UV(V1, V2, V3, V4, rho, rhou, rhov, E);
 
-	    //	    if (k==0){
-	    //	      printf("Uvf = %f, %f, %f, %f\n",rho,rhou,rhov,E);
-	    //	    }
+            //	    if (k==0){
+            //	      printf("Uvf = %f, %f, %f, %f\n",rho,rhou,rhov,E);
+            //	    }
 
             Qf[id + 0 * p_NfqNfaces] = rho;
             Qf[id + 1 * p_NfqNfaces] = rhou;
@@ -775,9 +784,9 @@ kernel void euler_update_2d(const int K, const dfloat *restrict Jq,
           for (int j = 0; j < p_Nq; ++j)
           {
             const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-	    //	    if (k==0){
-	      //	      printf("VqPq(%d,%d) = %f\n",i+1,j+1,VqPq_ij);
-	    //	    }
+            //	    if (k==0){
+            //	      printf("VqPq(%d,%d) = %f\n",i+1,j+1,VqPq_ij);
+            //	    }
             V1 += VqPq_ij * sV1[k2][j];
             V2 += VqPq_ij * sV2[k2][j];
             V3 += VqPq_ij * sV3[k2][j];
@@ -788,9 +797,9 @@ kernel void euler_update_2d(const int K, const dfloat *restrict Jq,
           dfloat rho, rhou, rhov, E;
           UV(V1, V2, V3, V4, rho, rhou, rhov, E);
 
-	  //	  if (k==0){
-	    //	    printf("Uv = %f, %f, %f, %f\n",rho,rhou,rhov,E);
-	  //	  }
+          //	  if (k==0){
+          //	    printf("Uv = %f, %f, %f, %f\n",rho,rhou,rhov,E);
+          //	  }
 
           const int id = i + k * p_Nq * p_Nfields;
           rhsQ[id + 0 * p_Nq] = rho;
