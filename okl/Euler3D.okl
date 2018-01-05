@@ -604,10 +604,10 @@ kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
           const dfloat betaM = beta(rhoM, uM, vM, wM, EM);
           const dfloat betaP = beta(rhoP, uP, vP, wM, EP);
 
-          if (isBoundary)
-          {
-            // add BCs here - assume periodic for now
-          }
+          // if (isBoundary)
+          // {
+          //   // add BCs here - assume periodic for now
+          // }
 
           dfloat FxS1, FyS1, FzS1;
           dfloat FxS2, FyS2, FzS2;
