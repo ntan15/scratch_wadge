@@ -3051,6 +3051,8 @@ static void modify_mapP(app_t *app, int usePeriodic)
           (idP - Nfq * Nfaces * enbr) + enbr * Nfq * Nfaces * NFIELDS;
     }
   }
+
+  occaMemoryFree(app->mapPq);
   app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
                              app->hops->mapPq);
 }
