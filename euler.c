@@ -2888,7 +2888,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 }
 
 // 2D only for now
-static double modify_mapP(app_t *app, int usePeriodic)
+static void modify_mapP(app_t *app, int usePeriodic)
 {
 
   const uintloc_t E = app->hm->E;
