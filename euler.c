@@ -1121,36 +1121,39 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
   {
     uintloc_t start = 0;
     uintloc_t end = NFACES * om->E - 1;
-    uintloc_t offset;
+    uintloc_t offset = 0;
 
-    while (end >= start)
+    if (om->E > 0)
     {
-      offset = (start + end) / 2;
-
-      if (offset == 0)
-        break;
-
-      int c = fn_cmp(fnloc + offset * NFN, pivotsloc + r * NFN);
-
-      if (start == end)
+      while (end >= start)
       {
+        offset = (start + end) / 2;
+
+        if (offset == 0)
+          break;
+
+        int c = fn_cmp(fnloc + offset * NFN, pivotsloc + r * NFN);
+
+        if (start == end)
+        {
+          if (c < 0)
+            ++offset;
+          break;
+        }
+
         if (c < 0)
-          ++offset;
-        break;
+          start = offset + 1;
+        else if (c > 0)
+          end = offset - 1;
+        else
+          break;
       }
 
-      if (c < 0)
-        start = offset + 1;
-      else if (c > 0)
-        end = offset - 1;
-      else
-        break;
+      // Make sure matching faces end up on the same rank
+      while (offset > 0 &&
+             0 == fn_cmp(fnloc + (offset - 1) * NFN, pivotsloc + r * NFN))
+        --offset;
     }
-
-    // Make sure matching faces end up on the same rank
-    while (offset > 0 &&
-           0 == fn_cmp(fnloc + (offset - 1) * NFN, pivotsloc + r * NFN))
-      --offset;
 
     ASD_ABORT_IF_NOT(offset <= NFACES * om->E, "Problem with binary search");
 
@@ -2201,30 +2204,33 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
   {
     uintloc_t start = 0;
     uintloc_t end = om->E - 1;
-    uintloc_t offset;
+    uintloc_t offset = 0;
 
-    while (end >= start)
+    if (om->E > 0)
     {
-      offset = (start + end) / 2;
-
-      if (offset == 0)
-        break;
-
-      int c = EToH_H_cmp(EToHloc + offset * NETOH, pivotsloc + r * NETOH);
-
-      if (start == end)
+      while (end >= start)
       {
-        if (c < 0)
-          ++offset;
-        break;
-      }
+        offset = (start + end) / 2;
 
-      if (c < 0)
-        start = offset + 1;
-      else if (c > 0)
-        end = offset - 1;
-      else
-        break;
+        if (offset == 0)
+          break;
+
+        int c = EToH_H_cmp(EToHloc + offset * NETOH, pivotsloc + r * NETOH);
+
+        if (start == end)
+        {
+          if (c < 0)
+            ++offset;
+          break;
+        }
+
+        if (c < 0)
+          start = offset + 1;
+        else if (c > 0)
+          end = offset - 1;
+        else
+          break;
+      }
     }
 
     ASD_ABORT_IF_NOT(offset <= om->E, "Problem with binary search");
