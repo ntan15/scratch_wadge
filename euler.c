@@ -3496,7 +3496,7 @@ int main(int argc, char *argv[])
   dfloat_t *resQ =
       (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * K);
 
-  for (int i = 0; i < K * NFIELDS * Nq; ++i)
+  for (unsigned int i = 0; i < K * NFIELDS * Nq; ++i)
   {
     resQ[i] = 0.0;
   }
