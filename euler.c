@@ -2892,10 +2892,10 @@ static double modify_mapP(app_t *app, int usePeriodic)
 {
 
   const uintloc_t E = app->hm->E;
-  const int Nq = app->hops->Nq;
+  // const int Nq = app->hops->Nq;
   const int Nfq = app->hops->Nfq;
   const int Nfaces = app->hops->Nfaces;
-  const int Nfgeo = app->hops->Nfgeo;
+  // const int Nfgeo = app->hops->Nfgeo;
 
   if (usePeriodic == 1)
   {
@@ -2938,7 +2938,9 @@ static double modify_mapP(app_t *app, int usePeriodic)
     // find boundary nodes
     dfloat_t *xB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
     dfloat_t *yB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
+#if VDIM == 3
     dfloat_t *zB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
+#endif
     int *idB = asd_malloc_aligned(sizeof(int) * Nfq * Nfaces * E);
     int sk = 0;
     for (uintloc_t e = 0; e < E; ++e)
@@ -3161,7 +3163,7 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
 
   dfloat_t x = X.x;
   dfloat_t y = X.y;
-  dfloat_t z = X.z;
+  // dfloat_t z = X.z;
   dfloat_t gamma = app->prefs->physical_gamma;
   dfloat_t gm1 = (gamma - 1.0);
 
@@ -3198,10 +3200,10 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   // 3D vortex on [0,10] x [0,10] x [0,10]
   dfloat_t x0 = 5.0;
   dfloat_t y0 = 5.0;
-  dfloat_t z0 = 5.0;
+  // dfloat_t z0 = 5.0;
   dfloat_t xt = x - x0;
   dfloat_t yt = y - y0 - t;
-  dfloat_t zt = z - z0;
+  // dfloat_t zt = z - z0;
 
   // cross(X,[0,0,1]) = [-y,x,0]
   dfloat_t rx = -yt;
@@ -3575,7 +3577,9 @@ int main(int argc, char *argv[])
       dfloat_t V2 = 0.0;
       dfloat_t V3 = 0.0;
       dfloat_t V4 = 0.0;
+#if VDIM == 3
       dfloat_t V5 = 0.0;
+#endif
       for (int j = 0; j < Nq; ++j)
       {
         dfloat_t VqPq_ij = app->hops->VqPq[i + j * Nq];
@@ -3614,7 +3618,9 @@ int main(int argc, char *argv[])
       dfloat_t V2 = 0.0;
       dfloat_t V3 = 0.0;
       dfloat_t V4 = 0.0;
+#if VDIM == 3
       dfloat_t V5 = 0.0;
+#endif
       for (int j = 0; j < Nq; ++j)
       {
         dfloat_t VfPq_ij = app->hops->VfPq[i + j * Nfq * Nfaces];
