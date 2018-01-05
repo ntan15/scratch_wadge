@@ -111,7 +111,7 @@ kernel void test_kernel_2d(const int K, dfloat *restrict Q, dfloat *restrict Qf,
         dfloat rhou = Q[i + 1 * p_Nq + k * p_Nq * p_Nfields];
         dfloat rhov = Q[i + 2 * p_Nq + k * p_Nq * p_Nfields];
         dfloat E = Q[i + 3 * p_Nq + k * p_Nq * p_Nfields];
-        if (k == 0 & i == 0)
+        if (k == 0 && i == 0)
         {
           // printf("p_Nq = %d, p_Nfields = %d, K = %d\n",p_Nq,p_Nfields,K);
           printf("Q(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou,
@@ -132,7 +132,7 @@ kernel void test_kernel_2d(const int K, dfloat *restrict Q, dfloat *restrict Qf,
         dfloat rhou = rhsQ[i + 1 * p_Nq + k * p_Nq * p_Nfields];
         dfloat rhov = rhsQ[i + 2 * p_Nq + k * p_Nq * p_Nfields];
         dfloat E = rhsQ[i + 3 * p_Nq + k * p_Nq * p_Nfields];
-        if (k == 0 & i == 0)
+        if (k == 0 && i == 0)
         {
           printf("Qv(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou,
                  rhov, E);
@@ -154,7 +154,7 @@ kernel void test_kernel_2d(const int K, dfloat *restrict Q, dfloat *restrict Qf,
         dfloat rhou = Qf[id + 1 * offset];
         dfloat rhov = Qf[id + 2 * offset];
         dfloat E = Qf[id + 3 * offset];
-        if (k == 0 & i == 0)
+        if (k == 0 && i == 0)
         {
           printf("Qvf(%d) = %16.16f, %16.16f, %16.16f, %16.16f\n", i, rho, rhou,
                  rhov, E);
@@ -281,7 +281,7 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
             const dfloat beta_i = beta(rho_i, u_i, v_i, E_i);
 
 #if 0
-	    if (k==0 & i==0){
+	    if (k==0 && i==0){
 	      printf("rho,u,v,E,beta = %f, %f, %f, %f, %f\n",rho_i,u_i,v_i,E_i,beta_i);
 	    }
 #endif
@@ -302,7 +302,7 @@ kernel void euler_vol_2d(const int K, const dfloat *restrict vgeo,
               euler2d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, E_i, E_j, beta_i,
                            beta_j, FxS1, FyS1, FxS2, FyS2, FxS3, FyS3, FxS4,
                            FyS4);
-              /*	      if (k==0 & i==0){
+              /*	      if (k==0 && i==0){
                 printf("xfluxes = %f, %f, %f, %f\n",FxS1,FxS2,FxS3,FxS4);
                 printf("yfluxes = %f, %f, %f, %f\n",FyS1,FyS2,FyS3,FyS4);
                 }*/
@@ -468,7 +468,7 @@ kernel void euler_surf_2d(const int K, const dfloat *restrict fgeo,
         const int k = k1 * p_KblkS + k2;
 
         // read traces
-        if ((k < K) & (i < p_NfqNfaces))
+        if ((k < K) && (i < p_NfqNfaces))
         {
 
           int idM = i + k * p_NfqNfaces * p_Nfields;
@@ -556,7 +556,7 @@ kernel void euler_surf_2d(const int K, const dfloat *restrict fgeo,
       {
 
         const int k = k1 * p_KblkS + k2;
-        if (k < K & i < p_Nq)
+        if (k < K && i < p_Nq)
         {
 
           // accumulate lifted contributions into vol rhs
