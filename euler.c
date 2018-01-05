@@ -729,10 +729,16 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
       char *mother = asd_dictionary_get_value(&periodic_vertices, child);
 
       if (mother)
+        ASD_TRACE("Finding periodic mother vertex for child %ju", v);
+
+      while (mother)
       {
         const uintglo_t mv = strtouglo_or_abort(mother) - 1;
-        ASD_TRACE("Setting child %ju to mother %ju", v, mv);
+        ASD_TRACE("  %ju -> %ju", v, mv);
         v = mv;
+
+        snprintf(child, ASD_BUFSIZ, "%" UINTGLO_PRI, v + 1);
+        mother = asd_dictionary_get_value(&periodic_vertices, child);
       }
 
       mesh->EToVG[NVERTS * (e - ethis) + n] = v;
