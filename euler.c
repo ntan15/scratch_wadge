@@ -3285,7 +3285,7 @@ static void rk_run(app_t *app, double dt, double FinalTime)
 {
   printf("Running...\n");
 
-  int Nsteps = (double)ceil(FinalTime / dt);
+  int Nsteps = (int)ceil(FinalTime / dt);
   int interval = (Nsteps / 10);
   if (Nsteps < 10)
   {
