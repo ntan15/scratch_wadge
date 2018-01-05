@@ -497,10 +497,10 @@ kernel void euler_surf_2d(const int K, const dfloat *restrict fgeo,
           const dfloat betaM = beta(rhoM, uM, vM, EM);
           const dfloat betaP = beta(rhoP, uP, vP, EP);
 
-          if (isBoundary)
-          {
-            // add BCs here - assume periodic for now
-          }
+          // if (isBoundary)
+          // {
+          //   // add BCs here - assume periodic for now
+          // }
 
           dfloat FxS1, FyS1, FxS2, FyS2, FxS3, FyS3, FxS4, FyS4;
           euler2d_flux(rhoM, rhoP, uM, uP, vM, vP, EM, EP, betaM, betaP, FxS1,
