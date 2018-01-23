@@ -729,10 +729,16 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
       char *mother = asd_dictionary_get_value(&periodic_vertices, child);
 
       if (mother)
+        ASD_TRACE("Finding periodic mother vertex for child %ju", v);
+
+      while (mother)
       {
         const uintglo_t mv = strtouglo_or_abort(mother) - 1;
-        ASD_TRACE("Setting child %ju to mother %ju", v, mv);
+        ASD_TRACE("  %ju -> %ju", v, mv);
         v = mv;
+
+        snprintf(child, ASD_BUFSIZ, "%" UINTGLO_PRI, v + 1);
+        mother = asd_dictionary_get_value(&periodic_vertices, child);
       }
 
       mesh->EToVG[NVERTS * (e - ethis) + n] = v;
@@ -1115,36 +1121,39 @@ static host_mesh_t *host_mesh_connect(MPI_Comm comm, const host_mesh_t *om)
   {
     uintloc_t start = 0;
     uintloc_t end = NFACES * om->E - 1;
-    uintloc_t offset;
+    uintloc_t offset = 0;
 
-    while (end >= start)
+    if (om->E > 0)
     {
-      offset = (start + end) / 2;
-
-      if (offset == 0)
-        break;
-
-      int c = fn_cmp(fnloc + offset * NFN, pivotsloc + r * NFN);
-
-      if (start == end)
+      while (end >= start)
       {
+        offset = (start + end) / 2;
+
+        if (offset == 0)
+          break;
+
+        int c = fn_cmp(fnloc + offset * NFN, pivotsloc + r * NFN);
+
+        if (start == end)
+        {
+          if (c < 0)
+            ++offset;
+          break;
+        }
+
         if (c < 0)
-          ++offset;
-        break;
+          start = offset + 1;
+        else if (c > 0)
+          end = offset - 1;
+        else
+          break;
       }
 
-      if (c < 0)
-        start = offset + 1;
-      else if (c > 0)
-        end = offset - 1;
-      else
-        break;
+      // Make sure matching faces end up on the same rank
+      while (offset > 0 &&
+             0 == fn_cmp(fnloc + (offset - 1) * NFN, pivotsloc + r * NFN))
+        --offset;
     }
-
-    // Make sure matching faces end up on the same rank
-    while (offset > 0 &&
-           0 == fn_cmp(fnloc + (offset - 1) * NFN, pivotsloc + r * NFN))
-      --offset;
 
     ASD_ABORT_IF_NOT(offset <= NFACES * om->E, "Problem with binary search");
 
@@ -2195,30 +2204,33 @@ static void get_hilbert_partition(MPI_Comm comm, host_mesh_t *om,
   {
     uintloc_t start = 0;
     uintloc_t end = om->E - 1;
-    uintloc_t offset;
+    uintloc_t offset = 0;
 
-    while (end >= start)
+    if (om->E > 0)
     {
-      offset = (start + end) / 2;
-
-      if (offset == 0)
-        break;
-
-      int c = EToH_H_cmp(EToHloc + offset * NETOH, pivotsloc + r * NETOH);
-
-      if (start == end)
+      while (end >= start)
       {
-        if (c < 0)
-          ++offset;
-        break;
-      }
+        offset = (start + end) / 2;
 
-      if (c < 0)
-        start = offset + 1;
-      else if (c > 0)
-        end = offset - 1;
-      else
-        break;
+        if (offset == 0)
+          break;
+
+        int c = EToH_H_cmp(EToHloc + offset * NETOH, pivotsloc + r * NETOH);
+
+        if (start == end)
+        {
+          if (c < 0)
+            ++offset;
+          break;
+        }
+
+        if (c < 0)
+          start = offset + 1;
+        else if (c > 0)
+          end = offset - 1;
+        else
+          break;
+      }
     }
 
     ASD_ABORT_IF_NOT(offset <= om->E, "Problem with binary search");
@@ -2888,14 +2900,14 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 }
 
 // 2D only for now
-static double modify_mapP(app_t *app, int usePeriodic)
+static void modify_mapP(app_t *app, int usePeriodic)
 {
 
   const uintloc_t E = app->hm->E;
-  const int Nq = app->hops->Nq;
+  // const int Nq = app->hops->Nq;
   const int Nfq = app->hops->Nfq;
   const int Nfaces = app->hops->Nfaces;
-  const int Nfgeo = app->hops->Nfgeo;
+  // const int Nfgeo = app->hops->Nfgeo;
 
   if (usePeriodic == 1)
   {
@@ -2938,7 +2950,9 @@ static double modify_mapP(app_t *app, int usePeriodic)
     // find boundary nodes
     dfloat_t *xB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
     dfloat_t *yB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
+#if VDIM == 3
     dfloat_t *zB = asd_malloc_aligned(sizeof(dfloat_t) * Nfq * Nfaces * E);
+#endif
     int *idB = asd_malloc_aligned(sizeof(int) * Nfq * Nfaces * E);
     int sk = 0;
     for (uintloc_t e = 0; e < E; ++e)
@@ -3049,6 +3063,8 @@ static double modify_mapP(app_t *app, int usePeriodic)
           (idP - Nfq * Nfaces * enbr) + enbr * Nfq * Nfaces * NFIELDS;
     }
   }
+
+  occaMemoryFree(app->mapPq);
   app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
                              app->hops->mapPq);
 }
@@ -3161,7 +3177,7 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
 
   dfloat_t x = X.x;
   dfloat_t y = X.y;
-  dfloat_t z = X.z;
+  // dfloat_t z = X.z;
   dfloat_t gamma = app->prefs->physical_gamma;
   dfloat_t gm1 = (gamma - 1.0);
 
@@ -3198,10 +3214,10 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   // 3D vortex on [0,10] x [0,10] x [0,10]
   dfloat_t x0 = 5.0;
   dfloat_t y0 = 5.0;
-  dfloat_t z0 = 5.0;
+  // dfloat_t z0 = 5.0;
   dfloat_t xt = x - x0;
   dfloat_t yt = y - y0 - t;
-  dfloat_t zt = z - z0;
+  // dfloat_t zt = z - z0;
 
   // cross(X,[0,0,1]) = [-y,x,0]
   dfloat_t rx = -yt;
@@ -3283,7 +3299,7 @@ static void rk_run(app_t *app, double dt, double FinalTime)
 {
   printf("Running...\n");
 
-  int Nsteps = (double)ceil(FinalTime / dt);
+  int Nsteps = (int)ceil(FinalTime / dt);
   int interval = (Nsteps / 10);
   if (Nsteps < 10)
   {
@@ -3494,7 +3510,7 @@ int main(int argc, char *argv[])
   dfloat_t *resQ =
       (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * K);
 
-  for (int i = 0; i < K * NFIELDS * Nq; ++i)
+  for (unsigned int i = 0; i < K * NFIELDS * Nq; ++i)
   {
     resQ[i] = 0.0;
   }
@@ -3575,7 +3591,9 @@ int main(int argc, char *argv[])
       dfloat_t V2 = 0.0;
       dfloat_t V3 = 0.0;
       dfloat_t V4 = 0.0;
+#if VDIM == 3
       dfloat_t V5 = 0.0;
+#endif
       for (int j = 0; j < Nq; ++j)
       {
         dfloat_t VqPq_ij = app->hops->VqPq[i + j * Nq];
@@ -3614,7 +3632,9 @@ int main(int argc, char *argv[])
       dfloat_t V2 = 0.0;
       dfloat_t V3 = 0.0;
       dfloat_t V4 = 0.0;
+#if VDIM == 3
       dfloat_t V5 = 0.0;
+#endif
       for (int j = 0; j < Nq; ++j)
       {
         dfloat_t VfPq_ij = app->hops->VfPq[i + j * Nfq * Nfaces];

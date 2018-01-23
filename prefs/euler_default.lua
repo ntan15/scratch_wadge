@@ -14,7 +14,7 @@ app = {
               -Wcast-align -Wchar-subscripts -Wall -W \z
               -Wpointer-arith -Wwrite-strings -Wformat-security -pedantic \z
               -Wextra -Wno-unused-parameter -Wno-unknown-pragmas \z
-              -Wno-unused-variable"
+              -Wno-unused-variable -Wno-int-in-bool-context"
               -- -Wconversion -fsanitize=address
     -- OpenCL
     -- info = string.format("mode = OpenCL , platformID = 0, deviceID = %d",

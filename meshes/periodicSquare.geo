@@ -1,8 +1,8 @@
 /* Rectangle Geometry File */
 
-gridsize = .50; // prescribed mesh element size
+gridsize = 5.0; // prescribed mesh element size
     
-Lx = 20.0; // width
+Lx = 10.0; // width
 Ly = 10.0;   // height
    
 Point(1) = {0, -Ly/2, 0, gridsize};
