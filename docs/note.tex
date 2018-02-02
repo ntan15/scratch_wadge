@@ -303,29 +303,30 @@ Let $\Pi_w u$ and $P_w u$ be represented by coefficients $\bm{u}_w, \tilde{\bm{u
 We refer to the matrix $\bm{M}\bm{M}_{1/w}^{-1}  \bm{M}$ as the weight-adjusted mass matrix.  
 Assuming that $u$ is a constant (i.e. $\phi_0 = 1$), both the weighted and weight-adjusted mass matrices can be inverted explicitly to yield explicit formulas for $\Pi_w u, P_w u$
 \[
-\Pi_w u = \frac{\LRp{u,1}}{\LRp{w,1}}, \qquad P_w u = \frac{\LRp{\frac{1}{w},1}}{\LRp{1,1}}\frac{\LRp{u,1}}{\LRp{1,1}}.
+\Pi_w u = \frac{\int_{D^k}{u}}{\int_{D^k}w}, \qquad P_w u = \frac{\int_{D^k}{\frac{1}{w}}}{\LRb{D^k}}\frac{\int_{D^k} u}{\LRb{D^k}}.
 \]
 
 
 We now decompose $\Pi_wu = u_0 + \tilde{u}(x)$, where $\LRp{\tilde{u}w,1} = 0$.  Taking $v = 1$ then shows that the weighted average of $\Pi_w u$ obeys
 \[
-\frac{\LRp{w\Pi_w u,1}}{\LRp{1,1}} = u_0 = \frac{\LRp{u,1}}{\LRp{1,1}}.
+\frac{\int_{D^k}{w\Pi_w u}}{\LRb{D^k}} = u_0 = \frac{\int_{D^k}{u}}{\LRb{D^k}}.
 \]
 To restore local conservation to the weight-adjusted projection, we can modify the weight-adjusted projection by adding and subtracting the weighted mean 
 \[
-P_w u + \frac{\LRp{u,1}-\LRp{wP_w u,1} }{\LRp{w,1}}.  
+\tilde{P}_w u = P_w u + \frac{\int_{D^k}{u}-\int_{D^k}{wP_w u} }{\int_{D^k}{w}}.  
 \]
 We note that the weighted average of this corrected quantity is the same as the weighted average of the projection $\Pi_w u$
-\begin{equation}
-\LRp{w\LRp{P_w u + \frac{\LRp{u,1}-\LRp{wP_w u,1} }{\LRp{w,1}}},1}  = \LRp{wP_w u + \LRp{\frac{\LRp{u,1}-\LRp{wP_w u,1}}{\LRp{w,1}}}w,1} = \LRp{u,1} = \LRp{w\Pi_w u,1}.
+\begin{align}
+\LRp{w\tilde{P}_w u,1}&=\LRp{w\LRp{P_w u + \frac{\int_{D^k}{u}-\int_{D^k}wP_w u }{\int_{D^k}{w}}},1} = \nonumber\\ 
+& \LRp{wP_w u +  \LRp{\frac{\int_{D^k}{u}-\int_{D^k}wP_w u }{\int_{D^k}{w}}}w,1} = \LRp{u,1} = \LRp{w\Pi_w u,1}.
 \label{eq:wadgcorrection}
-\end{equation}
+\end{align}
 
 For vector functions $\bm{u}(\bm{x})$, the weight can be matrix-valued.  Extending the weighted average correction in (\ref{eq:wadgcorrection}) to the matrix-valued case can be done as follows
 \[
-P_{\bm{W}} \bm{u}(\bm{x}) + \LRp{\int_{D^k}\bm{W}}^{-1}\LRp{\LRp{\bm{u},1}-\LRp{\bm{W}P_{\bm{W}} \bm{u},1}}.  
+P_{\bm{W}} \bm{u}(\bm{x}) + \LRp{\int_{D^k}\bm{W}}^{-1}\LRp{\int_{D^k}{\bm{u}}-\int_{D^k}\bm{W}P_{\bm{W}} \bm{u}}.  
 \]
-The main difference here is that the inverse of the averaged weight matrix $\LRp{\int_{D^k}{\bm{W}}}^{-1}$ must be computed.  The matrix-weighted average of this corrected quantity is high order accurate and equal to $\LRp{\bm{W}\bm{u},1}$.  
+The main difference here is that the inverse of the averaged weight matrix $\LRp{\int_{D^k}{\bm{W}}}^{-1}$ must be computed.  The matrix-weighted average of this corrected quantity is high order accurate and equal to $\int_{D^k}\bm{W}\bm{u}$.  
 
 \bibliographystyle{unsrt}
 \bibliography{dg}

@@ -274,7 +274,7 @@ legend style={font=\small}
 
 \date{}
 \author{Jesse Chan, Lucas Wilcox}
-\title{Discretely entropy stable discontinuous Galerkin methods: curvilinear meshes and GPU acceleration}
+\title{Discretely entropy stable weight-adjusted discontinuous Galerkin methods: curvilinear meshes and GPU acceleration}
 \graphicspath{{./figs/}}
 
 
@@ -318,12 +318,46 @@ Let $\Omega\mathbb{R}^d$ now be a closed domain with boundary $\partial \Omega$.
 \end{equation}
 where $\bm{n} = \LRp{n_1,\ldots,n_d}^T$ denotes the unit outward normal vector on $\partial \Omega$.  
 
-\subsection{Standard discontinuous Galerkin formulations}
+\subsection{Standard discontinuous Galerkin formulations and the $L^2$ projection}
 
-
-\section{Discretely stable and efficient DG methods}
 
 \note{Discuss standard DG formulations and their disadvantages: not entropy stable due to the loss of the chain rule, and storage costs of inverting the mass matrix.  }
+
+\note{ Introduce mesh and elements $D^k$, as well as $L^2$ projection operator.}
+For $u \in L^2\LRp{\widehat{D}}$, 
+\begin{equation}
+\int_{\widehat{D}} \Pi_N u v \diff{\hat{\bm{x}}} = \int_{\widehat{D}} u v \diff{\hat{\bm{x}}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
+\label{eq:l2proj}
+\end{equation}
+
+Discontinuous Galerkin methods have been very widely applied to systems of nonlinear conservation laws (\ref{eq:nonlineqs}) \cite{cockburn1989tvb, cockburn1998runge, cockburn2001devising, karniadakis2013spectral}.  The development of new discontinuous Galerkin methods for nonlinear conservation laws have focused heavily on the choice of numerical flux \cite{qiu2006numerical} or the development of  slope limiters \cite{krivodonova2007limiters, zhang2012maximum, dumbser2014posteriori} and artificial viscosity strategies \cite{persson2006sub, barter2010shock, klockner2011viscous}.  However, the treatment of the underlying volume discretization remains relatively unchanged between each of these approaches.  
+
+Ignoring terms involving filters, limiters, or artificial viscosity, a semi-discrete ``weak'' DG formulation  for (\ref{eq:nonlineqs}) can be given locally over an element $D^k$: find $\bm{u}\in \LRp{P^N\LRp{D^k}}^n$ such that
+\begin{align}
+\int_{D^k} \LRp{\pd{\bm{u}}{t}\cdot \bm{v} - \sum_{j=1}^d\bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i}} \diff{\bm{x}} 
++ \sum_{j=1}^d \int_{\partial D^k} \LRp{\bm{f}^*_j\LRp{\bm{u}^+,\bm{u}} }\cdot \bm{v} n_j  \diff{\bm{x}} = 0, \qquad \forall \bm{v}\in \LRp{P^N\LRp{D^k}}^n,
+\label{eq:weakdg}
+\end{align}
+where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on both $D^k$ and neighboring elements.  
+
+Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, this implies that there is no guarantee that the solution does not blow up.  
+
+For polynomial approximation spaces, $\pd{\bm{v}}{x_i}$ is polynomial.  Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
+\[
+\int_{D^k} \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} \diff{\bm{x}} = \int_{\hat{D}} \Pi_N \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} J\diff{\bm{x}}.
+\]
+Thus, integrating by parts (\ref{eq:weakdg}) recovers a ``strong'' DG formulation involving the projection operator
+\begin{align}
+&\int_{D^k} \LRp{\pd{\bm{u}}{t} - \sum_{j=1}^d \pd{\Pi_N \bm{f}_j(\bm{u})}{x_j}} \cdot \bm{v} \diff{\bm{x}} \nonumber\\
+&+ \sum_{j=1}^d \int_{\partial D^k} \LRp{\bm{f}^*_j\LRp{\bm{u}^+,\bm{u}} - \Pi_N\bm{f}_j(\bm{u})}\cdot \bm{v} n_j  \diff{\bm{x}} = 0, \qquad \forall \bm{v}\in \LRp{P^N\LRp{D^k}}^n.  
+\label{eq:strongdg}
+\end{align}
+We note that it is not strictly necessary to introduce the projection operator; however, constructing a ``strong'' DG formulation without a projection operator requires an analytical expression for derivatives of the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$, which can be complex or expensive to compute.  Moreover, because polynomial quadrature rules are typically used in practice to evaluate integrals, 
+it is not possible to use integration by parts when the nonlinear flux function is rational due to errors in approximating integrals.  Introducing the projection operator resolves both issues, as the integrands involved in integration by parts are polynomials of degree $2N-1$, for which efficient quadratures exist. 
+
+
+
+\section{A discretely stable and low-storage DG method on curved meshes}
 
 \subsection{A weight-adjusted approximation to the curvilinear mass matrix}
 
@@ -577,7 +611,7 @@ We seek conditions for which free-stream preservation
 \]
 is satisfied if $\bm{u}$ constant.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
 
-This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous}.  
+This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous, crean2018entropy}.  
 
 Integrating by parts the DG formulation yields, for any constant $\bm{u}$
 \begin{align*}
@@ -591,7 +625,8 @@ Thus, to ensure that this sums to zero, we modify the geometric factors by seeki
 &\min_{\tilde{J\bm{G}}_i \in P^N} \frac{1}{2}\nor{\tilde{J\bm{G}}_i - J\bm{G}_i}_{L^2\LRp{\hat{D}}}^2,\\ 
 {\rm s.t.\ } &\LRa{\bm{n}_i,v}_{\d \hat{D}}-\LRp{\tilde{J\bm{G}}_i,\Grad v}_{\hat{D}} = 0, \qquad \forall v\in P^N.
 \end{align*}
-We note that the constraint corresponding to $v = 1$ yields that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$.  Thus, in order to guarantee a solution to this problem, we require that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$ for consistency of the right hand side.  This is satisfied if the mapping is isoparametric: the cross product formula is exact at quadrature points and the geometric factors are degree $2N-2$ polynomials, which implies that for $v = 1$, $\LRa{\bm{n}_i,v}_{\d \hat{D}}$ is exactly integrated by a surface quadrature of degree $2N$.
+We note that the constraint corresponding to $v = 1$ yields that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$.  Thus, in order to guarantee a solution to this problem, we require that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$ for consistency of the right hand side.  This is satisfied if the mesh is watertight 
+%This is satisfied if the mapping is isoparametric: the cross product formula is exact at quadrature points and the geometric factors are degree $2N-2$ polynomials, which implies that for $v = 1$, $\LRa{\bm{n}_i,v}_{\d \hat{D}}$ is exactly integrated by a surface quadrature of degree $2N$.
 
 This strategy was first introduced in the context of SBP-SAT terms in \cite{fernandez2016simultaneous}.  We approach its implementation slightly differently, and use the fact that the quadratic program can be solved explicitly using the null space method, which is computationally feasible since the null space of the constraint matrix is computed only once on the reference element.  This null space corresponds to a discretely divergence-free basis, which we extract using the SVD.  
 
