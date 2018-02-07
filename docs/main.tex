@@ -286,13 +286,15 @@ legend style={font=\small}
 Things to include: entropy conservation and stability on curvilinear meshes, choosing geometric factors to ensure constant state preservation, high order accuracy.  Computational considerations for curvilinear meshes.  
 \end{abstract}
 
+\tableofcontents
+
 \section{Introduction}
 
 Introducing WADG \cite{chan2016weight1,chan2016weight2}.  
 
 Matrix WADG: GPU efficiency of WADG vs storing weighted inverses \cite{chan2017weight}.  
 
-\section{Nonlinear conservation laws and the compressible Euler equations}
+\section{Systems of nonlinear conservation laws}
 
 This work addresses is high order schemes for the following system of $n$ nonlinear conservation laws in $d$ dimensions 
 \begin{equation}
@@ -305,30 +307,75 @@ We are interested in nonlinear conservation laws for which an entropy function $
 
 It can be shown (see, for example, \cite{mock1980systems}) that symmetrization is equivalent to the existence of an entropy flux function $F(\bm{u})$ and entropy potential $\psi$ such that
 \[
-\bm{v}^T \pd{\bm{f}}{\bm{u}} = \pd{F(\bm{u})}{\bm{u}}^T, \qquad \psi(\bm{v}) = \bm{v}^T\bm{f}(\bm{u}(\bm{v})) - F(\bm{u}(\bm{v})), \qquad \psi'(\bm{v}) = \bm{f}(\bm{u}(\bm{v})).
+\bm{v}^T \pd{\bm{f}_j}{\bm{u}} = \pd{F_j(\bm{u})}{\bm{u}}^T, \qquad \psi_j(\bm{v}) = \bm{v}^T\bm{f}_j(\bm{u}(\bm{v})) - F_j(\bm{u}(\bm{v})), \qquad \psi_j'(\bm{v}) = \bm{f}_j(\bm{u}(\bm{v})).
 \]
-Physically relevant solutions of (\ref{eq:nonlineqs}) can be shown to satisfy an entropy inequality by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy flux along with the chain rule yields 
-\[
-\pd{U(\bm{u})}{t} + \sum_{j=1}^d \pd{F_j(\bm{u})}{x_j} \leq 0.
-\]
+Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields 
+\begin{equation}
+\bm{v}^T\pd{\bm{f}_j(\bm{u})}{x_j} = \pd{U(\bm{u})}{\bm{u}}^T\pd{\bm{f}_j(\bm{u})}{\bm{u}}\pd{\bm{u}}{x_j} = \pd{F_j(\bm{u})}{x_j},
+\label{eq:chainrule}
+\end{equation}
+and that 
+\begin{equation*}
+\pd{U(\bm{u})}{t} + \sum_{j=1}^d \pd{F_j(\bm{u})}{x_j} = 0.
+%\label{eq:entropyeqstrong}
+\end{equation*}
 Let $\Omega\mathbb{R}^d$ now be a closed domain with boundary $\partial \Omega$.  Integrating over $\Omega$ an using Gauss' theorem on the spatial derivative yields
+\begin{equation}
+\int_{\Omega}\pd{U(\bm{u})}{t}\diff{x} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}(\bm{u})^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{x} = 0,
+\label{eq:entropyeq}
+\end{equation}
+where $\bm{n} = \LRp{n_1,\ldots,n_d}^T$ denotes the unit outward normal vector on $\partial \Omega$.  
+
+General solutions (including non-smooth solutions such as shocks) satisfy an entropy \emph{inequality}
 \begin{equation}
 \int_{\Omega}\pd{U(\bm{u})}{t}\diff{x} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}(\bm{u})^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{x} \leq 0,
 \label{eq:entropyineq}
 \end{equation}
-where $\bm{n} = \LRp{n_1,\ldots,n_d}^T$ denotes the unit outward normal vector on $\partial \Omega$.  
-
-\subsection{Standard discontinuous Galerkin formulations and the $L^2$ projection}
+which results from considering solutions of an appropriate viscous form of the equations (\ref{eq:nonlineqs}) and taking the limit as viscosity vanishes.  In this work, schemes which satisfy a discrete form of (\ref{eq:entropyineq}) will be constructed by first enforcing a discrete version of entropy conservation (\ref{eq:entropyeq}), then adding an appropriate numerical dissipation which will enforce the entropy inequality (\ref{eq:entropyineq}).  
 
 
-\note{Discuss standard DG formulations and their disadvantages: not entropy stable due to the loss of the chain rule, and storage costs of inverting the mass matrix.  }
+\subsection{Standard DG formulations for nonlinear conservation laws}
 
-\note{ Introduce mesh and elements $D^k$, as well as $L^2$ projection operator.}
-For $u \in L^2\LRp{\widehat{D}}$, 
+We begin by reviewing the construction of standard high order DG formulations for (\ref{eq:nonlineqs}).  
+
+\subsubsection{Mathematical notation}
+
+Let the domain $\Omega \subset \mathbb{R}^d$ be decomposed into elements (subdomains) $D^k$, and let $\hat{D}$ denote a $d$-dimensional reference element with boundary $\partial \hat{D}$.  Let $\hat{\bm{x}}$ denote coordinates on $\hat{D}$, and let $\hat{n}_i$ denote and the $i$th component of the unit normal vector on $\partial \hat{D}$.  We assume that $\hat{n}_i$ is constant; i.e., that the faces of the reference element are planar (this assumption holds for all commonly used reference elements \cite{chan2015gpu}).  
+
+We will assume that each physical element $D^k$ is the image of $\hat{D}$ under some smoothly differentiable mapping $\bm{\Phi}_k(\hat{\bm{x}})$ such that
+\[
+\bm{x} = \bm{\Phi}_k(\hat{\bm{x}}), \qquad \bm{x}\in D^k.
+\]
+This also implies that integrals over physical elements can be mapped back to the reference element as follows
+\[
+\int_{D^k} u \diff{\bm{x}} = \int_{\hat{D}} u J\diff{\hat{\bm{x}}}, 
+\]
+where $J$ denotes the determinant of the Jacobian of $\bm{\Phi}_k$.  Integrals over physical faces of $D^k$ can similarly be mapped back to reference faces.
+
+
+We define an approximation space using degree $N$ polynomials on the reference element.  For example, on a $d$-dimensional reference simplex, the natural polynomial space are total degree $N$ polynomials 
+\[
+P^N\LRp{\widehat{D}} = \LRc{\hat{x}_1^{i_1}\ldots\hat{x}_d^{i_d}, \quad \hat{\bm{x}} \in \widehat{D}, \quad 0\leq \sum_{k=1}^d i_k \leq N}.
+\]
+Other element types possess different natural polynomial spaces \cite{chan2015gpu}, but typically contain the space of total degree $N$ polynomials.  This work is directly applicable to other elements and spaces as well.  We denote the dimension of the approximation space $P^N$ as $N_p = {\rm dim}\LRp{P^N\LRp{\widehat{D}}}$.
+
+Finally, we define the $L^2$ norm and inner products over the reference element $\hat{D}$ and the surface of the reference element $\partial \hat{D}$
+\[
+\LRp{\bm{u},\bm{v}}_{\hat{D}} = \int_{\hat{D}} \bm{u}\cdot\bm{v}\diff{\bm{x}} =  \int_{\widehat{D}} \bm{u}\cdot\bm{v} J^k \diff{\widehat{x}}, \qquad \nor{\bm{u}}^2_{\hat{D}} = (\bm{u},\bm{u})_{\hat{D}}, \qquad \LRa{\bm{u},\bm{v}}_{\partial \hat{D}} = \int_{\partial \hat{D}} \bm{u} \cdot \bm{v} \diff{\bm{x}},
+\]
+Finally, we introduce the continuous $L^2$ projection operator $\Pi_N$ and lifting operator $L$.  For $u \in L^2\LRp{\widehat{D}}$, the $L^2$ projection $\Pi_N u$ is defined through
 \begin{equation}
 \int_{\widehat{D}} \Pi_N u v \diff{\hat{\bm{x}}} = \int_{\widehat{D}} u v \diff{\hat{\bm{x}}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
 \label{eq:l2proj}
 \end{equation}
+Likewise, for a boundary function $u \in L^2\LRp{\partial \hat{D}}$, the lifting operator $L$ \cite{hesthaven2007nodal, di2011mathematical} is defined through 
+\begin{equation}
+\LRp{L u,v}_{\hat{D}} = \LRa{u,v}_{\partial \hat{D}}, \qquad \forall v \in P^N.
+\label{eq:lift}
+\end{equation}
+
+
+\subsubsection{Discontinuous Galerkin formulations and the $L^2$ projection}
 
 Discontinuous Galerkin methods have been very widely applied to systems of nonlinear conservation laws (\ref{eq:nonlineqs}) \cite{cockburn1989tvb, cockburn1998runge, cockburn2001devising, karniadakis2013spectral}.  The development of new discontinuous Galerkin methods for nonlinear conservation laws have focused heavily on the choice of numerical flux \cite{qiu2006numerical} or the development of  slope limiters \cite{krivodonova2007limiters, zhang2012maximum, dumbser2014posteriori} and artificial viscosity strategies \cite{persson2006sub, barter2010shock, klockner2011viscous}.  However, the treatment of the underlying volume discretization remains relatively unchanged between each of these approaches.  
 
@@ -340,7 +387,7 @@ Ignoring terms involving filters, limiters, or artificial viscosity, a semi-disc
 \end{align}
 where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on both $D^k$ and neighboring elements.  
 
-Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, this implies that there is no guarantee that the solution does not blow up.  
+Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux  function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  To account for the inexactness of quadrature, we rewrite (\ref{eq:weakdg}) in strong form using a discrete quadrature-based $L^2$ projection.  
 
 For polynomial approximation spaces, $\pd{\bm{v}}{x_i}$ is polynomial.  Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
 \[
@@ -352,12 +399,109 @@ Thus, integrating by parts (\ref{eq:weakdg}) recovers a ``strong'' DG formulatio
 &+ \sum_{j=1}^d \int_{\partial D^k} \LRp{\bm{f}^*_j\LRp{\bm{u}^+,\bm{u}} - \Pi_N\bm{f}_j(\bm{u})}\cdot \bm{v} n_j  \diff{\bm{x}} = 0, \qquad \forall \bm{v}\in \LRp{P^N\LRp{D^k}}^n.  
 \label{eq:strongdg}
 \end{align}
-We note that it is not strictly necessary to introduce the projection operator; however, constructing a ``strong'' DG formulation without a projection operator requires an analytical expression for derivatives of the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$, which can be complex or expensive to compute.  Moreover, because polynomial quadrature rules are typically used in practice to evaluate integrals, 
-it is not possible to use integration by parts when the nonlinear flux function is rational due to errors in approximating integrals.  Introducing the projection operator resolves both issues, as the integrands involved in integration by parts are polynomials of degree $2N-1$, for which efficient quadratures exist. 
+From this, we see that our discrete scheme does not differentiation the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ exactly, but instead differentiates the projection of $\Pi_N \bm{f}_j\LRp{\bm{u}}$ onto polynomials of degree $N$.  Because the $L^2$ projection operator is introduced, the chain rule no longer holds at the discrete level and step (\ref{eq:chainrule}) of the proof of entropy conservation is no longer valid.  Thus, ensuring discrete entropy stability will require a discrete formulation of the system of nonlinear conservation laws (\ref{eq:nonlineqs}) from which we can prove a discrete entropy inequality without relying on the chain rule.  
+
+%We note that it is not strictly necessary to introduce the projection operator; however, constructing a ``strong'' DG formulation without a projection operator requires an analytical expression for derivatives of the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$, which can be complex or expensive to compute.  Moreover, because polynomial quadrature rules are typically used in practice to evaluate integrals, it is not possible to use integration by parts when the nonlinear flux function is rational due to errors in approximating integrals.  Introducing the $L^2$ projection operator resolves both issues, as the integrands involved in integration by parts are polynomials of degree $2N-1$, for which efficient quadratures exist. 
+
+\section{Discretely entropy stable DG methods on curved meshes}
+
+We will first show how to construct discretely entropy stable high order DG methods on curvilinear meshes, but will present this using a matrix formulation as opposed to a continuous formulation.  This is to ensure that the effects of discretization, nonlinear, and quadrature are accounted for in the proof of semi-discrete entropy stability.  We first introduce quadrature-based matrices, which we will then use to construct discretely entropy stable DG formulations.
+
+
+\subsection{Basis and quadrature rules}
+
+{We now introduce quadrature-based matrices for the $d$-dimensional reference element $\widehat{D}$, which we will use to construct matrix-vector formulations of DG methods.   Assuming $u(\bm{x}) \in P^N\LRp{\widehat{D}}$, it can be represented in terms of the vector of coefficients $\bm{u}$ using some polynomial basis $\phi_i$ of degree $N$ and dimension $N_p$ 
+\[
+u(\bm{x}) = \sum_{j=1}^{N_p}\bm{u}_j \phi_j(\widehat{\bm{x}}), \qquad P^N\LRp{\widehat{D}} = {\rm span}\LRc{\phi_i(\widehat{x})}_{i=1}^{N_p}.
+\]
+
+We construct quadrature-based based on $\phi_i$ and appropriate volume and surface quadrature rules.  The volume and surface quadrature rules are given by points and positive weights $\LRc{(\bm{x}_i, w_i)}_{i=1}^{N_q}$ and $\LRc{(\bm{x}^f_i, w^f_i)}_{i=1}^{N^f_q}$, respectively.  We make the following assumptions on the strength of these quadratures: %\note{finish!  Note that we want quadratures such that discrete IBP holds.  For example, GLL or $2N-1$ vol and $2N$ surface. }
+\begin{assumption}
+The volume quadrature rule  $\LRc{(\bm{x}_i, w_i)}_{i=1}^{N_q}$ is exact for polynomials of degree $2N-1$.  Additionally, 
+for any $u, v \in P^N\LRp{\hat{D}}$, integration by parts 
+\[
+\LRp{\pd{u}{x_i},v}_{\hat{D}} = \LRa{u,vn_i}_{\partial \hat{D}} - \LRp{u,\pd{v}{x_i}}_{\hat{D}}
+\]
+holds when volume and surface integrals are approximated using quadrature.
+\label{ass:quad}
+\end{assumption}
+Assumption (\ref{ass:quad}) holds, for example, for any surface quadrature rule which is exact for degree $2N$ polynomials on the boundary of the reference element $\partial \hat{D}$.  
+
+
+\subsection{{Interpolation, differentiation, projection, and lifting matrices}}
+\label{sec:matrix}
+
+
+Let $\bm{W}, \bm{W}_f$ denote diagonal matrices whose entries are volume and surface quadrature weights, respectively.  We define the volume and surface quadrature interpolation matrices $\bm{V}_q$ and $\bm{V}_f$
+\begin{align}
+\LRp{\bm{V}_q}_{ij} &= \phi_j(\hat{\bm{x}}_i), \qquad 1 \leq j \leq N_p, \qquad 1 \leq i \leq N_q, \nonumber\\
+\LRp{\bm{V}_f}_{ij} &= \phi_j(\hat{\bm{x}}^f_i), \qquad 1 \leq j \leq N_p, \qquad 1 \leq i \leq N^f_q,\label{eq:qinterp}
+\end{align}
+which map coefficients $\bm{u}$ to evaluations of $u$ at volume and surface quadrature points.  
+
+Next, let ${\bm{D}}_i$ denote the differentiation matrix with respect to the $i$th coordinate, defined implicitly through the relation
+\[
+u(\hat{\bm{x}}) = \sum_{j=1}^{N_p} \bm{u}_j \phi_j(\hat{\bm{x}}), \qquad \pd{u}{\hat{\bm{x}}_i} = \sum_{j=1}^{N_p} \LRp{{\bm{D}}_i \bm{u}}_j\phi_j(\hat{\bm{x}}).
+\]
+The matrix ${\bm{D}}_i$ maps basis coefficients of some polynomial $u \in P^N$ to coefficients of its $i$th derivative with respect to the reference coordinate $\hat{\bm{x}}$, and is sometimes referred to as a ``modal'' differentiation matrix (with respect to a general non-nodal ``modal'' basis \cite{hicken2016multidimensional}).  
+
+
+Using the volume quadrature interpolation matrix $\bm{V}_q$, we can compute a quadrature-based mass matrix $\bm{M}$ by evaluating $L^2$ inner products of different basis functions using quadrature
+\[
+\bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \qquad \bm{M}_{ij} = \sum_{k=1}^{N_q} w_k \phi_j(\bm{x}_k)\phi_i(\bm{x}_k) \approx \int_{\hat{D}}\phi_j\phi_i \diff{\hat{\bm{x}}} = \LRp{\phi_j,\phi_i}_{\hat{D}}.
+\]
+The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
+
+The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2proj}) and lift operators (\ref{eq:lift}) using quadrature.  The result are quadrature-based $L^2$ projection and lift operators $\bm{P}_q, \bm{L}_q$, 
+\begin{equation}
+\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{L}_q = \bm{M}^{-1}\bm{V}_f^T \bm{W}_f,
+\label{eq:projlift}
+\end{equation}
+which are discretizations of the continuous $L^2$ projection operator $\Pi_N$ and continuous lift operator $L$.  The matrix $\bm{P}_q$ maps a function (in terms of its evaluation at quadrature points) to coefficients of the $L^2$ projection in the basis $\phi_j(x)$, while the matrix $\bm{L}_q$ ``lifts'' a function (evaluated at surface quadrature points) from the boundary of an element to coefficients of a basis defined in the interior of the element.  
+
+Finally, we define a curved mass matrix over each element by weighting the discrete $L^2$ norm with values of $J$ at quadrature points
+\[
+\bm{M}_k = \bm{V}_q^T \bm{W}_J \bm{V}_q, \qquad \LRp{\bm{W}_J}_{ij} = \delta_{ij} w_i J(\bm{x}_i).
+\]
+These matrices are distinct from element to element.
+\note{finish}
+
+\subsection{A discretely entropy stable DG formulation on curved meshes}
+
+\subsection{Free stream preservation}
+
+We seek conditions for which free-stream preservation 
+\[
+\pd{\bm{u}}{t} = \Grad_h \cdot \bm{u} = 0
+\]
+is satisfied if $\bm{u}$ constant.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
+
+This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous, crean2018entropy}.  
+
+Integrating by parts the DG formulation yields, for any constant $\bm{u}$
+\begin{align*}
+\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},v }_{\hat{D}} + \LRa{J\bm{G}^T\bm{u} - \Pi_N \LRp{J\bm{G}^T\bm{u}}, v \hat{\bm{n}}}_{\d \hat{D}}\\
+&= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\LRp{J\bm{G}\hat{\bm{n}}}^T\bm{u}, v }_{\d \hat{D}}\\
+&= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\bm{n}\cdot \bm{u}, v }_{\d \hat{D}}.  
+\end{align*}
+for any $v\in V_h$.  
+Thus, to ensure that this sums to zero, we modify the geometric factors by seeking $J\bm{G}$ which minimizes the $L^2$ error for a degree $N$ polynomial approximation to the true geometric factors, subject to a weakly divergence-free constraint
+\begin{align*}
+&\min_{\tilde{J\bm{G}}_i \in P^N} \frac{1}{2}\nor{\tilde{J\bm{G}}_i - J\bm{G}_i}_{L^2\LRp{\hat{D}}}^2,\\ 
+{\rm s.t.\ } &\LRa{\bm{n}_i,v}_{\d \hat{D}}-\LRp{\tilde{J\bm{G}}_i,\Grad v}_{\hat{D}} = 0, \qquad \forall v\in P^N.
+\end{align*}
+We note that the constraint corresponding to $v = 1$ yields that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$.  Thus, in order to guarantee a solution to this problem, we require that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$ for consistency of the right hand side.  \note{Clarify when this is satisfied!!}.
+%This is satisfied if the mapping is isoparametric: the cross product formula is exact at quadrature points and the geometric factors are degree $2N-2$ polynomials, which implies that for $v = 1$, $\LRa{\bm{n}_i,v}_{\d \hat{D}}$ is exactly integrated by a surface quadrature of degree $2N$.
+
+This strategy was first introduced in the context of SBP-SAT terms in \cite{fernandez2016simultaneous}.  We approach its implementation slightly differently, and use the fact that the quadratic program can be solved explicitly using the null space method, which is computationally feasible since the null space of the constraint matrix is computed only once on the reference element.  This null space corresponds to a discretely divergence-free basis, which we extract using the SVD.  
+
+The resulting free-stream preserving geometric factors result in separate approximations of the volume and surface geometric factors.  The surface geometric factors are constructed at surface quadrature points, which guarantees that neighboring surface normal terms cancel for watertight meshes.  The volume geometric factors are constructed at quadrature points and projected onto a polynomial basis of degree $N$ with weakly divergence-free constraints involving the surface normals.
 
 
 
-\section{A discretely stable and low-storage DG method on curved meshes}
+\section{Discretely stable and low storage DG methods on curved meshes}
+
+While the 
 
 \subsection{A weight-adjusted approximation to the curvilinear mass matrix}
 
@@ -392,7 +536,6 @@ Furthermore, using that $T_{1/J}^{-1}$ is self-adjoint for $v \in V_h$ with resp
 \LRp{T_{1/J}^{-1} P_N u,v} = \LRp{ \frac{1}{J}\Pi_N(uJ),T_{1/J}^{-1}v} = \LRp{\Pi_N(u J),v} = \LRp{u J,v}, \qquad \forall v\in V_h.
 \label{eq:PNproj}
 \end{equation}
-
 
 Let $\Pi_N^k u$ be the $L^2$ projection of $u$ with respect to the weighted (curvilinear) $L^2$ inner product.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
 
@@ -461,7 +604,6 @@ where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through b
  gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
 
-
 %\section{Flux differencing for affine meshes}
 %
 %Let $\bm{F}(\bm{U})$ denote the flux matrix whose rows are 
@@ -521,116 +663,84 @@ where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through b
 %\]
 %\end{proof}
 
-\section{Curved meshes}
-
-Let $\bm{G}$ denote the Jacobian of the geometric mapping
-\[
-\bm{G}_{ij} = \pd{\hat{\bm{x}}_j}{\bm{x}_i},
-\]
-and let $J$ denote the determinant of $\bm{G}$.  One can show that
-\[
-\hat{\Grad} \cdot \LRp{J\bm{G}^T} = 0, \qquad \hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}} = \Grad \cdot \bm{u}
-\]
-at the continuous level.  We also have that the mapped normals obey the property
-\[
-J\bm{G} \hat{\bm{n}}\hat{J}^f = \bm{n}J^f.
-\]
-At the continuous level, the physical gradient and divergence satisfy
-\[
-\LRp{\Grad u, \bm{v}}_{D^k} = \LRp{J\bm{G} \hat{\Grad} u,\bm{v}}_{\hat{D}}, \qquad \LRp{\Grad\cdot \bm{u},v}_{D^k} = \LRp{\hat{\Grad}\cdot \LRp{J\bm{G}^T u},\bm{v}}_{\hat{D}}, 
-\]
-as well as a corresponding integration by parts property.  
-
-\subsection{Flux differencing for curvilinear meshes}
-
-We introduce a ``reference'' global DG derivative, which is defined (for $v\in V_h$ but $u,w\not\in V_h$)
-\begin{align*}
-\LRp{\hat{D}^i_h u,vw}_{\Omega} &= \sum_k \LRp{\pd{\Pi_N\bm{u}}{\hat{\bm{x}}_i},vw}_{\hat{D}} 
- + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}_i}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}_i}_{\d \hat{D}}.
-\end{align*}
+%\section{Curved meshes}
+%
+%Let $\bm{G}$ denote the Jacobian of the geometric mapping
+%\[
+%\bm{G}_{ij} = \pd{\hat{\bm{x}}_j}{\bm{x}_i},
+%\]
+%and let $J$ denote the determinant of $\bm{G}$.  One can show that
+%\[
+%\hat{\Grad} \cdot \LRp{J\bm{G}^T} = 0, \qquad \hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}} = \Grad \cdot \bm{u}
+%\]
+%at the continuous level.  We also have that the mapped normals obey the property
+%\[
+%J\bm{G} \hat{\bm{n}}\hat{J}^f = \bm{n}J^f.
+%\]
+%At the continuous level, the physical gradient and divergence satisfy
+%\[
+%\LRp{\Grad u, \bm{v}}_{D^k} = \LRp{J\bm{G} \hat{\Grad} u,\bm{v}}_{\hat{D}}, \qquad \LRp{\Grad\cdot \bm{u},v}_{D^k} = \LRp{\hat{\Grad}\cdot \LRp{J\bm{G}^T u},\bm{v}}_{\hat{D}}, 
+%\]
+%as well as a corresponding integration by parts property.  
+%
+%\subsection{Flux differencing for curvilinear meshes}
+%
+%We introduce a ``reference'' global DG derivative, which is defined (for $v\in V_h$ but $u,w\not\in V_h$)
 %\begin{align*}
-%\LRp{\hat{\Grad}_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \Pi_N\bm{u},vw}_{\hat{D}} \\
-%& + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}}.
+%\LRp{\hat{D}^i_h u,vw}_{\Omega} &= \sum_k \LRp{\pd{\Pi_N\bm{u}}{\hat{\bm{x}}_i},vw}_{\hat{D}} 
+% + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}_i}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}_i}_{\d \hat{D}}.
 %\end{align*}
-We use this to define a reference DG divergence
-\begin{align*}
-\hat{\Grad}_h \cdot \bm{u} = \sum_{i=1}^d \hat{D}^i_h \bm{u}_i.
-\end{align*}
-We next introduce two physical DG divergences based on the reference DG divergence.  The a ``conservative'' DG divergence is defined using the reference DG divergence operator
-\[
-\Grad^c_h \cdot \bm{u} = \hat{\Grad}_h \cdot \LRp{J\bm{G}^T\bm{u}}.  
-\]
-
-We also introduce the ``non-conservative'' divergence 
-\[
-\Grad_h^{nc} \cdot \bm{u} = \LRp{J\bm{G}\hat{\Grad}_h}\cdot \bm{u} = \sum_{i=1}^d \sum_{j=1}^d J\bm{G}_{ij} \hat{D}^j_h\bm{u}_i.
-\]
-Unless $J\bm{G}$ is element-wise constant,
-\[
-\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} \neq \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}, 
-\]
-due to the presence of the projection operator $\Pi_N$ in the definition of $\hat{\Grad}_h$.  
-
-Instead of choosing one definition over the other, it was shown in \cite{wintermeyer2017entropy} that stability is achieved when using the average of these two definitions of the physical gradient.  The following lemma describes how to implement this within the flux differencing framework.
-\begin{lemma}
-Let $\bm{u}^k(\bm{x},\bm{x}')$ be defined as
-\[
-\bm{u}^k(\bm{x},\bm{x}') = \avg{J\bm{G}^T}\bm{u} = \LRp{\frac{J(\bm{x})\bm{G}^T(\bm{x}) + J(\bm{x}')\bm{G}^T(\bm{x}')}{2}}\bm{u}.
-\]
-Applying the reference global DG divergence to $\bm{u}^k$ is equivalent to averaging both definitions of the global DG divergence
-\[
-\LRl{{\hat{\Grad}_h \cdot \bm{u}^k(\bm{x},\bm{x}')}}_{\bm{x}'=\bm{x}} = \frac{1}{2}\LRp{\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} + \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}} = \frac{1}{2}\LRp{\Grad^c_h\cdot \bm{u} + \Grad_h^{nc}\cdot\bm{u}}.
-\]
-\end{lemma}
-\begin{proof}
-\note{TBD.}
-\end{proof}
-
-We now have the following curvilinear generalization of Theorem~\ref{thm:ec}
-\begin{theorem}
-\label{thm:ec_curvi}
-Let $\bm{u}_{\bm{v}} = \bm{u}\LRp{P_N\bm{v}(\bm{u})}$.  Then, the semi-discrete DG discretization 
-\[
-\LRp{\pd{\bm{u}}{t} + 2\LRl{\hat{\Grad}_h\cdot \bm{f}^k_S(\bm{u}_{\bm{v}},\bm{u}_{\bm{v}}')}_{\bm{x}'=\bm{x}},\bm{w}} = 0, \qquad \bm{f}^k_S(\bm{u}_L,\bm{u}_R) = \avg{J\bm{G}^T}\bm{f}_S(\bm{u}_L,\bm{u}_R).
-\]
-is entropy conservative on curvilinear meshes.  
-\end{theorem}
-\begin{proof}
-Take $\bm{w} = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{ \bm{v}J}}$.  
-
-\end{proof}
-
-
-
-
-\section{Free stream preservation}
-
-We seek conditions for which free-stream preservation 
-\[
-\pd{\bm{u}}{t} = \Grad_h \cdot \bm{u} = 0
-\]
-is satisfied if $\bm{u}$ constant.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
-
-This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous, crean2018entropy}.  
-
-Integrating by parts the DG formulation yields, for any constant $\bm{u}$
-\begin{align*}
-\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},v }_{\hat{D}} + \LRa{J\bm{G}^T\bm{u} - \Pi_N \LRp{J\bm{G}^T\bm{u}}, v \hat{\bm{n}}}_{\d \hat{D}}\\
-&= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\LRp{J\bm{G}\hat{\bm{n}}}^T\bm{u}, v }_{\d \hat{D}}\\
-&= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\bm{n}\cdot \bm{u}, v }_{\d \hat{D}}.  
-\end{align*}
-for any $v\in V_h$.  
-Thus, to ensure that this sums to zero, we modify the geometric factors by seeking $J\bm{G}$ which minimizes the $L^2$ error for a degree $N$ polynomial approximation to the true geometric factors, subject to a weakly divergence-free constraint
-\begin{align*}
-&\min_{\tilde{J\bm{G}}_i \in P^N} \frac{1}{2}\nor{\tilde{J\bm{G}}_i - J\bm{G}_i}_{L^2\LRp{\hat{D}}}^2,\\ 
-{\rm s.t.\ } &\LRa{\bm{n}_i,v}_{\d \hat{D}}-\LRp{\tilde{J\bm{G}}_i,\Grad v}_{\hat{D}} = 0, \qquad \forall v\in P^N.
-\end{align*}
-We note that the constraint corresponding to $v = 1$ yields that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$.  Thus, in order to guarantee a solution to this problem, we require that $\LRa{\bm{n}_i,v}_{\d \hat{D}} = 0$ for consistency of the right hand side.  This is satisfied if the mesh is watertight 
-%This is satisfied if the mapping is isoparametric: the cross product formula is exact at quadrature points and the geometric factors are degree $2N-2$ polynomials, which implies that for $v = 1$, $\LRa{\bm{n}_i,v}_{\d \hat{D}}$ is exactly integrated by a surface quadrature of degree $2N$.
-
-This strategy was first introduced in the context of SBP-SAT terms in \cite{fernandez2016simultaneous}.  We approach its implementation slightly differently, and use the fact that the quadratic program can be solved explicitly using the null space method, which is computationally feasible since the null space of the constraint matrix is computed only once on the reference element.  This null space corresponds to a discretely divergence-free basis, which we extract using the SVD.  
-
-The resulting free-stream preserving geometric factors result in separate approximations of the volume and surface geometric factors.  The surface geometric factors are constructed at surface quadrature points, which guarantees that neighboring surface normal terms cancel for watertight meshes.  The volume geometric factors are constructed at quadrature points and projected onto a polynomial basis of degree $N$ with weakly divergence-free constraints involving the surface normals.
+%%\begin{align*}
+%%\LRp{\hat{\Grad}_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \Pi_N\bm{u},vw}_{\hat{D}} \\
+%%& + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}}.
+%%\end{align*}
+%We use this to define a reference DG divergence
+%\begin{align*}
+%\hat{\Grad}_h \cdot \bm{u} = \sum_{i=1}^d \hat{D}^i_h \bm{u}_i.
+%\end{align*}
+%We next introduce two physical DG divergences based on the reference DG divergence.  The a ``conservative'' DG divergence is defined using the reference DG divergence operator
+%\[
+%\Grad^c_h \cdot \bm{u} = \hat{\Grad}_h \cdot \LRp{J\bm{G}^T\bm{u}}.  
+%\]
+%
+%We also introduce the ``non-conservative'' divergence 
+%\[
+%\Grad_h^{nc} \cdot \bm{u} = \LRp{J\bm{G}\hat{\Grad}_h}\cdot \bm{u} = \sum_{i=1}^d \sum_{j=1}^d J\bm{G}_{ij} \hat{D}^j_h\bm{u}_i.
+%\]
+%Unless $J\bm{G}$ is element-wise constant,
+%\[
+%\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} \neq \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}, 
+%\]
+%due to the presence of the projection operator $\Pi_N$ in the definition of $\hat{\Grad}_h$.  
+%
+%Instead of choosing one definition over the other, it was shown in \cite{wintermeyer2017entropy} that stability is achieved when using the average of these two definitions of the physical gradient.  The following lemma describes how to implement this within the flux differencing framework.
+%\begin{lemma}
+%Let $\bm{u}^k(\bm{x},\bm{x}')$ be defined as
+%\[
+%\bm{u}^k(\bm{x},\bm{x}') = \avg{J\bm{G}^T}\bm{u} = \LRp{\frac{J(\bm{x})\bm{G}^T(\bm{x}) + J(\bm{x}')\bm{G}^T(\bm{x}')}{2}}\bm{u}.
+%\]
+%Applying the reference global DG divergence to $\bm{u}^k$ is equivalent to averaging both definitions of the global DG divergence
+%\[
+%\LRl{{\hat{\Grad}_h \cdot \bm{u}^k(\bm{x},\bm{x}')}}_{\bm{x}'=\bm{x}} = \frac{1}{2}\LRp{\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} + \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}} = \frac{1}{2}\LRp{\Grad^c_h\cdot \bm{u} + \Grad_h^{nc}\cdot\bm{u}}.
+%\]
+%\end{lemma}
+%\begin{proof}
+%\note{TBD.}
+%\end{proof}
+%
+%We now have the following curvilinear generalization of Theorem~\ref{thm:ec}
+%\begin{theorem}
+%\label{thm:ec_curvi}
+%Let $\bm{u}_{\bm{v}} = \bm{u}\LRp{P_N\bm{v}(\bm{u})}$.  Then, the semi-discrete DG discretization 
+%\[
+%\LRp{\pd{\bm{u}}{t} + 2\LRl{\hat{\Grad}_h\cdot \bm{f}^k_S(\bm{u}_{\bm{v}},\bm{u}_{\bm{v}}')}_{\bm{x}'=\bm{x}},\bm{w}} = 0, \qquad \bm{f}^k_S(\bm{u}_L,\bm{u}_R) = \avg{J\bm{G}^T}\bm{f}_S(\bm{u}_L,\bm{u}_R).
+%\]
+%is entropy conservative on curvilinear meshes.  
+%\end{theorem}
+%\begin{proof}
+%Take $\bm{w} = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{ \bm{v}J}}$.  
+%
+%\end{proof}
 
 
 \section{Limiting}
@@ -672,7 +782,10 @@ Another approach is to change the time-step size based on the difference between
 \item Expensive option: bisection or Newton algorithm for finding theta.  
 \end{itemize}
 
-\section{Implementation}
+\section{Numerical experiments}
+
+
+\section{Computational results}
 
 The semi-discrete evolution equation is as follows
 \[
