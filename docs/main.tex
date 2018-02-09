@@ -457,7 +457,7 @@ The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2pro
 \end{equation}
 which are discretizations of the continuous $L^2$ projection operator $\Pi_N$ and continuous lift operator $L$.  The matrix $\bm{P}_q$ maps a function (in terms of its evaluation at quadrature points) to coefficients of the $L^2$ projection in the basis $\phi_j(x)$, while the matrix $\bm{L}_q$ ``lifts'' a function (evaluated at surface quadrature points) from the boundary of an element to coefficients of a basis defined in the interior of the element.  
 
-Finally, we introduce quadrature-based operators  $\bm{D}_N^i$ which will be used to construct discretizations of our nonlinear conservation laws.  This operator was introduced in \cite{chan2017discretely} as a ``decoupled summation by parts'' operator
+Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used to construct discretizations of our nonlinear conservation laws.  This operator was introduced in \cite{chan2017discretely} as a ``decoupled summation by parts'' operator
 \begin{equation}
 \bm{D}_N^i =\LRs{
 \begin{array}{cc}
@@ -472,7 +472,7 @@ where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
 \]
 
-A key property of the matrix $\bm{D}_N^i$ is that it satisfies a summation-by-parts property.  Let $\bm{Q}_N^i$ be the scaling of $\bm{D}_N^i$ by the diagonal matrix of volume and surface quadrature weights 
+It can be observed that the matrix $\bm{D}_N^i$ satisfies several key properties.  First, it can be observed that $\bm{D}_N^i\bm{1} = 0$, where $\bm{1}$ is the vector of all ones.  Second, $\bm{D}_N^i$ satisfies a summation-by-parts property.  Let $\bm{Q}_N^i$ be the scaling of $\bm{D}_N^i$ by the diagonal matrix of volume and surface quadrature weights 
 \[
 \bm{Q}_N^i = \bm{W}_N \bm{D}_N^i, \qquad \bm{W}_N = \LRp{\begin{array}{cc}
 \bm{W} &\\
@@ -500,25 +500,25 @@ where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives o
 
 We assume in this work that the mesh is stationary.  It can be shown at the continuous level that, for any differentiable and invertible mapping, the quantity $J^k\bm{G}^k$ satisfies a geometric conservation law (GCL) \cite{thomas1979geometric, kopriva2006metric}
 \begin{equation}
-\sum_{j=1}^d\pd{}{\hat{x}_j}J^k\bm{G}^k_{ji} = 0,
+\sum_{j=1}^d\pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0,
 \label{eq:gcl}
 \end{equation}
-or that $\hat{\Grad}\cdot \LRp{J^k\bm{G}^k}^T = 0$.  Using (\ref{eq:gcl}), the scaled physical derivative $J^k\pd{u}{x_i}$ can be computed via
+or that $\hat{\Grad}\cdot \LRp{\LRp{J^k\bm{G}^k}^T} = 0$.  Using (\ref{eq:gcl}), the scaled physical derivative $J^k\pd{u}{x_i}$ can be computed via
 \begin{equation}
-J^k\pd{u}{x_i} = \frac{1}{2}\sum_{j=1}^d \LRp{J^k\bm{G}^k_{ij}\pd{u}{\hat{x}_j} + \pd{\LRp{J^k\bm{G}^k_{ji}u}}{\hat{x}_j}}.
+J^k\pd{u}{x_i} = \frac{1}{2}\sum_{j=1}^d \LRp{J^k\bm{G}^k_{ij}\pd{u}{\hat{x}_j} + \pd{\LRp{J^k\bm{G}^k_{ij}u}}{\hat{x}_j}}.
 \label{eq:splitderiv}
 \end{equation}
 
 We define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as 
 \[
-\bm{D}^i_k = \sum_{j=1}^d {\rm diag}\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}^k_{ji}}
+\bm{D}^i_k = \sum_{j=1}^d {\rm diag}\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}^k_{ij}}
 \]
 where $\bm{JG}^k_{ij}$ refers to the vector containing evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points.  Using properties of the Hadamard product \cite{horn2012matrix}, we can rewrite $\bm{D}^i_k$ as 
 \begin{equation}
-\bm{D}^i_k = \sum_{j=1}^d \LRp{\bm{D}^j_N \circ \avg{\bm{JG}^k_{ji}}}, \qquad \avg{\bm{JG}^k_{ji}}_{mn} = \frac{1}{2}\LRp{\LRp{\bm{JG}^k_{ji}}_m + \LRp{\bm{JG}^k_{ji}}_n},
+\bm{D}^i_k = \sum_{j=1}^d \LRp{\bm{D}^j_N \circ \avg{\bm{JG}^k_{ij}}}, \qquad \avg{\bm{JG}^k_{ij}}_{mn} = \frac{1}{2}\LRp{\LRp{\bm{JG}^k_{ij}}_m + \LRp{\bm{JG}^k_{ij}}_n},
 \label{eq:dik}
 \end{equation}
-where $\avg{\bm{JG}^k_{ji}}$ denotes the matrix of averages between each of the entries of $\bm{JG}^k_{ij}$.  From (\ref{eq:dik}), it is straightforward to show that $\bm{Q}^i_k = \bm{W}_N\bm{D}^i_k$ also satisfies a summation by parts property
+where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the entries of $\bm{JG}^k_{ij}$.  From (\ref{eq:dik}), it is straightforward to show that $\bm{Q}^i_k = \bm{W}_N\bm{D}^i_k$ also satisfies a summation by parts property
 \begin{equation}
 \bm{Q}^i_k + \LRp{\bm{Q}^i_k}^T = \bm{B}^i_k, \qquad \bm{B}^i_k = 
 \LRp{\begin{array}{cc}
@@ -529,7 +529,7 @@ where $\avg{\bm{JG}^k_{ji}}$ denotes the matrix of averages between each of the 
 \end{equation}
 where $\bm{n}_i$ and $\bm{J}^k_f$ are vectors containing evaluations of the physical unit normals and face Jacobian factors for $D^k$ at surface quadrature points, respectively.  Here, we have used that the scaled matrix of geometric factors transforms scaled reference normal vectors to scaled physical normals \cite{ciarlet1978finite}, such that 
 \[
-\sum_{j=1}^d J\bm{G}_{ij} \hat{n}_i\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ji}} \circ\LRp{\hat{\bm{n}}_i\hat{\bm{J}}_f}}
+\sum_{j=1}^d J\bm{G}_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}} \circ\LRp{\hat{\bm{n}}_j\hat{\bm{J}}_f}}
 = \LRp{\bm{n}_i\bm{J}^k_f}.
 \]
 
@@ -613,14 +613,14 @@ Define the boundary quadrature matrix $\bm{W}_{\partial \Omega}$ such that
 \]
 We have the following semi-discrete statement of entropy conservation:
 \begin{theorem}
-Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  Then, (\ref{eq:dgform1}) is entropy conservative in the sense that
+Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform1}) is entropy conservative in the sense that
 \[
 \sum_k \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
 \]
 \label{thm:stab}
 \end{theorem}
 \begin{proof}
-Using that $bm{Q}^j_k\bm{1} = 0$ and (\ref{eq:sbpk}), the proof of entropy conservation is identical to that of \cite{chan2017discretely}.
+Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\ref{eq:sbpk}), the proof of entropy conservation is identical to that of \cite{chan2017discretely}.  
 %To prove entropy conservation, we multiply on both sides by $\bm{M}_k$ 
 %\begin{align}
 %\bm{M}_k\td{\bm{u}_h}{t} + \LRs{\begin{array}{c}\bm{V}_q \\ \bm{V}_f\end{array}}^T
@@ -638,21 +638,27 @@ Using that $bm{Q}^j_k\bm{1} = 0$ and (\ref{eq:sbpk}), the proof of entropy conse
 %\note{Finish proof}
 \end{proof}
 
-\subsection{Free stream preservation}
+\subsection{A discrete geometric conservation law}%Free stream preservation}
 
 An important aspect of Theorem~\ref{thm:stab} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J\bm{G}_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
 
-\note{Note that this is equivalent to free-stream preservation!}
-
-We seek conditions for which free-stream preservation 
+From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
+\begin{align*}
+\bm{W}_N\sum_{j=1}^d\bm{D}^j_N\avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ {\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{1}} \\
+&= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
+\end{align*}
+where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that 
+\begin{equation}
+\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
+\label{eq:dgcl}
+\end{equation}
+a discrete version of the GCL (\ref{eq:gcl}).  This condition is also related to free-stream preservation, which ensures (at the discrete level) that for $\bm{u}$ constant, 
 \[
-\pd{\bm{u}}{t} = \Grad_h \cdot \bm{u} = 0
+\pd{\bm{u}}{t} + \Grad \cdot \bm{u} = \pd{\bm{u}}{t} = 0.
 \]
-is satisfied if $\bm{u}$ constant.  Free stream preservation is not always maintained at the discrete level in 3D due to the fact that geometric factors are higher degree polynomials than the corresponding discrete space \cite{kopriva2006metric, johnen2013geometrical}.  For curvilinear meshes, $\hat{\Grad}\cdot{J\bm{G}^T} \neq 0$ due to polynomial aliasing of geometric factors.  
+For isoparametric mappings in two dimensions, free stream preservation is naturally enforced by noting that the scaled metric terms $J\bm{G}_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly naturally enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D due to the fact that geometric factors for a degree $N$ geometric mapping are polynomials of degree $2N-2$.  Because the degree of $J\bm{G}_{ij}$ is higher than the degree of the underlying polynomial space, these metric terms are not represented exactly through their values at nodal or quadrature points, resulting in aliasing errors and the loss of the discrete GCL (\ref{eq:dgcl}) \cite{kopriva2006metric, johnen2013geometrical}.  
 
-This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous, crean2018entropy}.  
-
-Integrating by parts the DG formulation yields, for any constant $\bm{u}$
+This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous, crean2018entropy}.  Integrating by parts the DG formulation yields, for any constant $\bm{u}$
 \begin{align*}
 \LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}},v }_{\hat{D}} + \LRa{J\bm{G}^T\bm{u} - \Pi_N \LRp{J\bm{G}^T\bm{u}}, v \hat{\bm{n}}}_{\d \hat{D}}\\
 &= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\LRp{J\bm{G}\hat{\bm{n}}}^T\bm{u}, v }_{\d \hat{D}}\\
@@ -675,16 +681,16 @@ The resulting free-stream preserving geometric factors result in separate approx
 
 \section{Discretely stable and low storage DG methods on curved meshes}
 
-While the 
+A disadvantage of the formulation (\ref{eq:dgform1}) is high storage costs, especially at high orders of approximation.  While the matrices $\bm{Q}^i_k$ can be applied to a vector without needing to explicitly store the matrix, the projection and lifting matrices (\ref{eq:projliftcurved}) differ from element to element, necessitating either explicit pre-computation and storage or the assembly and inversion of a weighted mass matrix for each right hand side evaluation.  The latter option is computationally expensive, while the former option increases storage costs.  This increase in storage can result in suboptimal performance on modern computational architectures \cite{chan2017weight}, due to the increasing cost of memory operations and data movement compared to arithmetic operations.  
+
+In this section, we present a discretely entropy stable scheme which avoids this high storage cost through the use of a weight-adjusted approximation to the inverse of a weighted mass matrix.  
 
 \subsection{A weight-adjusted approximation to the curvilinear mass matrix}
 
-The $L^2$ projection on a curvilinear domain $\Pi_N^k$ is defined as
+Recall that the $L^2$ projection on a curvilinear domain $\Pi_N^k$ is defined as
 \[
 \LRp{\Pi_N^k u,v}_{D^k} = \LRp{J \Pi_N^k u,v}_{\hat{D}} = \LRp{uJ,v}_{\hat{D}} = \LRp{u,v}_{D^k}, \qquad \forall v\in V_h.
 \]
-
-
 To define a weight-adjusted approximation to the curvilinear $L^2$ inner product, we first define the operator $T_{w}^{-1}$ as follows
 \[
 \LRp{wT_{w}^{-1} u,v}_{\hat{D}} = \LRp{ u,v}_{\hat{D}}, \qquad \forall v\in V_h.
@@ -694,6 +700,8 @@ Taking $w = 1/J$ then provides an approximation of the curvilinear $L^2$ inner p
 \LRp{J u,v}_{\hat{D}}\approx \LRp{T_{1/J}^{-1} u,v}_{\hat{D}}, \qquad \forall u,v\in V_h.
 \]
 This forms the basis of the weight-adjusted approximation of weighted $L^2$ inner products.  
+
+\note{Add matrix stuff}
 
 \subsection{Weight-adjusted projection} 
 We now define the weight-adjusted projection operator $P_N$ as 
@@ -958,6 +966,18 @@ Another approach is to change the time-step size based on the difference between
 
 \section{Numerical experiments}
 
+\subsection{Super-convergence of the weight-adjusted projection}
+
+\subsection{Compressible Euler equations}
+\subsubsection{Two dimensional experiments}
+
+\note{Shock propagation on a curved mesh: testing entropy conservation}
+
+\note{Isentropic vortex on curved and non-curved meshes}
+
+\subsubsection{Three dimensional experiments}
+
+\note{Isentropic vortex on curved and non-curved meshes}
 
 \section{Computational results}
 
@@ -989,6 +1009,12 @@ The method is outlined as follows: we store the conservation variables $\bm{u}$ 
 \item Apply WADG (scale by $1/J$ and apply $\bm{V}_q\bm{P}_q$ and update $\bm{u}$ at volume quad points.  Compute curvilinear projected entropy variables $\bm{v}_u = P_N\bm{v}(\bm{u}) =  \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{\bm{v}(\bm{u})J}}$, interpolate to volume quad points, and compute conservative variable volume values (update)
 \item Interpolate entropy variables at surface quadrature points and write out conservative variable surface values (face).  
 \end{enumerate}
+
+\section{Conclusions}
+
+\section{Acknowledgements}
+
+The authors thank Mark H.\ Carpenter and David C.\ Del Rey Fernandez for informative discussions.
 
 \bibliographystyle{unsrt}
 \bibliography{dg}
