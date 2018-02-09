@@ -717,14 +717,14 @@ which implies that, when restricted to polynomials, the matrix form of $T_{1/J^k
 \[
 \bm{M}^k \approx \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}, \qquad \LRp{\bm{M}^k}^{-1} \approx \bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1}.
 \]
-The inverse of the weight-adjusted mass matrix can be applied in a matrix-free fashion by using quadrature to form $\bm{M}_{1/J^k} $.  This requires storage of the inverse reference mass matrix and the values of $\bm{J}^k$ at quadrature points, yielding a storage cost of $O(N^d)$ per-element compared to an $O(N^6)$ per element storage cost required for the storage of inverse weighted mass matrices $\LRp{\bm{M}^k}^{-1}$.  This application of the weight-adjusted mass matrix is typically applied using the $L^2$ projection matrix $\bm{P}_q$ as follows
+The inverse of the weight-adjusted mass matrix can be applied in a matrix-free fashion by using quadrature to form $\bm{M}_{1/J^k} $.  This requires storage of the inverse reference mass matrix and the values of $\bm{J}^k$ at quadrature points.  Assuming that the number of quadrature points scales as $O(N^d)$ in $d$ dimensions, this yields a storage cost of $O(N^d)$ per-element compared to an $O(N^{2d})$ per element storage cost required for the storage of inverse weighted mass matrices $\LRp{\bm{M}^k}^{-1}$.  This application of the weight-adjusted mass matrix is typically applied using the $L^2$ projection matrix $\bm{P}_q$ as follows
 \[
 \bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1} = \bm{P}_q {\rm diag}\LRp{1/\bm{J}^k} \bm{V}_q \bm{M}^{-1}.
 \]
 When evaluating the right hand side of a semi-discrete formulation such as (\ref{eq:dgform1}), the inverse mass matrix is typically merged into operations on the right hand side, such that the main work in applying the weight-adjusted mass matrix consists of applying the interpolation matrix $\bm{V}_q$, scaling by pointwise values of $1/\bm{J}^k$ at quadrature points, and multiplying by the $L^2$ projection matrix $\bm{P}_q$.
 
 
-\subsection{A discretely entropy stable weight-adjusted DG formulation on curved meshes}
+\subsection{A discretely entropy stable low storage DG formulation on curved meshes}
 
 Given the weight-adjusted inverse mass matrix, we can also define a weight-adjusted version of the $L^2$ projection over a curved element $D^k$.  We refer to this operator as $P^k_N: L^2\rightarrow P^N$, which satisfies
 \[
@@ -766,7 +766,7 @@ A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the varia
 &\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
 &\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
 \end{align}
-We can show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab2}: 
+Since the  weight-adjusted mass matrix inverse is low-storage, and since the matrices $\bm{D}^j_k$ in (\ref{eq:dik}) can be assembled from reference matrices $\bm{D}^i_N$ and the values of geometric terms at quadrature points, the overall scheme requires only $O(N^d)$ storage per element.  We can additionally show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab2}: 
 \begin{theorem}
 Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform2}) is entropy conservative in the sense that
 \[
