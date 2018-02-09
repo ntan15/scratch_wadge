@@ -472,7 +472,7 @@ where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
 \]
 
-It can be observed that the matrix $\bm{D}_N^i$ satisfies several key properties.  First, it can be observed that $\bm{D}_N^i\bm{1} = 0$, where $\bm{1}$ is the vector of all ones.  Second, $\bm{D}_N^i$ satisfies a summation-by-parts property.  Let $\bm{Q}_N^i$ be the scaling of $\bm{D}_N^i$ by the diagonal matrix of volume and surface quadrature weights 
+It was shown in \cite{chan2017discretely} that the matrix $\bm{D}_N^i$ satisfies several key properties.  First, it can be observed that $\bm{D}_N^i\bm{1} = 0$, where $\bm{1}$ is the vector of all ones.  Second, $\bm{D}_N^i$ satisfies a summation-by-parts property.  Let $\bm{Q}_N^i$ be the scaling of $\bm{D}_N^i$ by the diagonal matrix of volume and surface quadrature weights 
 \[
 \bm{Q}_N^i = \bm{W}_N \bm{D}_N^i, \qquad \bm{W}_N = \LRp{\begin{array}{cc}
 \bm{W} &\\
@@ -535,19 +535,19 @@ where $\bm{n}_i$ and $\bm{J}^k_f$ are vectors containing evaluations of the phys
 
 Curvilinear mappings also imply that integrals over each physical element $D^k$ are no longer simple scalings of integrals over $\hat{D}$.  The $L^2$ projection of $u\in L^2\LRp{D^k}$ over a curvilinear element $D^k$ is defined through 
 \begin{equation}
-\LRp{\Pi_N u,v}_{D^k} = \LRp{u,v}_{D^k}.
+\LRp{\Pi^k_N u,v}_{D^k} = \LRp{u,v}_{D^k}.
 \label{eq:l2curv}
 \end{equation}
 Mapping integrals to the reference element $\hat{D}$ yields
 \begin{equation}
-\LRp{\Pi_N u,v J}_{\hat{D}} = \LRp{u,vJ}_{\hat{D}}.
+\LRp{\Pi^k_N u,v J}_{\hat{D}} = \LRp{u,vJ}_{\hat{D}}.
 \label{eq:l2curvmap}
 \end{equation}
 For affine elements, $J$ is constant and can be cancelled.  Thus, the $L^2$ projection over affine elements is equivalent to simply taking the $L^2$ projection of a function over the reference element.  However, for curved elements, $J$ acts as a spatially varying weight within the $L^2$ inner product.  
 
 Discretizing (\ref{eq:l2curvmap}) requires a weighted mass matrix.  We define a curved mass matrix over an element $D^k$ by weighting the discrete $L^2$ norm with values of $J$ at quadrature points
 \begin{equation}
-\bm{M}_k = \bm{V}_q^T \bm{W}_J \bm{V}_q, \qquad \LRp{\bm{W}_J}_{ij} = \delta_{ij} w_i J(\bm{x}_i), \qquad i = 1,\ldots,N_q.
+\bm{M}^k = \bm{V}_q^T \bm{W}_{J^k} \bm{V}_q, \qquad \LRp{\bm{W}_J}_{ij} = \delta_{ij} w_i J^k(\bm{x}_i), \qquad i = 1,\ldots,N_q.
 \label{eq:curvedmass}
 \end{equation}
 Then, a curvilinear $L^2$ projection and lift matrices can be defined in a manner analogous to (\ref{eq:projlift})
@@ -592,8 +592,9 @@ We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and th
 \tilde{\bm{u}}_q\\
 \tilde{\bm{u}}_f
 \end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
+\label{eq:evars1}
 \end{align}
-Here, the entropy-projected conservative variables $\tilde{\bm{u}}$ denote the evaluation of the conservative variables in terms of the projected entropy variables at volume and face quadrature points.  We note that, under an appropriate choice of quadrature on quadrilaterals and hexahedra, this approach is equivalent to the approach taken in \cite{parsani2016entropy}, where the entropy variables are evaluated at Gauss nodes, then interpolated to a different set of nodes and used to compute the nonlinear fluxes.  
+In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u}}$ denote the evaluation of the conservative variables in terms of the projected entropy variables at volume and face quadrature points.  We note that, under an appropriate choice of quadrature on quadrilaterals and hexahedra, this approach is equivalent to the approach taken in \cite{parsani2016entropy}, where the entropy variables are evaluated at Gauss nodes, then interpolated to a different set of nodes and used to compute the nonlinear fluxes.  
 
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
 \begin{align}
@@ -617,7 +618,7 @@ Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.
 \[
 \sum_k \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
 \]
-\label{thm:stab}
+\label{thm:stab1}
 \end{theorem}
 \begin{proof}
 Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\ref{eq:sbpk}), the proof of entropy conservation is identical to that of \cite{chan2017discretely}.  
@@ -637,26 +638,30 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %\]
 %\note{Finish proof}
 \end{proof}
+An entropy stable scheme can be constructed by adding an entropy-dissipating penalty term, such as a Lax-Friedrichs penalization or the matrix dissipation terms introduced in \cite{chandrashekar2013kinetic,winters2017uniquely}.
+\note{maybe add more here?}
 
 \subsection{A discrete geometric conservation law}%Free stream preservation}
 
-An important aspect of Theorem~\ref{thm:stab} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J\bm{G}_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
+An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J\bm{G}_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
 
 From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
 \begin{align*}
 \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ {\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{1}} \\
 &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
 \end{align*}
-where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that 
+where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that a discrete version of the GCL (\ref{eq:gcl}) holds
 \begin{equation}
-\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
+\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0.
 \label{eq:dgcl}
 \end{equation}
-a discrete version of the GCL (\ref{eq:gcl}).  This condition is also related to free-stream preservation, which ensures (at the discrete level) that for $\bm{u}$ constant, 
+This condition is also related to free-stream preservation, which ensures (at the discrete level) that for $\bm{u}$ constant, 
 \[
 \pd{\bm{u}}{t} + \Grad \cdot \bm{u} = \pd{\bm{u}}{t} = 0.
 \]
 For isoparametric mappings in two dimensions, free stream preservation is naturally enforced by noting that the scaled metric terms $J\bm{G}_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly naturally enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D due to the fact that geometric factors for a degree $N$ geometric mapping are polynomials of degree $2N-2$.  Because the degree of $J\bm{G}_{ij}$ is higher than the degree of the underlying polynomial space, these metric terms are not represented exactly through their values at nodal or quadrature points, resulting in aliasing errors and the loss of the discrete GCL (\ref{eq:dgcl}) \cite{kopriva2006metric, johnen2013geometrical}.  
+
+\note{Clarify isoparametric here - use degree $N$ polynomials to approximate, so that second block row of $\bm{Q}_N$ is automatically zero.}
 
 This can be remedied by using an interpolation of the curl-conservative form of the geometric factors, which ensures that $\hat{\Grad}\cdot\LRp{J\bm{G}^T} = 0$ locally \cite{visbal2002use, kopriva2006metric}.  However, because the geometric factors are computed by applying the curl, the geometric factors are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  We take a different approach, based on a strategy described in \cite{fernandez2016simultaneous, crean2018entropy}.  Integrating by parts the DG formulation yields, for any constant $\bm{u}$
 \begin{align*}
@@ -664,7 +669,7 @@ This can be remedied by using an interpolation of the curl-conservative form of 
 &= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\LRp{J\bm{G}\hat{\bm{n}}}^T\bm{u}, v }_{\d \hat{D}}\\
 &= \sum_k \LRp{-J\bm{G}^T\bm{u},\hat{\Grad} v }_{\hat{D}} + \LRa{\bm{n}\cdot \bm{u}, v }_{\d \hat{D}}.  
 \end{align*}
-for any $v\in V_h$.  
+for any $v\in P^N$.  
 Thus, to ensure that this sums to zero, we modify the geometric factors by seeking $J\bm{G}$ which minimizes the $L^2$ error for a degree $N$ polynomial approximation to the true geometric factors, subject to a weakly divergence-free constraint
 \begin{align*}
 &\min_{\tilde{J\bm{G}}_i \in P^N} \frac{1}{2}\nor{\tilde{J\bm{G}}_i - J\bm{G}_i}_{L^2\LRp{\hat{D}}}^2,\\ 
@@ -683,48 +688,132 @@ The resulting free-stream preserving geometric factors result in separate approx
 
 A disadvantage of the formulation (\ref{eq:dgform1}) is high storage costs, especially at high orders of approximation.  While the matrices $\bm{Q}^i_k$ can be applied to a vector without needing to explicitly store the matrix, the projection and lifting matrices (\ref{eq:projliftcurved}) differ from element to element, necessitating either explicit pre-computation and storage or the assembly and inversion of a weighted mass matrix for each right hand side evaluation.  The latter option is computationally expensive, while the former option increases storage costs.  This increase in storage can result in suboptimal performance on modern computational architectures \cite{chan2017weight}, due to the increasing cost of memory operations and data movement compared to arithmetic operations.  
 
-In this section, we present a discretely entropy stable scheme which avoids this high storage cost through the use of a weight-adjusted approximation to the inverse of a weighted mass matrix.  
+In this section, we present a discretely entropy stable scheme which avoids this high storage cost through the use of a low-storage weight-adjusted approximation to the inverse of a weighted mass matrix.  To ensure a discrete entropy conservation or a discrete entropy inequality, we also modify the formulation (\ref{eq:dgform1}) to take into account the use of a weight-adjusted mass matrix.
 
 \subsection{A weight-adjusted approximation to the curvilinear mass matrix}
 
-Recall that the $L^2$ projection on a curvilinear domain $\Pi_N^k$ is defined as
-\[
-\LRp{\Pi_N^k u,v}_{D^k} = \LRp{J \Pi_N^k u,v}_{\hat{D}} = \LRp{uJ,v}_{\hat{D}} = \LRp{u,v}_{D^k}, \qquad \forall v\in V_h.
-\]
-To define a weight-adjusted approximation to the curvilinear $L^2$ inner product, we first define the operator $T_{w}^{-1}$ as follows
-\[
-\LRp{wT_{w}^{-1} u,v}_{\hat{D}} = \LRp{ u,v}_{\hat{D}}, \qquad \forall v\in V_h.
-\]
-Taking $w = 1/J$ then provides an approximation of the curvilinear $L^2$ inner product
-\[
-\LRp{J u,v}_{\hat{D}}\approx \LRp{T_{1/J}^{-1} u,v}_{\hat{D}}, \qquad \forall u,v\in V_h.
-\]
-This forms the basis of the weight-adjusted approximation of weighted $L^2$ inner products.  
+%Recall that, by mapping back to the reference element $\hat{D}$, the $L^2$ projection $\Pi_N^k$ on a curved element $D^k$ is defined as
+%\begin{equation}
+%\LRp{J \Pi_N^k u,v}_{\hat{D}} = \LRp{uJ,v}_{\hat{D}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
+%\label{eq:l2projcurv}
+%\end{equation}
+The presence of the weighted $L^2$ inner product $\LRp{J^k \Pi_N^k u,v}_{\hat{D}}$ in (\ref{eq:l2curvmap}) results in the presence of a weighted mass matrix.  Because the weight $J^k$ varies spatially over each element, the inverse of a weighted mass matrix is no longer a scaling of the inverse reference mass matrix.  The motivation for the weight-adjusted mass matrix is to replace the inversion of weighted mass matrices over each element with the application of inverse reference mass matrices and quadrature-based operations involving the spatially varying weights $J^k$ \cite{chan2016weight1, chan2016weight2}.  
 
-\note{Add matrix stuff}
-
-\subsection{Weight-adjusted projection} 
-We now define the weight-adjusted projection operator $P_N$ as 
-\[
-P_N u = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}.
-\]
-Note that $P_N$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
+To define a weight-adjusted approximation to the curvilinear $L^2$ inner product, we first define the operator $T_{w}^{-1}: L^2\rightarrow P^N$ as follows
 \begin{equation}
-\LRp{J P_N u, v} = \LRp{\Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{uJ}}, vJ} = \LRp{uJ, \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{vJ}}} =  \LRp{uJ, P_N v}.
+\LRp{wT_{w}^{-1} u,v}_{\hat{D}} = \LRp{ u,v}_{\hat{D}}, \qquad \forall v\in P^N.
+\label{eq:wadgTw}
+\end{equation}
+Roughly speaking, $T_{w} u$ approximates $u/w$.  Thus, taking $w = 1/J^k$ provides an approximation of the curvilinear $L^2$ inner product
+\begin{equation*}
+\LRp{J^k u,v}_{\hat{D}} \approx \LRp{T_{1/J^k}^{-1} u,v}_{\hat{D}}.
+\end{equation*}
+
+Computing $T_{1/J^k}^{-1}u$ requires solving (\ref{eq:wadgTw}).  Let $u \in P^N$, and let $\bm{u}_J$ denote coefficients for the polynomial $T_{1/J^k}^{-1}u$.  This results in the following matrix system
+\[
+\bm{M}_{1/J^k}\bm{u}_{J} = \bm{M}\bm{u}, \qquad {\bm{M}_{1/J^k}} = \bm{V}_q^T \bm{W}{\rm diag}\LRp{1/\bm{J}^k}\bm{V}_q,%\LRp{\frac{1}{J^k}\phi_i,\phi_j}_{\hat{D}},
+\]
+which implies that, when restricted to polynomials, the matrix form of $T_{1/J^k}^{-1}$ is $\bm{M}_{1/J^k}^{-1}\bm{M}$.  Then, the weight-adjusted mass matrix is the Gram matrix with respect to the weight-adjusted inner product $\LRp{T_{1/J^k}^{-1} u,v}_{\hat{D}}$, such that
+\[
+\bm{M}^k \approx \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}, \qquad \LRp{\bm{M}^k}^{-1} \approx \bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1}.
+\]
+The inverse of the weight-adjusted mass matrix can be applied in a matrix-free fashion by using quadrature to form $\bm{M}_{1/J^k} $.  This requires storage of the inverse reference mass matrix and the values of $\bm{J}^k$ at quadrature points, yielding a storage cost of $O(N^d)$ per-element compared to an $O(N^6)$ per element storage cost required for the storage of inverse weighted mass matrices $\LRp{\bm{M}^k}^{-1}$.  This application of the weight-adjusted mass matrix is typically applied using the $L^2$ projection matrix $\bm{P}_q$ as follows
+\[
+\bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1} = \bm{P}_q {\rm diag}\LRp{1/\bm{J}^k} \bm{V}_q \bm{M}^{-1}.
+\]
+When evaluating the right hand side of a semi-discrete formulation such as (\ref{eq:dgform1}), the inverse mass matrix is typically merged into operations on the right hand side, such that the main work in applying the weight-adjusted mass matrix consists of applying the interpolation matrix $\bm{V}_q$, scaling by pointwise values of $1/\bm{J}^k$ at quadrature points, and multiplying by the $L^2$ projection matrix $\bm{P}_q$.
+
+
+\subsection{A discretely entropy stable weight-adjusted DG formulation on curved meshes}
+
+Given the weight-adjusted inverse mass matrix, we can also define a weight-adjusted version of the $L^2$ projection over a curved element $D^k$.  We refer to this operator as $P^k_N: L^2\rightarrow P^N$, which satisfies
+\[
+\LRp{T^{-1}_{1/J^k}P^k_N u,v}_{\hat{D}} = \LRp{uJ^k,v}_{\hat{D}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
+\]
+It was shown in \cite{chan2016weight2} that $P_N^k $ is given explicitly by
+\begin{equation}
+P^k_N u = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}},
+\label{eq:wadgproj}
+\end{equation}
+where $\Pi_N$ is the $L^2$ projection operator on the reference element $\hat{D}$.  We can discretize $P^k_N$ using quadrature to yield a weight-adjusted projection matrix $\tilde{\bm{P}}_q$ 
+\begin{align}
+\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_q^T\bm{W}{\rm diag}\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W}{\rm diag}\LRp{1/\bm{J}^k} \bm{V}_q\bm{P}_q{\rm diag}\LRp{\bm{J}^k} \bm{V}_q \nonumber\\
+&= \bm{P}_q {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q {\rm diag}\LRp{\bm{J}^k}.
+\label{eq:wadgproj}
+\end{align}
+We can similarly define a weight-adjusted lifting matrix $\tilde{\bm{L}}_q$ by replacing the weighted mass matrix in (\ref{eq:projliftcurved}) with the weight-adjusted mass matrix
+\begin{equation}
+\tilde{\bm{L}}^k_q = \bm{P}_q {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{L}_q {\rm diag}\LRp{\bm{J}^k_f}.
+\label{eq:wadglift}
+\end{equation}
+
+We can now introduce the weight-adjusted projection of the entropy variables $\bm{v}_h$ and the corresponding entropy-projected conservative variables $\tilde{\bm{u}}$ 
+\begin{align}
+\bm{u}_q = \bm{V}_q \bm{u}_h, \qquad \bm{v}_h = \tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}, \qquad 
+\tilde{\bm{v}} = \LRs{\begin{array}{c}
+\bm{V}_q\\
+\bm{V}_f
+\end{array}}\bm{v}_h, \qquad \tilde{\bm{u}} =  \LRs{\begin{array}{c}
+\tilde{\bm{u}}_q\\
+\tilde{\bm{u}}_f
+\end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
+\label{eq:evars2}
+\end{align}
+A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the variables defined in (\ref{eq:evars2})
+\begin{align}
+&\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\tilde{\bm{P}}^k_q & \tilde{\bm{L}}^k_q\end{array}}
+\sum_{j=1}^d \LRp{\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q {\rm diag}\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
+&\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
+&\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
+\end{align}
+We can show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab2}: 
+\begin{theorem}
+Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform2}) is entropy conservative in the sense that
+\[
+\sum_k \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
+\]
+\label{thm:stab2}
+\end{theorem}
+\begin{proof}
+The proof is similar to that of Theorem~\ref{thm:stab1}.  
+First, we note that 
+\begin{align}
+\tilde{\bm{P}}^k_q &= \bm{P}_q {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q {\rm diag}\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W} {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q \bm{M}^{-1} \bm{V}_q^T \bm{W}{\rm diag}\LRp{\bm{J}^k} \nonumber\\
+&= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_q^T \bm{W}{\rm diag}\LRp{\bm{J}^k}\label{eq:projidentity}\\
+\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_f^T \bm{W}_f{\rm diag}\LRp{\bm{J}^k_f} \label{eq:liftidentity}.
+\end{align}
+Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}$ on both sides and using (\ref{eq:projidentity}), (\ref{eq:liftidentity}) yields 
+\[
+\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}{\bm{V}}_q^T & {\bm{V}}_f^T\end{array}}
+\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f {\rm diag}\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
+\]
+Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h = \tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}$ and using (\ref{eq:projidentity}) then yields for the time term
+\begin{align*}
+\LRp{\tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}{\rm diag}\LRp{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
+&= \bm{v}\LRp{\bm{u}_q}^T\bm{W}{\rm diag}\LRp{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}{\rm diag}\LRp{\bm{J}^k} \bm{v}\LRp{\bm{u}_q}^T\td{\bm{u}_q}{t} \\
+&= \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t}.
+\end{align*}
+The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \cite{chan2017discretely}.
+\end{proof}
+
+\subsection{Analysis of weight-adjusted projection} 
+
+The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is super-convergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
+
+We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
+\begin{equation}
+\LRp{J^k P_N^k  u, v} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}} =  \LRp{uJ^k, P_N^k  v}.
 \label{eq:PNsym}
 \end{equation}
-Furthermore, using that $T_{1/J}^{-1}$ is self-adjoint for $v \in V_h$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we have that a projection-like property holds for the weight-adjusted $L^2$ inner product
+Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
 \begin{equation}
-\LRp{T_{1/J}^{-1} P_N u,v} = \LRp{ \frac{1}{J}\Pi_N(uJ),T_{1/J}^{-1}v} = \LRp{\Pi_N(u J),v} = \LRp{u J,v}, \qquad \forall v\in V_h.
+\LRp{T_{1/J^k}^{-1} P_N^k  u,v} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v} = \LRp{\Pi_N(u J^k),v} = \LRp{u J^k,v}, \qquad \forall v\in P^N.
 \label{eq:PNproj}
 \end{equation}
-
-Let $\Pi_N^k u$ be the $L^2$ projection of $u$ with respect to the weighted (curvilinear) $L^2$ inner product.  We observe in numerical experiments that for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and WADG projection is superconvergent, the results are indistinguishable for a fixed geometric mapping.  
-
-We can prove this bound using results from \cite{chan2016weight1,chan2016weight2}.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
+To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use results from \cite{chan2016weight1,chan2016weight2}.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
 \begin{theorem}
 \label{thm:moment}
-Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in V_h\LRp{D^k}$.  Then, 
+Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in P^N\LRp{D^k}$.  Then, 
 \begin{align*}
 &\LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{T^{-1}_{1/J}u,v}_{\hat{D}}} \leq \\
 &Ch^{2N+2}\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{W^{N+1,2}\LRp{D^k}}.
@@ -747,45 +836,45 @@ The result is the consequence of a scaling argument and a Rayleigh quotient boun
 \[
 \bm{K}_N\bm{u} = \lambda\bm{M}\bm{u},
 \]
-where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product for $W^{N+1,2}\LRp{D^k}$.  We note that the constant $C_N$ depends on the largest eigenvalue, which in turn depends on the order $N$ and dimension $d$.  
+where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product for $W^{N+1,2}\LRp{D^k}$.  We emphasize, however, that the constant $C_N$ depends on the largest eigenvalue, which in turn depends on the order $N$ and dimension $d$.  
 \end{proof}
 
-We can now prove that $P_Nu$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$
+We can now prove that $P_N^k u$ is super-convergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
 \begin{theorem}
-Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_Nu$ is
+Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
 \[
-\nor{\Pi_N^k u - P_N u}_{L^2\LRp{D^k}} \leq C\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
+\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
 \]
 where $C$ is a mesh-independent constant.
+\label{thm:superconverge}
 \end{theorem}
-
 \begin{proof}
 Let $\Pi_N^k u$ be the $L^2$ projection over the curved element $D^k$, such that
 \[
-\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in V_h.
+\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in P^N.
 \]
-Using the fact that $P_N u$ satisfies an analogous property (\ref{eq:PNproj}),  we can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
+Using the fact that $P_N^k  u$ satisfies an analogous property (\ref{eq:PNproj}),  we can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
 \[
-\nor{\Pi_N^k  u - P_N u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N u.
+\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
 \]
 Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
 \begin{align*}
-\nor{\Pi_N^k  u - P_N u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k ,vJ}_{\hat{D}} - \LRp{P_N u,vJ}_{\hat{D}}}\\
-& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N u,v}_{\hat{D}} - \LRp{JP_N u,v}_{\hat{D}}}.
+\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k ,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}}\\
+& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N^k  u,v}_{\hat{D}} - \LRp{JP_N^k  u,v}_{\hat{D}}}.
 \end{align*}
 Applying Theorem~\ref{thm:moment} and Lemma~\ref{lemma:sobolev} then yields that 
 \begin{align*}
-\nor{\Pi_N^k u - P_N u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}
+\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}
 \nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
 &\leq Ch^{N+2} C_J\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}},
 \end{align*}
 where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through by 
 \[
-\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N u}_{L^2\LRp{D^k}}
+\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}
 \]
  gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
-
+We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
 %\section{Flux differencing for affine meshes}
 %
 %Let $\bm{F}(\bm{U})$ denote the flux matrix whose rows are 
@@ -867,7 +956,7 @@ where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through b
 %
 %\subsection{Flux differencing for curvilinear meshes}
 %
-%We introduce a ``reference'' global DG derivative, which is defined (for $v\in V_h$ but $u,w\not\in V_h$)
+%We introduce a ``reference'' global DG derivative, which is defined (for $v\in P^N$ but $u,w\not\in P^N$)
 %\begin{align*}
 %\LRp{\hat{D}^i_h u,vw}_{\Omega} &= \sum_k \LRp{\pd{\Pi_N\bm{u}}{\hat{\bm{x}}_i},vw}_{\hat{D}} 
 % + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}_i}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}_i}_{\d \hat{D}}.
@@ -913,7 +1002,7 @@ where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through b
 %We now have the following curvilinear generalization of Theorem~\ref{thm:ec}
 %\begin{theorem}
 %\label{thm:ec_curvi}
-%Let $\bm{u}_{\bm{v}} = \bm{u}\LRp{P_N\bm{v}(\bm{u})}$.  Then, the semi-discrete DG discretization 
+%Let $\bm{u}_{\bm{v}} = \bm{u}\LRp{P_N^k \bm{v}(\bm{u})}$.  Then, the semi-discrete DG discretization 
 %\[
 %\LRp{\pd{\bm{u}}{t} + 2\LRl{\hat{\Grad}_h\cdot \bm{f}^k_S(\bm{u}_{\bm{v}},\bm{u}_{\bm{v}}')}_{\bm{x}'=\bm{x}},\bm{w}} = 0, \qquad \bm{f}^k_S(\bm{u}_L,\bm{u}_R) = \avg{J\bm{G}^T}\bm{f}_S(\bm{u}_L,\bm{u}_R).
 %\]
@@ -925,46 +1014,8 @@ where $C_J$ is a mesh-independent constant depending on $J$.  Dividing through b
 %\end{proof}
 
 
-\section{Limiting}
-
-The evaluation of $\bm{u}_v = \bm{u}\LRp{\Pi_N v}$ can increase entropy pointwise, such that $S(\bm{u}_v) \geq S(\bm{u})$.  This can manifest as spikes in $\bm{u}_v$.  We wish to mollify the effect of such spikes.  
-
-The first approach is to limit the conservative variable $\bm{u}$
-\[
-\tilde{\bm{u}} = \bar{\bm{u}} + \Theta (\bm{u} - \bar{\bm{u}})
-\]
-where $\Theta$ is some diagonal matrix with entries in $[0,1]$.  We want to ensure that $\rho, E-\frac{\rho u^2}{2} > 0$.  
-
-The entropy for the compressible Euler equations is 
-\[
-U(\bm{u}) = -\frac{\rho s}{\gamma-1},
-\]
-where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy.  The entropy variables under this choice of entropy are then
-\begin{align*}
-v_1 = \frac{\gamma-s}{\gamma-1} - \frac{\rho u^2}{2p}, \qquad v_2 = \frac{\rho u}{\rho e}, \qquad v_3 = -\frac{\rho}{\rho e}.
-\end{align*}
-where the internal energy $\rho e = E - u^2/2$.
-
-The inverse mapping is given by 
-\[
-\rho = -(\rho e) v_3, \qquad m = (\rho e) v_2, \qquad E = (\rho e)\LRp{1 - \frac{v_2^2}{2 v_3}},
-\]
-where $\rho e$ and $s$ in terms of the entropy variables are 
-\[
-\rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_3}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{v_2^2}{2v_3}.
-\]
-The mapping is invertible so long as $\rho, E-\frac{\rho u^2}{2} > 0$, which can be ensured using standard limiters.  However, we have to ensure also that $\rho(\Pi_N\bm{v}) > 0$ (similarly for internal energy).  This boils down to ensuring that $\Pi_N v_3(x) < 0$, which guarantees that $(\rho e) > 0$ as well.   
-
-It can be helpful to ensure a stronger condition, that $\Pi_N v_3(x) \leq \max_{x} v_3(x)$.  This guarantees a bound constraint on the conservative variables evaluated using the projected entropy variables.  
-
-Another approach is to change the time-step size based on the difference between $\bm{u}$ and $\bm{u}_v$.  This would be similar to local time-stepping (high order interpolation of the numerical fluxes and multiple evaluations of )
-
-\begin{itemize}
-\item Adaptively choose time-step size?
-\item Expensive option: bisection or Newton algorithm for finding theta.  
-\end{itemize}
-
 \section{Numerical experiments}
+\label{sec:num}
 
 \subsection{Super-convergence of the weight-adjusted projection}
 
@@ -1006,7 +1057,7 @@ The method is outlined as follows: we store the conservation variables $\bm{u}$ 
 \begin{enumerate}
 \item Apply volume flux differencing ($\bm{D}_q$ and $\bm{V}_q\bm{L}_q$) and projection ($\bm{V}_q\bm{P}_q$) (volume kernel)
 \item Apply surface flux differencing ($\bm{V}_f\bm{P}_q$) and lifting ($\bm{V}_q\bm{L}_q$) (volume kernel)
-\item Apply WADG (scale by $1/J$ and apply $\bm{V}_q\bm{P}_q$ and update $\bm{u}$ at volume quad points.  Compute curvilinear projected entropy variables $\bm{v}_u = P_N\bm{v}(\bm{u}) =  \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{\bm{v}(\bm{u})J}}$, interpolate to volume quad points, and compute conservative variable volume values (update)
+\item Apply WADG (scale by $1/J$ and apply $\bm{V}_q\bm{P}_q$ and update $\bm{u}$ at volume quad points.  Compute curvilinear projected entropy variables $\bm{v}_u = P_N^k \bm{v}(\bm{u}) =  \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{\bm{v}(\bm{u})J}}$, interpolate to volume quad points, and compute conservative variable volume values (update)
 \item Interpolate entropy variables at surface quadrature points and write out conservative variable surface values (face).  
 \end{enumerate}
 
@@ -1021,5 +1072,47 @@ The authors thank Mark H.\ Carpenter and David C.\ Del Rey Fernandez for informa
 
 
 \end{document}
+
+
+
+
+%\section{Limiting}
+%
+%The evaluation of $\bm{u}_v = \bm{u}\LRp{\Pi_N v}$ can increase entropy pointwise, such that $S(\bm{u}_v) \geq S(\bm{u})$.  This can manifest as spikes in $\bm{u}_v$.  We wish to mollify the effect of such spikes.  
+%
+%The first approach is to limit the conservative variable $\bm{u}$
+%\[
+%\tilde{\bm{u}} = \bar{\bm{u}} + \Theta (\bm{u} - \bar{\bm{u}})
+%\]
+%where $\Theta$ is some diagonal matrix with entries in $[0,1]$.  We want to ensure that $\rho, E-\frac{\rho u^2}{2} > 0$.  
+%
+%The entropy for the compressible Euler equations is 
+%\[
+%U(\bm{u}) = -\frac{\rho s}{\gamma-1},
+%\]
+%where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy.  The entropy variables under this choice of entropy are then
+%\begin{align*}
+%v_1 = \frac{\gamma-s}{\gamma-1} - \frac{\rho u^2}{2p}, \qquad v_2 = \frac{\rho u}{\rho e}, \qquad v_3 = -\frac{\rho}{\rho e}.
+%\end{align*}
+%where the internal energy $\rho e = E - u^2/2$.
+%
+%The inverse mapping is given by 
+%\[
+%\rho = -(\rho e) v_3, \qquad m = (\rho e) v_2, \qquad E = (\rho e)\LRp{1 - \frac{v_2^2}{2 v_3}},
+%\]
+%where $\rho e$ and $s$ in terms of the entropy variables are 
+%\[
+%\rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_3}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{v_2^2}{2v_3}.
+%\]
+%The mapping is invertible so long as $\rho, E-\frac{\rho u^2}{2} > 0$, which can be ensured using standard limiters.  However, we have to ensure also that $\rho(\Pi_N\bm{v}) > 0$ (similarly for internal energy).  This boils down to ensuring that $\Pi_N v_3(x) < 0$, which guarantees that $(\rho e) > 0$ as well.   
+%
+%It can be helpful to ensure a stronger condition, that $\Pi_N v_3(x) \leq \max_{x} v_3(x)$.  This guarantees a bound constraint on the conservative variables evaluated using the projected entropy variables.  
+%
+%Another approach is to change the time-step size based on the difference between $\bm{u}$ and $\bm{u}_v$.  This would be similar to local time-stepping (high order interpolation of the numerical fluxes and multiple evaluations of )
+%
+%\begin{itemize}
+%\item Adaptively choose time-step size?
+%\item Expensive option: bisection or Newton algorithm for finding theta.  
+%\end{itemize}
 
 
