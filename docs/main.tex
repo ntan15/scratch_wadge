@@ -472,7 +472,6 @@ where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of
 \[
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
 \]
-
 It was shown in \cite{chan2017discretely} that the matrix $\bm{D}_N^i$ satisfies several key properties.  First, it can be observed that $\bm{D}_N^i\bm{1} = 0$, where $\bm{1}$ is the vector of all ones.  Second, $\bm{D}_N^i$ satisfies a summation-by-parts property.  Let $\bm{Q}_N^i$ be the scaling of $\bm{D}_N^i$ by the diagonal matrix of volume and surface quadrature weights 
 \[
 \bm{Q}_N^i = \bm{W}_N \bm{D}_N^i, \qquad \bm{W}_N = \LRp{\begin{array}{cc}
@@ -488,6 +487,17 @@ Then, $\bm{Q}_N^i$ satisfies the following discrete analogue of integration by p
 \end{array}}.
 \label{eq:sbpprop1}
 \end{equation}
+The matrix $\bm{D}_N^i$ reduces to polynomial differentiation when applied to polynomials, in the sense that
+\begin{align}
+\bm{D}_N^i \LRs{\begin{array}{c}
+\bm{V}_q\\
+\bm{V}_f
+\end{array}} = \LRs{\begin{array}{c}
+\bm{V}_q\bm{D}_i\\
+\bm{0}
+\end{array}}.
+\label{eq:dnvqvf}
+\end{align}
 
 %, and $\hat{J}_f$ denotes the Jacobian of the mapping from a face of $\hat{D}$ to a reference face (for example, the faces of a triangle are mapped back to the bi-unit interval $[-1,1]$).  
 
@@ -513,8 +523,11 @@ J^k\pd{u}{x_i} = \frac{1}{2}\sum_{j=1}^d \LRp{J^k\bm{G}^k_{ij}\pd{u}{\hat{x}_j} 
 
 We will require two additional assumptions on the mesh, geometric terms, and normal vectors for this work:
 \begin{assumption}[Consistency of normals]
-We assume that normals are consistent across neighboring elements.  Let $\bm{D}^k$ and $\bm{D}^{k,+}$ be adjacent elements sharing a face $f$.  Then, the scaled outward normal vectors for each element are equal and opposite such that $\bm{n}J^k_f = -\bm{n}^+J^{k,+}_f$.  
-
+We assume that normals are consistent across neighboring elements.  Let $\bm{D}^k$ and $\bm{D}^{k,+}$ be adjacent elements sharing a face $f$.  Then, the scaled outward normal vectors for each element are equal and opposite such that 
+\begin{align}
+\bm{n}J^k_f = -\bm{n}^+J^{k,+}_f.
+\label{eq:normalsign}
+\end{align}
 We also assume that the scaled matrix of geometric terms transforms scaled reference normal vectors to scaled physical normals, such that
 \begin{align}
 \sum_{j=1}^d J\bm{G}_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}} \circ\LRp{\hat{\bm{n}}_j\hat{\bm{J}}_f}}
@@ -653,129 +666,6 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 \end{proof}
 An entropy stable scheme can be constructed by adding an entropy-dissipating penalty term, such as a Lax-Friedrichs penalization or the matrix dissipation terms introduced in \cite{chandrashekar2013kinetic, winters2017uniquely}.  
 \note{maybe add more here?}
-
-\subsection{Enforcing the discrete geometric conservation law}
-
-An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J\bm{G}_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
-
-From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
-\begin{align*}
-\bm{Q}^j_k\bm{1} = \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\circ \avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ {\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{1}} \\
-&= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
-\end{align*}
-where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that a discrete version of the GCL (\ref{eq:gcl}) holds
-\begin{equation}
-\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0.
-\label{eq:dgcl}
-\end{equation}
-This condition is required to ensure that free-stream preservation holds at the discrete level.  In other words, we wish to ensure that the semi-discrete scheme preserves (for $\bm{u}$ constant) 
-\[
-\pd{\bm{u}}{t} + \Grad \cdot \bm{f}(\bm{u}) = \pd{\bm{u}}{t} = 0.
-\]
-For isoparametric geometric mappings (where the degree of the mapping matches the degree of the polynomial approximation) in two dimensions, the GCL is naturally enforced by noting that the scaled metric terms $J\bm{G}_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly automatically enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D.  
-
-In three dimensions, geometric terms are typically computed in ``cross-product'' form
-\begin{align}
-\LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}, \qquad i,j,k = 1,2,3, \qquad (i,j,k) \text{ cyclic}.
-\end{align}
-This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the curl of this term is a polynomial of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
-
-This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J\bm{G}_{ij}$ can also be computed in a ``conservative curl'' form
-\begin{align}
-\LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &= \hat{\Grad}\times \LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}, \qquad i,j,k \text{ cyclic},
-\label{eq:conscurl}
-\end{align}
-where $\hat{\Grad} \times $ denotes the curl computed with respect to the reference element coordinates.  A similar ``invariant curl form'' is also described in \cite{kopriva2006metric}.  From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds
-\begin{align}
-\hat{\Grad}\cdot \LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
-\end{align}
-The idea of Kopriva is to approximate the geometric terms through 
-\begin{align}
-\LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &\approx \hat{\Grad}\times I_N\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}, \qquad i,j,k \text{  cyclic},
-\label{eq:iconscurl}
-\end{align}
-where $I_N$ denotes the degree $N$ polynomial interpolation operator.  However, because the geometric terms are computed by applying the curl, the geometric terms are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  
-
-We adopt a slight modification of (\ref{eq:iconscurl}) in this work, approximating geometric terms by using the interpolation operator $I_{N+1}$ onto degree $(N+1)$ polynomials, then interpolating back to degree $N$ polynomials in the end
-\begin{align}
-\LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &\approx {\hat{\Grad}\times I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}, \qquad i,j,k \text{ cyclic}.
-\label{eq:iconscurl2}
-\end{align}
-We note that, since the curl of a degree $(N+1)$ polynomial is degree $N$, the approximation generated by (\ref{eq:iconscurl2}) is a degree $N$ polynomial.  
-\begin{theorem}
-Let the geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ denote the approximation of $J^k\bm{G}^k_{ij}$ using (\ref{eq:iconscurl2}), and let the scaled normals $\tilde{n_iJ^k_f}$ be computed using $\tilde{J^k\bm{G}^k_{ij}}$ and (\ref{eq:normalconsistency}).  Then, $\tilde{J^k\bm{G}^k_{ij}}$ is an $O(h^{N+1})$ accurate approximation which satisfies both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.
-\end{theorem}
-\begin{proof}
-The satisfaction of (\ref{eq:dgcl}) relies on the fact that $J^k\bm{G}^k_{ij}\in P^N$, and that $J^kG^k_{ij}$ is equal to its own $L^2$ projection.  Then, 
-\[
-\LRs{
-\begin{array}{c}
-\bm{V}_q\\
-\bm{V}_f
-\end{array}}\bm{P}_q\bm{JG}^k_{ij} = \bm{JG}^k_{ij}
-\]
-by the fact that the discrete $L^2$ projection operator applied to $\bm{JG}^k_{ij}$ returns its exact polynomial coefficients.  
-\note{Finish}
-\end{proof}
-
-\begin{remark}
-We note that the accuracy of (\ref{eq:iconscurl2}) depends on the choice of interpolation points.  It is well known that interpolating at equispaced points can result in inaccurate polynomial approximations.  One can determine good interpolation point sets by optimizing over some measure of interpolation quality (such as the Lebesgue constant), and in practice, sets of interpolation points are pre-computed for some polynomial degrees $N = 1,\ldots, N_{\max}$ on the reference element and stored \cite{chen1996optimal, hesthaven1998electrostatics}. Interpolation points can also be explicitly computed as the image of equispaced points under an appropriately defined mapping
-\cite{blyth2006lobatto, warburton2006explicit, chan2015comparison}.  
-\end{remark}
-
-We briefly outline how to compute $\tilde{J^k\bm{G}^k_{ij}}$ in three dimensions.  Let $\LRc{\hat{\bm{x}}^N_i}_{i=1}^{N_p}$ denote the set of degree $N$ interpolation points, and let $\ell^N_i(\hat{\bm{x}})$ denote the $i$th degree $N$ Lagrange basis function on the reference element.  We define interpolation matrices $\bm{V}_N^{N+1}$ and $\bm{V}^N_{N+1}$ between degree $N$ and $N+1$ polynomials such that 
-\begin{align}
-\LRp{\bm{V}_N^{N+1}}_{ij} &= \ell^N_j(\hat{\bm{x}}^{N+1}_i) , \qquad 1\leq i \leq N_p, \qquad \qquad 1\leq i \leq (N+1)_p\\
-\LRp{\bm{V}^N_{N+1}}_{ij} &= \ell^{N+1}_j(\hat{\bm{x}}^{N}_i) , \qquad 1\leq i \leq (N+1)_p, \qquad \qquad 1\leq i \leq N_p, \nonumber
-\end{align}
-where $N_p, (N+1)_p$ denotes the number of interpolation points for degree $N$ and $N+1$ polynomials, respectively.  Next, let $\bm{x}_1,\bm{x}_2,\bm{x}_3$ denote vectors containing $x,y,z$ coordinates of degree $N$ interpolation points on a curved physical element $D^k$, and let $\tilde{\bm{x}}_1,\tilde{\bm{x}}_2,\tilde{\bm{x}}_3$ denote their degree $N+1$ interpolation such that
-\begin{align}
-\tilde{\bm{x}}_1 = \bm{V}_N^{N+1}\bm{x}_1, \qquad \tilde{\bm{x}}_2 = \bm{V}_N^{N+1}\bm{x}_2, \qquad \tilde{\bm{x}}_3 = \bm{V}_N^{N+1}\bm{x}_3.
-\end{align}
-Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $N+1$ with respect to the $i$th coordinate direction.  The geometric factors are computed as follows:
-% rxJ = Dt*(ys.*z) - Ds*(yt.*z);
-% sxJ = Dr*(yt.*z) - Dt*(yr.*z);
-% txJ = Ds*(yr.*z) - Dr*(ys.*z);
-% 
-% ryJ = -(Dt*(xs.*z) - Ds*(xt.*z));
-% syJ = -(Dr*(xt.*z) - Dt*(xr.*z));
-% tyJ = -(Ds*(xr.*z) - Dr*(xs.*z));
-% 
-% rzJ = -(Dt*(ys.*x) - Ds*(yt.*x));
-% szJ = -(Dr*(yt.*x) - Dt*(yr.*x));
-% tzJ = -(Ds*(yr.*x) - Dr*(ys.*x));
-\begin{align}
-\bm{JG^k}_{11} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}} \\
-\bm{JG^k}_{12} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_3}} \nonumber\\
-\bm{JG^k}_{13} &= \bm{V}_{N+1}^N{\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_1 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}}} \nonumber\\
-%
-\bm{JG^k}_{21} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3}} \nonumber \\
-\bm{JG^k}_{22} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_1 }\circ\tilde{\bm{x}}_3}} \nonumber\\
-\bm{JG^k}_{23} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_1 }\circ\tilde{\bm{x}}_3}} \nonumber\\
-%
-\bm{JG^k}_{31} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1}} \nonumber\\
-\bm{JG^k}_{32} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_3 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}} \nonumber\\
-\bm{JG^k}_{33} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_1 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}}. \nonumber
-\end{align}
-\begin{remark}
-
-We note that the discrete GCL (\ref{eq:dgcl}) can be enforced directly through a local constrained minimization problem \cite{fernandez2016simultaneous, crean2018entropy}, which yields a solution in terms of a pseudo-inverse.  However, we have not found a straightforward way to simultaneously enforce both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm} using this approach.
-\end{remark}
 
 \section{Discretely stable and low storage DG methods on curved meshes}
 
@@ -993,148 +883,159 @@ We present an explicit formula for a conservative correction here which is simpl
 \tilde{P}^k_N u = P^k_N u + \frac{\int_{\hat{D}} f - JP^k_N u}{\int_{\hat{D}} J}.  
 \]
 This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.
+\newpage
+\section{Enforcing the discrete geometric conservation law}
 
+An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J\bm{G}_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
 
+From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
+\begin{align*}
+\bm{Q}^j_k\bm{1} = \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\circ \avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ {\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{1}} \\
+&= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
+\end{align*}
+where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that a discrete version of the GCL (\ref{eq:gcl}) holds
+\begin{equation}
+\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0.
+\label{eq:dgcl}
+\end{equation}
+This condition is required to ensure that free-stream preservation holds at the discrete level.  In other words, we wish to ensure that the semi-discrete scheme preserves (for $\bm{u}$ constant) 
+\[
+\pd{\bm{u}}{t} + \Grad \cdot \bm{f}(\bm{u}) = \pd{\bm{u}}{t} = 0.
+\]
+For isoparametric geometric mappings (where the degree of the mapping matches the degree of the polynomial approximation) in two dimensions, the GCL is naturally enforced by noting that the scaled metric terms $J\bm{G}_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly automatically enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D.  
 
-%\note{Explain that WADG is not strictly locally conservative with respect to $J$, show how to perform a high order correction.  Mention that in numerical experiments, results with and without conservation correction are essentially indistinguishable from each other.}
+In three dimensions, geometric terms are typically computed in ``cross-product'' form
+\begin{align}
+\LRs{\begin{array}{c}
+J^k\bm{G}^k_{i1}\\
+J^k\bm{G}^k_{i2}\\
+J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}, \qquad i,j,k = 1,2,3, \qquad (i,j,k) \text{ cyclic}.
+\end{align}
+This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the curl of this term is a polynomial of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
 
-%\section{Flux differencing for affine meshes}
-%
-%Let $\bm{F}(\bm{U})$ denote the flux matrix whose rows are 
+This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J\bm{G}_{ij}$ can also be computed in a ``conservative curl'' form
+\begin{align}
+\LRs{\begin{array}{c}
+J^k\bm{G}^k_{i1}\\
+J^k\bm{G}^k_{i2}\\
+J^k\bm{G}^k_{i3}\end{array}} &= \hat{\Grad}\times \LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}, \qquad i,j,k \text{ cyclic},
+\label{eq:conscurl}
+\end{align}
+where $\hat{\Grad} \times $ denotes the curl computed with respect to the reference element coordinates.  A similar ``invariant curl form'' is also described in \cite{kopriva2006metric}.  From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds
+\begin{align}
+\hat{\Grad}\cdot \LRs{\begin{array}{c}
+J^k\bm{G}^k_{i1}\\
+J^k\bm{G}^k_{i2}\\
+J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
+\end{align}
+The idea of Kopriva is to approximate the geometric terms through 
+\begin{align}
+\LRs{\begin{array}{c}
+J^k\bm{G}^k_{i1}\\
+J^k\bm{G}^k_{i2}\\
+J^k\bm{G}^k_{i3}\end{array}} &\approx \hat{\Grad}\times I_N\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}, \qquad i,j,k \text{  cyclic},
+\label{eq:iconscurl}
+\end{align}
+where $I_N$ denotes the degree $N$ polynomial interpolation operator.  However, because the geometric terms are computed by applying the curl, the geometric terms are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  
+
+We adopt a slight modification of (\ref{eq:iconscurl}) in this work, approximating geometric terms by using the interpolation operator $I_{N+1}$ onto degree $(N+1)$ polynomials, then interpolating back to degree $N$ polynomials 
+\begin{align}
+\LRs{\begin{array}{c}
+J^k\bm{G}^k_{i1}\\
+J^k\bm{G}^k_{i2}\\
+J^k\bm{G}^k_{i3}\end{array}} &\approx I_N\LRp{\hat{\Grad}\times I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}, \qquad i,j,k \text{ cyclic}.
+\label{eq:iconscurl2}
+\end{align}
+We note that the interpolation to degree $N$ polynomials is exact, since the curl of a degree $(N+1)$ polynomial is degree $N$, the approximation generated by (\ref{eq:iconscurl2}) is a degree $N$ polynomial.  
+\begin{theorem}
+Let the geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ denote the approximation of $J^k\bm{G}^k_{ij}$ using (\ref{eq:iconscurl2}), and let the scaled normals $\tilde{n_iJ^k_f}$ be computed using $\tilde{J^k\bm{G}^k_{ij}}$ and (\ref{eq:normalconsistency}).  Then, the geometric terms satisfy both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.  Additionally, the error satisfies
+\[
+\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}} \leq C_N h^{N+2}.
+\]
+\end{theorem}
+\begin{proof}
+The satisfaction of (\ref{eq:dgcl}) relies on the fact that $\tilde{J^k\bm{G}^k}_{ij}$ is a degree $N$ polynomial and is equal to its own $L^2$ projection.  Let $\tilde{\bm{JG}^k_{ij}}$ denote the polynomial coefficients of $\tilde{J^k\bm{G}^k}_{ij}$.  
+%Then, 
 %\[
-%\bm{F}(\bm{U}) = \LRp{
+%\LRs{
 %\begin{array}{c}
-%\bm{F}_x \\
-%\bm{F}_y
-%\end{array}
-%}.
+%\bm{V}_q\\
+%\bm{V}_f
+%\end{array}}
+%\bm{P}_q\tilde{\bm{JG}^k_{ij}} = \tilde{\bm{JG}^k_{ij}}
 %\]
-%The conservation law of interest is the following
-%\[
-%\pd{\bm{U}}{t} + \Grad \cdot \bm{F}(\bm{U}) = 0,
-%\]
-%where the divergence is taken over each column of $\bm{F}(\bm{U})$.  
-%
-%Define the global DG divergence
-%\begin{align*}
-%\LRp{\Grad_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\Grad \cdot \Pi_N\bm{u},vw}_{D^k} \\
-%& + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\bm{n}}_{\d D^k} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\bm{n}}_{\d D^k}.
-%\end{align*}
-%This is equivalent to defining
-%\[
-%\Grad_h \cdot\bm{u} = \sum_i D^i_h \bm{u}_i.  
-%\]
-%Let $\bm{f}^i_S(\bm{u}_L,\bm{u}_R)$ for $i= 1,\ldots,d$ denote the multi-dimensional entropy conservative flux of Tadmor \cite{tadmor1987numerical}, such that
-%\[
-%\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}^i_S(\bm{u}_L,\bm{u}_R) = \psi_{i,L} - \psi_{i,R}
-%\]
-%where $\psi_i$ denotes the $i$th component of the entropy potential.  We concatenate these components together into a matrix $\bm{f}_S$ whose $i$th row is $\bm{f}^i_S$
-%\[
-%\bm{f}_S = \LRs{\bm{f}^1_S,\ldots,\bm{f}^d_S}^T.  
-%\]
-%\begin{theorem}
-%\label{thm:ec}
-%The semi-discrete DG discretization 
-%\[
-%\LRp{\pd{\bm{u}}{t} + 2\LRl{{\Grad_h\cdot \bm{f}_S(\bm{u},\bm{u}')}}_{\bm{x}'=\bm{x}},\bm{w}}_{\Omega} = 0
-%\]
-%is entropy conservative.  
-%\end{theorem}
-%\begin{proof}
-%Take $\bm{w} = \bm{v}$.  The time term reduces to $\pd{S(\bm{u})}{t}$ by the chain rule.  The spatial term is then
-%\begin{align*}
-%2\LRp{\LRl{{\Grad_h\cdot \bm{f}_S(\bm{u},\bm{u}')}}_{\bm{x}'=\bm{x}},\bm{v}} &= \LRp{\LRl{{\Grad_h\cdot \bm{f}_S(\bm{u},\bm{u}')}\bm{v}'}_{\bm{x}'=\bm{x}},{1}} + \sum_{i=1}^d  \LRp{\LRl{{D^i_h \bm{f}^i_S(\bm{u},\bm{u}')}}_{\bm{x}'=\bm{x}},\bm{v}} \\
-%&= \sum_{i=1}^d\LRa{\bm{f}^i_S(\bm{u},\bm{u}),\bm{v}\bm{n}_i} - \LRp{\LRl{{D^i_h \LRp{\LRp{\bm{v}'-\bm{v}}^T\bm{f}^i_S(\bm{u},\bm{u}')}}}_{\bm{x}'=\bm{x}},{1}}
-%\end{align*}
-%The boundary term is simplified by noting that $\bm{f}^i_S(\bm{u},\bm{u}) = \bm{f}^i(\bm{u})$.  
-%Applying properties of the entropy conservative flux yields
-%\[
-%\LRp{\bm{v}'-\bm{v}}^T\bm{f}^i_S(\bm{u},\bm{u}') = \psi_i' - \psi_i,
-%\]
-%which simplifies the final volume term to
-%\[
-%\LRp{\LRl{D^i_h \LRp{\psi_i' - \psi_i}}_{\bm{x}'=\bm{x}},{1}} = \LRa{-\psi_i\bm{n}_i,1}.
-%\]
-%\end{proof}
+%by the fact that the discrete $L^2$ projection operator applied to $\bm{JG}^k_{ij}$ returns its exact polynomial coefficients.  
+Then, applying $\bm{D}^j_N$ to evaluations of $\tilde{J^k\bm{G}^k_{ij}}$ at volume and surface quadrature points and using (\ref{eq:dnvqvf}), we have
+\[
+\sum_{j=1}^d\bm{D}^j_N \LRs{
+\begin{array}{c}
+\bm{V}_q\\
+\bm{V}_f
+\end{array}}
+\tilde{\bm{JG}^k_{ij}} = 
+\sum_{j=1}^d \LRs{\begin{array}{c}
+\bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}} \\
+0
+\end{array}}.
+\]
+The entries of $\bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}}$ correspond to values of the derivatives of $\tilde{J^k\bm{G}^k_{ij}}$ evaluated at quadrature points.  Since 
+\[
+\sum_{j=1}^d\pd{}{\hat{x}_j}\tilde{J^k\bm{G}^k_{ij}} = 0
+\]
+by the construction using (\ref{eq:iconscurl2}), $\sum_{j=1,\ldots,d} \bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}} = \bm{0}$ as well.
 
-%\section{Curved meshes}
-%
-%Let $\bm{G}$ denote the Jacobian of the geometric mapping
-%\[
-%\bm{G}_{ij} = \pd{\hat{\bm{x}}_j}{\bm{x}_i},
-%\]
-%and let $J$ denote the determinant of $\bm{G}$.  One can show that
-%\[
-%\hat{\Grad} \cdot \LRp{J\bm{G}^T} = 0, \qquad \hat{\Grad} \cdot \LRp{J\bm{G}^T\bm{u}} = \Grad \cdot \bm{u}
-%\]
-%at the continuous level.  We also have that the mapped normals obey the property
-%\[
-%J\bm{G} \hat{\bm{n}}\hat{J}_f = \bm{n}J^f.
-%\]
-%At the continuous level, the physical gradient and divergence satisfy
-%\[
-%\LRp{\Grad u, \bm{v}}_{D^k} = \LRp{J\bm{G} \hat{\Grad} u,\bm{v}}_{\hat{D}}, \qquad \LRp{\Grad\cdot \bm{u},v}_{D^k} = \LRp{\hat{\Grad}\cdot \LRp{J\bm{G}^T u},\bm{v}}_{\hat{D}}, 
-%\]
-%as well as a corresponding integration by parts property.  
-%
-%\subsection{Flux differencing for curvilinear meshes}
-%
-%We introduce a ``reference'' global DG derivative, which is defined (for $v\in P^N$ but $u,w\not\in P^N$)
+Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied by directly constructing the scaled normals using values of $\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  Equation (\ref{eq:normalsign}) is \note{not proven yet, but I do observe it!}.  The accuracy of the approximation is a result \note{that I still need to show, but it checks out numerically too.}
+%of Lemma~\ref{lemma:sobolev} applied to the reference element 
 %\begin{align*}
-%\LRp{\hat{D}^i_h u,vw}_{\Omega} &= \sum_k \LRp{\pd{\Pi_N\bm{u}}{\hat{\bm{x}}_i},vw}_{\hat{D}} 
-% + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}_i}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}_i}_{\d \hat{D}}.
+%\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}} &= \nor{\hat{\Grad}\times \LRp{\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}- I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}}_{L^2\LRp{\hat{D}}}\\
+%&\leq C_N \nor{\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}- I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}_{L^2\LRp{\hat{D}}}
 %\end{align*}
-%%\begin{align*}
-%%\LRp{\hat{\Grad}_h \cdot \bm{u},vw}_{\Omega} &= \sum_k \LRp{\hat{\Grad} \cdot \Pi_N\bm{u},vw}_{\hat{D}} \\
-%%& + \frac{1}{2}\LRa{ \bm{u}^+ - \Pi_N\bm{u},vw\hat{\bm{n}}}_{\d \hat{D}} +  \frac{1}{2}\LRa{ \bm{u} - \Pi_N\bm{u},\Pi_N\LRp{vw}\hat{\bm{n}}}_{\d \hat{D}}.
-%%\end{align*}
-%We use this to define a reference DG divergence
-%\begin{align*}
-%\hat{\Grad}_h \cdot \bm{u} = \sum_{i=1}^d \hat{D}^i_h \bm{u}_i.
-%\end{align*}
-%We next introduce two physical DG divergences based on the reference DG divergence.  The a ``conservative'' DG divergence is defined using the reference DG divergence operator
-%\[
-%\Grad^c_h \cdot \bm{u} = \hat{\Grad}_h \cdot \LRp{J\bm{G}^T\bm{u}}.  
-%\]
+
+\end{proof}
+
+\begin{remark}
+We note that the accuracy of (\ref{eq:iconscurl2}) depends on the choice of interpolation points.  It is well known that interpolating at equispaced points can result in inaccurate polynomial approximations.  One can determine good interpolation point sets by optimizing over some measure of interpolation quality (such as the Lebesgue constant), and in practice, sets of interpolation points are pre-computed for some polynomial degrees $N = 1,\ldots, N_{\max}$ on the reference element and stored \cite{chen1996optimal, hesthaven1998electrostatics}. Interpolation points can also be explicitly computed as the image of equispaced points under an appropriately defined mapping
+\cite{blyth2006lobatto, warburton2006explicit, chan2015comparison}.  
+\end{remark}
+
+We briefly outline how to compute $\tilde{J^k\bm{G}^k_{ij}}$ in three dimensions.  Let $\LRc{\hat{\bm{x}}^N_i}_{i=1}^{N_p}$ denote the set of degree $N$ interpolation points, and let $\ell^N_i(\hat{\bm{x}})$ denote the $i$th degree $N$ Lagrange basis function on the reference element.  We define interpolation matrices $\bm{V}_N^{N+1}$ and $\bm{V}^N_{N+1}$ between degree $N$ and $N+1$ polynomials such that 
+\begin{align}
+\LRp{\bm{V}_N^{N+1}}_{ij} &= \ell^N_j(\hat{\bm{x}}^{N+1}_i) , \qquad 1\leq i \leq N_p, \qquad \qquad 1\leq i \leq (N+1)_p\\
+\LRp{\bm{V}^N_{N+1}}_{ij} &= \ell^{N+1}_j(\hat{\bm{x}}^{N}_i) , \qquad 1\leq i \leq (N+1)_p, \qquad \qquad 1\leq i \leq N_p, \nonumber
+\end{align}
+where $N_p, (N+1)_p$ denotes the number of interpolation points for degree $N$ and $N+1$ polynomials, respectively.  Next, let $\bm{x}_1,\bm{x}_2,\bm{x}_3$ denote vectors containing $x,y,z$ coordinates of degree $N$ interpolation points on a curved physical element $D^k$, and let $\tilde{\bm{x}}_1,\tilde{\bm{x}}_2,\tilde{\bm{x}}_3$ denote their evaluation at degree $(N+1)$ interpolation points
+\begin{align}
+\tilde{\bm{x}}_1 = \bm{V}_N^{N+1}\bm{x}_1, \qquad \tilde{\bm{x}}_2 = \bm{V}_N^{N+1}\bm{x}_2, \qquad \tilde{\bm{x}}_3 = \bm{V}_N^{N+1}\bm{x}_3.
+\end{align}
+Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $N+1$ with respect to the $i$th coordinate direction.  The geometric factors are computed as follows:
+% rxJ = Dt*(ys.*z) - Ds*(yt.*z);
+% sxJ = Dr*(yt.*z) - Dt*(yr.*z);
+% txJ = Ds*(yr.*z) - Dr*(ys.*z);
+% 
+% ryJ = -(Dt*(xs.*z) - Ds*(xt.*z));
+% syJ = -(Dr*(xt.*z) - Dt*(xr.*z));
+% tyJ = -(Ds*(xr.*z) - Dr*(xs.*z));
+% 
+% rzJ = -(Dt*(ys.*x) - Ds*(yt.*x));
+% szJ = -(Dr*(yt.*x) - Dt*(yr.*x));
+% tzJ = -(Ds*(yr.*x) - Dr*(ys.*x));
+\begin{align}
+\bm{JG^k}_{11} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}} \\
+\bm{JG^k}_{12} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_3}} \nonumber\\
+\bm{JG^k}_{13} &= \bm{V}_{N+1}^N{\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_1 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}}} \nonumber\\
 %
-%We also introduce the ``non-conservative'' divergence 
-%\[
-%\Grad_h^{nc} \cdot \bm{u} = \LRp{J\bm{G}\hat{\Grad}_h}\cdot \bm{u} = \sum_{i=1}^d \sum_{j=1}^d J\bm{G}_{ij} \hat{D}^j_h\bm{u}_i.
-%\]
-%Unless $J\bm{G}$ is element-wise constant,
-%\[
-%\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} \neq \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}, 
-%\]
-%due to the presence of the projection operator $\Pi_N$ in the definition of $\hat{\Grad}_h$.  
+\bm{JG^k}_{21} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3}} \nonumber \\
+\bm{JG^k}_{22} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_1 }\circ\tilde{\bm{x}}_3}} \nonumber\\
+\bm{JG^k}_{23} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_1 }\circ\tilde{\bm{x}}_3}} \nonumber\\
 %
-%Instead of choosing one definition over the other, it was shown in \cite{wintermeyer2017entropy} that stability is achieved when using the average of these two definitions of the physical gradient.  The following lemma describes how to implement this within the flux differencing framework.
-%\begin{lemma}
-%Let $\bm{u}^k(\bm{x},\bm{x}')$ be defined as
-%\[
-%\bm{u}^k(\bm{x},\bm{x}') = \avg{J\bm{G}^T}\bm{u} = \LRp{\frac{J(\bm{x})\bm{G}^T(\bm{x}) + J(\bm{x}')\bm{G}^T(\bm{x}')}{2}}\bm{u}.
-%\]
-%Applying the reference global DG divergence to $\bm{u}^k$ is equivalent to averaging both definitions of the global DG divergence
-%\[
-%\LRl{{\hat{\Grad}_h \cdot \bm{u}^k(\bm{x},\bm{x}')}}_{\bm{x}'=\bm{x}} = \frac{1}{2}\LRp{\hat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}} + \LRp{J\bm{G}\hat{\Grad}_h}\cdot\bm{u}} = \frac{1}{2}\LRp{\Grad^c_h\cdot \bm{u} + \Grad_h^{nc}\cdot\bm{u}}.
-%\]
-%\end{lemma}
-%\begin{proof}
-%\note{TBD.}
-%\end{proof}
-%
-%We now have the following curvilinear generalization of Theorem~\ref{thm:ec}
-%\begin{theorem}
-%\label{thm:ec_curvi}
-%Let $\bm{u}_{\bm{v}} = \bm{u}\LRp{P_N^k \bm{v}(\bm{u})}$.  Then, the semi-discrete DG discretization 
-%\[
-%\LRp{\pd{\bm{u}}{t} + 2\LRl{\hat{\Grad}_h\cdot \bm{f}^k_S(\bm{u}_{\bm{v}},\bm{u}_{\bm{v}}')}_{\bm{x}'=\bm{x}},\bm{w}} = 0, \qquad \bm{f}^k_S(\bm{u}_L,\bm{u}_R) = \avg{J\bm{G}^T}\bm{f}_S(\bm{u}_L,\bm{u}_R).
-%\]
-%is entropy conservative on curvilinear meshes.  
-%\end{theorem}
-%\begin{proof}
-%Take $\bm{w} = \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{ \bm{v}J}}$.  
-%
-%\end{proof}
+\bm{JG^k}_{31} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1}} \nonumber\\
+\bm{JG^k}_{32} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_3 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}} \nonumber\\
+\bm{JG^k}_{33} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_1 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}}. \nonumber
+\end{align}
+\begin{remark}
+
+We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly through a local constrained minimization problem \cite{fernandez2016simultaneous, crean2018entropy}, which yields a solution in terms of a pseudo-inverse.  However, we have not found a straightforward way to simultaneously enforce both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm} using this approach.
+\end{remark}
 
 
 \section{Numerical experiments}
@@ -1210,6 +1111,7 @@ coordinates{(0.5,0.00428104)(0.25,0.00080429)(0.125,0.000182915)(0.0625,2.96705e
 \caption{$L^2$ errors in approximating both smooth and discontinuous functions $f(\bm{x})$ using $L^2$ and weight-adjusted projections on a curved mesh.  The approximation order is $N=4$, and a degree $2N$ quadrature rule is used to compute integrals over the reference triangle. }
 \label{fig:superconverge}
 \end{figure}
+
 
 
 \subsection{Compressible Euler equations}
