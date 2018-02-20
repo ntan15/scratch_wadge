@@ -285,7 +285,6 @@ legend style={font=\small}
 
 \begin{abstract}
 We construct entropy conservative and entropy stable high order discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guaranteeing that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
-%Things to include: entropy conservation and stability on curvilinear meshes, choosing geometric terms to ensure constant state preservation, high order accuracy.  Computational considerations for curvilinear meshes.  
 \end{abstract}
 
 \tableofcontents
@@ -973,7 +972,7 @@ Assumption~\ref{ass:interp} implies that we cannot utilize interpolation points 
 \begin{theorem}
 Let the interpolation points which define the interpolation operators $I_N, I_{N+1}$ satisfy Assumption~\ref{ass:interp}, and let the mesh be watertight, such that the faces between any two neighboring elements are identical and do not contain gaps.  Let the geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ denote the approximation of $J^k\bm{G}^k_{ij}$ using (\ref{eq:iconscurl2}), and let the scaled normals $\tilde{n_iJ^k_f}$ be computed using $\tilde{J^k\bm{G}^k_{ij}}$ and (\ref{eq:normalconsistency}).  Then, the geometric terms satisfy both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.  Additionally, the error satisfies
 \[
-\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}} \leq C_N h^{N+2}.
+\sqrt{\sum_{k}\sum_{ij=1}^d\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}}^2} \leq C_N h^{N+2}.
 \]
 \label{thm:koprivagcl}
 \end{theorem}
@@ -1063,7 +1062,7 @@ We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly thro
 \section{Numerical experiments}
 \label{sec:num}
 
-\subsection{Accuracy of weight-adjusted projection and geometric terms satisfying the discrete GCL}
+\subsection{Accuracy of weight-adjusted projection and geometric terms}
 
 %\begin{figure}
 %\centering
@@ -1071,7 +1070,7 @@ We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly thro
 %\caption{Warped mesh of degree $N=4$ used to test super-convergence of the difference between the curvilinear $L^2$ and weight-adjusted projection.}
 %\end{figure}
 
-In this section, we verify Theorems~\ref{thm:superconverge} and \ref{thm:koprivagcl} concerning the accuracy of the weight-adjusted projection and modified construction of geometric terms satisfying the discrete geometric conservation law.  Figure~\ref{fig:superconverge} shows $L^2$ errors for both the standard $L^2$ projection (\ref{eq:l2curv}) and the weight-adjusted projection (\ref{eq:wadgproj}) for a series of warped meshes of degree $N = 4$.  We compute $L^2$ errors for both smooth and discontinuous functions
+In this section, we verify Theorems~\ref{thm:superconverge} and \ref{thm:koprivagcl} concerning the accuracy of the weight-adjusted projection and modified construction of geometric terms satisfying the discrete geometric conservation law.  Figure~\ref{fig:superconverge} shows $L^2$ errors for both the standard $L^2$ projection (\ref{eq:l2curv}) and the weight-adjusted projection (\ref{eq:wadgproj}) for a series of warped meshes of degree $N = 4$.  Errors are estimated using degree $2N+1$ quadratures for triangles and tetrahedra \cite{xiao2010quadrature}.  We compute $L^2$ errors for both smooth and discontinuous functions
 \[
 f(\bm{x}) = e^{x+y}\sin\LRp{{\pi x}}\sin\LRp{{\pi y}}, \qquad g(\bm{x}) = f(\bm{x}) + H(x+y-\sin(\pi x)),
 \]
@@ -1136,24 +1135,200 @@ coordinates{(0.5,0.00466574)(0.25,0.000804201)(0.125,0.000182886)(0.0625,2.96701
 \label{fig:superconverge}
 \end{figure}
 
-We next compare the approximation of the geometric factors on a curved three-dimensional mesh.  We generate a sequence of quasi-uniform unstructured meshes using GMSH \cite{geuzaine2009gmsh} and distort their coordinates using the mapping
+We next compare the approximation of the geometric factors on a curved three-dimensional mesh.  We generate a sequence of quasi-uniform unstructured tetrahedral meshes using GMSH \cite{geuzaine2009gmsh} and construct a curvilinear mesh from the distorted coordinates $\tilde{\bm{x}}$, where
 \begin{align}
-\bm{x} = \bm{x} + \frac{1}{8}\cos\LRp{\frac{\pi}{2}x}\cos\LRp{\frac{\pi}{2}y}\cos\LRp{\frac{\pi}{2}z}.  
+\tilde{\bm{x}} = \bm{x} + \frac{1}{8}\cos\LRp{\frac{\pi}{2}x}\cos\LRp{\frac{\pi}{2}y}\cos\LRp{\frac{\pi}{2}z}.  
 \label{eq:mapping}
 \end{align}
-We then computed the maximum $L^2$ error in approximating $J^k\bm{G}^k_{ij}$
-\[
-\max_k \sqrt{\sum_{ij=1}^d \nor{J^k\bm{G}^k_{ij} - \tilde{J^k\bm{G}^k_{ij}}}^2_{L^2\LRp{\hat{D}}}}.  
-\]
+We then compute the $L^2$ error in approximating geometric terms for each element $D^k$ by computing $J^k\bm{G}^k_{ij}-\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  
+%\[
+%\sqrt{\sum_{k}\sum_{ij=1}^d \nor{J^k\bm{G}^k_{ij} - \tilde{J^k\bm{G}^k_{ij}}}^2_{L^2\LRp{\hat{D}}}}.  
+%\]
+We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Kopriva-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Kopriva-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Kopriva-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Kopriva-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  
 
-% alpha = 1/8
-%coordinates{(0.737185,0.000791584)(0.39984,1.62016e-05)(0.166642,3.92283e-07)(0.0867136,5.76479e-09)};
-%coordinates{(0.737185,0.00171192)(0.39984,8.52393e-05)(0.166642,2.31097e-06)(0.0867136,1.28404e-07)};
+We note that the error in both approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge as $O(h^{N+1})$, the same rate as the $L^2$ projection error.  
+Sensititivity to geometry error \cite{toulorge2016optimizing}. 
 
 
+\begin{figure}
+\centering
+\subfloat[$N=3$]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.45\textwidth,    
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ error}, 
+%     ymin=1e-10, ymax=1e-1,    
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.67574,0.00231891)(0.374388,7.21634e-05)(0.16654,3.2502e-06)(0.0867431,1.31183e-07)};
+\addplot[color=magenta,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.67574,0.00231891)(0.374388,0.000121059)(0.16654,2.10855e-06)(0.0867431,8.08278e-08)};
+\addplot[color=red,mark=square*,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.67574,0.00635039)(0.374388,0.000542466)(0.16654,4.85003e-05)(0.0867431,4.03792e-06)};
+\addplot[color=black,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.67574,0.00952559)(0.374388,0.000897556)(0.16654,3.51441e-05)(0.0867431,2.58651e-06)};
+
+%coordinates{(0.5,0.00237193)(0.25,5.41179e-05)(0.125,7.6934e-07)(0.0625,1.18362e-08)(0.03125,1.84801e-10)};
+%\logLogSlopeTriangleFlip{0.3}{0.15}{0.225}{6}{black}
+
+\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
+%\legend{Uniform, Optimal, Smoothed}
+\end{loglogaxis}
+\end{tikzpicture}
+}
+\subfloat[$N=4$]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.45\textwidth,
+    xlabel={Mesh size $h$},
+%         ymin=1e-10, ymax=1e-1,    
+%     ymin=1e-7, ymax=1e1,
+%    ylabel={$L^2$ error}, 
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.673351,0.000766195)(0.373777,1.44835e-05)(0.166655,2.91207e-07)(0.0867501,5.69685e-09)};
+\addplot[color=magenta,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.673351,0.000957743)(0.373777,2.80204e-05)(0.166655,2.20143e-07)(0.0867501,4.37946e-09)};
+\addplot[color=red,mark=square*,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.673351,0.00231677)(0.373777,0.000127702)(0.166655,5.3742e-06)(0.0867501,2.11781e-07)};
+\addplot[color=black,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.673351,0.00405434)(0.373777,0.000213685)(0.166655,3.7653e-06)(0.0867501,1.43901e-07)};
+
+%coordinates{(0.5,0.00237193)(0.25,5.41179e-05)(0.125,7.6934e-07)(0.0625,1.18362e-08)(0.03125,1.84801e-10)};
+%\logLogSlopeTriangleFlip{0.3}{0.15}{0.225}{6}{black}
+
+\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
+\end{loglogaxis}
+\end{tikzpicture}
+}
+\caption{$L^2$ errors in the approximation of metric terms $J^k\bm{G}^k_{ij}$ with metric terms $\tilde{J^k\bm{G}^k_{ij}}$ satisfying the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.}
+\label{fig:geomerr}
+\end{figure}
+
+% N = 3
 \subsection{Compressible Euler equations}
 
+Next, we verify the semi-discrete entropy conservation and accuracy of the proposed high order methods for the compressible Euler equations on curved meshes in two and three dimensions.  
+
 \subsubsection{Two dimensional experiments}
+
+The compressible Euler equations in two dimensions are given as follows:
+\begin{align}
+\pd{\rho}{t} + \pd{\LRp{\rho u}}{x} + \pd{\LRp{\rho v}}{y} &= 0,\\
+\pd{\rho u}{t} + \pd{\LRp{\rho u^2 + p }}{x} + \pd{\LRp{\rho uv}}{y} &= 0,\nonumber\\
+\pd{\rho v}{t} + \pd{\LRp{\rho uv}}{x} + \pd{\LRp{\rho v^2 + p }}{y} &= 0,\nonumber\\
+\pd{E}{t} + \pd{\LRp{u(E+p)}}{x} + \pd{\LRp{v(E+p)}}{y}&= 0.\nonumber
+\end{align}
+In two dimensions, the pressure is $p = (\gamma-1)\LRp{E - \frac{1}{2}\rho (u^2+v^2)}$, and the specific internal energy is $\rho e = E - \frac{1}{2}\rho (u^2+v^2)$.  
+
+The choice of convex entropy for the Euler equations is non-unique \cite{harten1983symmetric}.  However, a unique entropy can be chosen by restricting to choices of entropy variables which symmetrize the viscous heat conduction term in the compressible Navier-Stokes equations \cite{hughes1986new}.  This leads to $U(\bm{u})$ of the form
+\begin{equation}
+U(\bm{u}) = -\frac{\rho s}{\gamma-1},
+\label{eq:entropy2d}
+\end{equation}
+where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy. The entropy variables in two dimensions are 
+\begin{align}
+v_1 = \frac{\rho e (\gamma + 1 - s) - E}{\rho e}, \qquad v_2 = \frac{\rho u}{\rho e}, \qquad v_3 = \frac{\rho v}{\rho e}, \qquad v_4 = -\frac{\rho}{\rho e}.
+\end{align}
+The conservation variables in terms of the entropy variables are given by
+\begin{equation}
+\rho = -(\rho e) v_4, \qquad \rho u = (\rho e) v_2, \qquad \rho v = (\rho e) v_3, \qquad E = (\rho e)\LRp{1 - \frac{{v_2^2+v_3^2}}{2 v_4}},
+\end{equation}
+where $\rho e$ and $s$ in terms of the entropy variables are 
+\begin{equation}
+\rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_4}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{{v_2^2+v_3^2}}{2v_4}.
+\end{equation}
+The entropy conservative numerical fluxes for the two-dimensional compressible Euler equations are given by Chandrashekar \cite{chandrashekar2013kinetic}
+\begin{align}
+&f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
+&f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u},&\nonumber\\
+&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
+&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{v},& \nonumber
+\end{align}
+where we have defined the auxiliary quantities
+\begin{equation}
+p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad p_{\rm avg}^{\log} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}}, \qquad \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}}.  
+\end{equation}
+
+We begin by testing the propagation of a shock on a two-dimensional curved mesh using a discontinuous profile.  
+\begin{figure}
+\centering
+\subfloat[With weight-adjusted projection]{
+\begin{tikzpicture}
+\begin{semilogyaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.45\textwidth,    
+    xlabel={Time $t$},
+    ylabel={Change in entropy $\Delta U(\bm{u})$}, 
+%     ymin=1e-10, ymax=1e-1,    
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.025641,0)(0.128205,1.81455e-05)(0.230769,1.84993e-05)(0.333333,1.81016e-05)(0.435897,2.38212e-05)(0.538462,3.43804e-05)(0.641026,3.75077e-05)(0.74359,3.80509e-05)(0.846154,4.02406e-05)(0.948718,4.57864e-05)(1.05128,5.21023e-05)(1.15385,5.52339e-05)(1.25641,5.93653e-05)(1.35897,6.53204e-05)(1.46154,7.10508e-05)(1.5641,7.58692e-05)(1.66667,8.21148e-05)(1.76923,8.86933e-05)(1.87179,9.52306e-05)(1.97436,0.000102832)};
+\addplot[color=blue,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.025641,9.95731e-16)(0.128205,4.11303e-15)(0.230769,1.09496e-14)(0.333333,1.86934e-14)(0.435897,1.8624e-14)(0.538462,4.82253e-14)(0.641026,2.80886e-14)(0.74359,3.34073e-14)(0.846154,3.41116e-14)(0.948718,1.12826e-14)(1.05128,1.02106e-14)(1.15385,7.27543e-15)(1.25641,3.21965e-15)(1.35897,2.70617e-15)(1.46154,2.28116e-15)(1.5641,1.01134e-14)(1.66667,9.05179e-15)(1.76923,8.96852e-15)(1.87179,2.69368e-14)(1.97436,1.20043e-15)};
+\addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.0129032,0)(0.116129,9.54018e-07)(0.219355,8.64409e-07)(0.322581,7.28292e-07)(0.425806,1.00547e-06)(0.529032,1.54507e-06)(0.632258,1.58376e-06)(0.735484,1.48926e-06)(0.83871,1.52599e-06)(0.941935,1.77263e-06)(1.04516,2.04306e-06)(1.14839,2.10785e-06)(1.25161,2.25231e-06)(1.35484,2.49471e-06)(1.45806,2.7075e-06)(1.56129,2.86391e-06)(1.66452,3.11015e-06)(1.76774,3.35711e-06)(1.87097,3.6045e-06)(1.97419,3.88568e-06)};
+\addplot[color=red,dotted,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.0129032,1.00787e-15)(0.116129,2.48065e-16)(0.219355,8.43769e-15)(0.322581,1.07483e-14)(0.425806,6.18255e-15)(0.529032,4.95159e-14)(0.632258,1.19835e-14)(0.735484,3.68837e-14)(0.83871,2.35957e-14)(0.941935,1.19904e-14)(1.04516,1.73785e-14)(1.14839,7.88952e-15)(1.25161,2.44249e-14)(1.35484,6.38031e-15)(1.45806,1.78781e-14)(1.56129,5.72459e-16)(1.66452,4.02456e-15)(1.76774,1.7316e-14)(1.87097,2.50425e-14)(1.97419,3.55375e-14)};
+\addplot[color=black,mark=pentagon*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.00647249,0)(0.110032,5.38994e-08)(0.213592,4.43651e-08)(0.317152,3.18878e-08)(0.420712,4.65967e-08)(0.524272,7.64772e-08)(0.627832,7.36288e-08)(0.731392,6.33475e-08)(0.834951,6.22881e-08)(0.938511,7.43794e-08)(1.04207,8.71374e-08)(1.14563,8.67872e-08)(1.24919,9.19998e-08)(1.35275,1.02781e-07)(1.45631,1.11204e-07)(1.55987,1.16121e-07)(1.66343,1.26634e-07)(1.76699,1.36562e-07)(1.87055,1.46567e-07)(1.97411,1.57581e-07)};
+\addplot[color=black,dashdotted,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.00647249,2.19226e-16)(0.110032,5.88071e-15)(0.213592,1.34059e-14)(0.317152,2.30337e-14)(0.420712,8.23647e-15)(0.524272,2.68709e-14)(0.627832,2.53304e-14)(0.731392,2.95527e-14)(0.834951,2.5948e-14)(0.938511,4.56579e-15)(1.04207,2.28428e-14)(1.14563,8.22259e-15)(1.24919,1.51094e-14)(1.35275,7.86871e-15)(1.45631,1.11508e-14)(1.55987,1.57721e-14)(1.66343,6.95624e-15)(1.76699,2.07681e-14)(1.87055,2.72421e-14)(1.97411,1.7028e-14)};
+
+% % N = 4, K= 8, dt = .25
+ % N = 4, K= 8, dt = .125
+ % N = 4, K= 8, dt = .0625
+
+%\legend{$dt = .25$, }
+%\legend{Uniform, Optimal, Smoothed}
+\end{semilogyaxis}
+\end{tikzpicture}
+}
+\subfloat[Without weight-adjusted projection]{
+\begin{tikzpicture}
+\begin{semilogyaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.45\textwidth,
+    xlabel={Time $t$},
+%         ymin=1e-10, ymax=1e-1,    
+%     ymin=1e-7, ymax=1e1,
+%    ylabel={$L^2$ error}, 
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.025641,0)(0.128205,4.45681e-05)(0.230769,6.82313e-05)(0.333333,0.000131517)(0.435897,0.000108761)(0.538462,8.51562e-05)(0.641026,2.94791e-05)(0.74359,3.62904e-05)(0.846154,2.97564e-05)(0.948718,9.87886e-05)(1.05128,0.000136806)(1.15385,7.64601e-05)(1.25641,0.000111044)(1.35897,5.72761e-05)(1.46154,4.27e-05)(1.5641,5.03819e-05)(1.66667,4.99789e-05)(1.76923,5.07438e-05)(1.87179,4.26361e-05)(1.97436,2.48694e-05)};
+\addplot[color=blue,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.025641,5.11743e-16)(0.128205,1.16547e-14)(0.230769,7.91034e-15)(0.333333,1.28231e-14)(0.435897,4.79131e-15)(0.538462,3.44134e-14)(0.641026,6.92502e-15)(0.74359,2.28047e-14)(0.846154,2.15314e-14)(0.948718,4.36456e-15)(1.05128,2.09416e-14)(1.15385,4.86763e-15)(1.25641,3.59088e-15)(1.35897,3.43475e-16)(1.46154,1.03632e-14)(1.5641,1.03598e-14)(1.66667,1.83881e-16)(1.76923,5.94663e-15)(1.87179,3.18252e-14)(1.97436,1.88495e-14)};
+\addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.0129032,0)(0.116129,6.48664e-05)(0.219355,8.24474e-05)(0.322581,0.000152373)(0.425806,0.000138342)(0.529032,0.000126709)(0.632258,1.85501e-05)(0.735484,6.98555e-05)(0.83871,7.53129e-05)(0.941935,0.00013915)(1.04516,0.000196476)(1.14839,0.000133645)(1.25161,0.000173751)(1.35484,0.000126668)(1.45806,0.000116008)(1.56129,0.000127919)(1.66452,0.0001343)(1.76774,0.000140992)(1.87097,0.00013971)(1.97419,0.0001291)};
+\addplot[color=red,dotted,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.0129032,3.00107e-16)(0.116129,6.93196e-15)(0.219355,1.00198e-14)(0.322581,7.79932e-15)(0.425806,2.48759e-15)(0.529032,3.46181e-14)(0.632258,1.7205e-14)(0.735484,2.30718e-14)(0.83871,3.0146e-14)(0.941935,9.4369e-15)(1.04516,1.07969e-14)(1.14839,5.59275e-15)(1.25161,5.34295e-15)(1.35484,5.7801e-15)(1.45806,8.74648e-15)(1.56129,1.24137e-14)(1.66452,2.95597e-15)(1.76774,2.64441e-14)(1.87097,2.58023e-14)(1.97419,6.984e-15)};
+\addplot[color=black,mark=pentagon*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,0.000153077)(0.420712,0.000141625)(0.524272,0.000130883)(0.627832,2.58046e-05)(0.731392,6.81127e-05)(0.834951,7.92926e-05)(0.938511,0.000137768)(1.04207,0.000201777)(1.14563,0.000136705)(1.24919,0.000177364)(1.35275,0.000131153)(1.45631,0.000119851)(1.55987,0.000131686)(1.66343,0.000138676)(1.76699,0.00014539)(1.87055,0.000144608)(1.97411,0.000134142)};
+\addplot[color=black,dashdotted,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.00647249,7.31403e-16)(0.110032,1.05055e-14)(0.213592,2.58127e-15)(0.317152,1.04916e-14)(0.420712,5.12437e-15)(0.524272,4.40203e-14)(0.627832,1.147e-14)(0.731392,2.81025e-14)(0.834951,3.01946e-14)(0.938511,4.51028e-15)(1.04207,1.096e-14)(1.14563,6.11317e-15)(1.24919,3.69843e-15)(1.35275,6.47399e-15)(1.45631,9.41608e-15)(1.55987,1.58901e-15)(1.66343,6.39766e-15)(1.76699,1.56819e-14)(1.87055,2.11949e-14)(1.97411,1.12063e-14)};
+
+%\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
+\end{semilogyaxis}
+\end{tikzpicture}
+}
+\caption{\note{Finish}.}
+\label{fig:dSconverge}
+\end{figure}
 
 \note{Shock propagation on a curved mesh: testing entropy conservation}
 
@@ -1161,40 +1336,97 @@ We then computed the maximum $L^2$ error in approximating $J^k\bm{G}^k_{ij}$
 
 \subsubsection{Three dimensional experiments}
 
+In three dimensions, the compressible Euler equations are given by
+\begin{align}
+\pd{}{t}\LRp{\begin{array}{c}
+\rho\\
+\rho u\\
+\rho v\\
+\rho w\\
+E
+\end{array}} +
+\pd{}{x}\LRp{\begin{array}{c}
+\rho u\\
+\rho u^2+p\\
+\rho uv\\
+\rho uw\\
+u(E+p)
+\end{array}} + \pd{}{y}\LRp{\begin{array}{c}
+\rho v\\
+\rho uv\\
+\rho v^2+p\\
+\rho vw\\
+v(E+p)
+\end{array}}  + \pd{}{z}\LRp{\begin{array}{c}
+\rho w\\
+\rho uw\\
+\rho vw\\
+\rho w^2+p\\
+w(E+p)
+\end{array}} &= 0,
+\label{eq:euler3d}
+\end{align}
+where the pressure $p$ and specific internal energy $\rho e$ are defined 
+\begin{align}
+p = (\gamma-1)\LRp{E - \frac{1}{2}\rho (u^2+v^2+w^2)}, \qquad \rho e = E - \frac{1}{2}\rho (u^2+v^2+w^2).  
+\label{eq:pressure3d}
+\end{align}
+The formula for the entropy $U(\bm{u})$ in three dimensions is the same as the two-dimensional formula (\ref{eq:entropy2d}).  
+ The entropy variables in three dimensions are 
+\begin{align}
+v_1 = \frac{\rho e (\gamma + 1 - s) - E}{\rho e}, \qquad v_2 = \frac{\rho u}{\rho e}, \qquad v_3 = \frac{\rho v}{\rho e}, \qquad v_4 = \frac{\rho w}{\rho e}, \qquad v_5 = -\frac{\rho}{\rho e}.
+\end{align}
+The conservation variables in terms of the entropy variables are given by
+\begin{equation}
+\rho = -(\rho e) v_5, \qquad \rho u = (\rho e) v_2, \qquad \rho v = (\rho e) v_3, \qquad \rho w = (\rho e) v_4, \qquad E = (\rho e)\LRp{1 - \frac{{v_2^2+v_3^2+v_4^2}}{2 v_5}},
+\end{equation}
+where $\rho e$ and $s$ in terms of the entropy variables are 
+\begin{equation}
+\rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_5}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{{v_2^2+v_3^2+v_4^2}}{2v_5}.
+\end{equation}
+A set of entropy conservative numerical fluxes for the three-dimensional compressible Euler equations can be written as
+\begin{gather}
+\bm{f}_{1,S} = \LRp{\begin{array}{c}
+\avg{\rho}^{\log}\avg{u}\\
+\avg{\rho}^{\log}\avg{u}^2 + p_{\rm avg}\\
+\avg{\rho}^{\log}\avg{u}\avg{v}\\
+\avg{\rho}^{\log}\avg{u}\avg{w}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{u}\\
+\end{array}}, 
+\qquad 
+\bm{f}_{2,S} = \LRp{\begin{array}{c}
+\avg{\rho}^{\log}\avg{v}\\
+\avg{\rho}^{\log}\avg{u}\avg{v}\\
+\avg{\rho}^{\log}\avg{v}^2 + p_{\rm avg}\\
+\avg{\rho}^{\log}\avg{v}\avg{w}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{v}\\
+\end{array}},\\
+\bm{f}_{3,S} = \LRp{\begin{array}{c}
+\avg{\rho}^{\log}\avg{w}\\
+\avg{\rho}^{\log}\avg{u}\avg{w}\\
+\avg{\rho}^{\log}\avg{v}\avg{w}\\
+\avg{\rho}^{\log}\avg{w}^2 + p_{\rm avg}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{w}\\
+\end{array}}.\nonumber
+%&f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
+%&f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u},&\nonumber\\
+%&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
+%&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{v},& \nonumber
+\end{gather}
+where we have defined the auxiliary quantities
+\begin{align}
+p_{\rm avg} &= \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2(\gamma-1)\avg{\beta}^{\log}} + \frac{1}{2}\avg{\rho}^{\log}\nor{\bm{u}}^2_{\rm avg}\\
+\nor{\bm{u}}^2_{\rm avg} &= 2(\avg{u}^2 + \avg{v}^2 + \avg{w}^2) - \LRp{\avg{u^2} +\avg{v^2} + \avg{w^2}}.\nonumber
+\end{align}
+
+
 \note{Isentropic vortex on curved and non-curved meshes}
 
 \note{Taylor-Green vortex}
 
 \section{Computational results}
 
-The semi-discrete evolution equation is as follows
-\[
-\pd{\bm{u}}{t} = \LRs{\begin{array}{cc}
-\bm{P}_q & \bm{L}_q
-\end{array}}
-\LRp{
-\LRs{
-\begin{array}{cc}
-2\bm{D}_q & \bm{V}_q\bm{L}_q\\
-\bm{V}_f\bm{P}_q & \bm{I}
-\end{array} 
-}\circ 
-\LRs{
-\begin{array}{cc}
-\bm{f}_{S}(\bm{u},\bm{u}_f) & \bm{f}_{S}(\bm{u},\bm{u}_f)\\
- \bm{f}_{S}(\bm{u},\bm{u}_f) &  \bm{f}_S(\bm{u}_f^+,\bm{u}_f)
-\end{array} 
-}\bm{1}}.
-\]
-where $\bm{u}, \bm{u}_f$ are evaluations at volume and surface quadrature points.  
 
-The method is outlined as follows: we store the conservation variables $\bm{u}$ at quadrature points, and compute projected entropy variables $\bm{v}_u = \Pi_N\LRp{\bm{v}(\bm{u})}$ 
-\begin{enumerate}
-\item Apply volume flux differencing ($\bm{D}_q$ and $\bm{V}_q\bm{L}_q$) and projection ($\bm{V}_q\bm{P}_q$) (volume kernel)
-\item Apply surface flux differencing ($\bm{V}_f\bm{P}_q$) and lifting ($\bm{V}_q\bm{L}_q$) (volume kernel)
-\item Apply WADG (scale by $1/J$ and apply $\bm{V}_q\bm{P}_q$ and update $\bm{u}$ at volume quad points.  Compute curvilinear projected entropy variables $\bm{v}_u = P_N^k \bm{v}(\bm{u}) =  \Pi_N\LRp{\frac{1}{J}\Pi_N\LRp{\bm{v}(\bm{u})J}}$, interpolate to volume quad points, and compute conservative variable volume values (update)
-\item Interpolate entropy variables at surface quadrature points and write out conservative variable surface values (face).  
-\end{enumerate}
 
 \section{Conclusions}
 
@@ -1209,45 +1441,5 @@ The authors thank Mark H.\ Carpenter and David C.\ Del Rey Fernandez for informa
 \end{document}
 
 
-
-
-%\section{Limiting}
-%
-%The evaluation of $\bm{u}_v = \bm{u}\LRp{\Pi_N v}$ can increase entropy pointwise, such that $S(\bm{u}_v) \geq S(\bm{u})$.  This can manifest as spikes in $\bm{u}_v$.  We wish to mollify the effect of such spikes.  
-%
-%The first approach is to limit the conservative variable $\bm{u}$
-%\[
-%\tilde{\bm{u}} = \bar{\bm{u}} + \Theta (\bm{u} - \bar{\bm{u}})
-%\]
-%where $\Theta$ is some diagonal matrix with entries in $[0,1]$.  We want to ensure that $\rho, E-\frac{\rho u^2}{2} > 0$.  
-%
-%The entropy for the compressible Euler equations is 
-%\[
-%U(\bm{u}) = -\frac{\rho s}{\gamma-1},
-%\]
-%where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy.  The entropy variables under this choice of entropy are then
-%\begin{align*}
-%v_1 = \frac{\gamma-s}{\gamma-1} - \frac{\rho u^2}{2p}, \qquad v_2 = \frac{\rho u}{\rho e}, \qquad v_3 = -\frac{\rho}{\rho e}.
-%\end{align*}
-%where the internal energy $\rho e = E - u^2/2$.
-%
-%The inverse mapping is given by 
-%\[
-%\rho = -(\rho e) v_3, \qquad m = (\rho e) v_2, \qquad E = (\rho e)\LRp{1 - \frac{v_2^2}{2 v_3}},
-%\]
-%where $\rho e$ and $s$ in terms of the entropy variables are 
-%\[
-%\rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_3}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{v_2^2}{2v_3}.
-%\]
-%The mapping is invertible so long as $\rho, E-\frac{\rho u^2}{2} > 0$, which can be ensured using standard limiters.  However, we have to ensure also that $\rho(\Pi_N\bm{v}) > 0$ (similarly for internal energy).  This boils down to ensuring that $\Pi_N v_3(x) < 0$, which guarantees that $(\rho e) > 0$ as well.   
-%
-%It can be helpful to ensure a stronger condition, that $\Pi_N v_3(x) \leq \max_{x} v_3(x)$.  This guarantees a bound constraint on the conservative variables evaluated using the projected entropy variables.  
-%
-%Another approach is to change the time-step size based on the difference between $\bm{u}$ and $\bm{u}_v$.  This would be similar to local time-stepping (high order interpolation of the numerical fluxes and multiple evaluations of )
-%
-%\begin{itemize}
-%\item Adaptively choose time-step size?
-%\item Expensive option: bisection or Newton algorithm for finding theta.  
-%\end{itemize}
 
 
