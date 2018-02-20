@@ -284,7 +284,8 @@ legend style={font=\small}
 \maketitle
 
 \begin{abstract}
-Things to include: entropy conservation and stability on curvilinear meshes, choosing geometric terms to ensure constant state preservation, high order accuracy.  Computational considerations for curvilinear meshes.  
+We construct entropy conservative and entropy stable high order discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guaranteeing that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
+%Things to include: entropy conservation and stability on curvilinear meshes, choosing geometric terms to ensure constant state preservation, high order accuracy.  Computational considerations for curvilinear meshes.  
 \end{abstract}
 
 \tableofcontents
@@ -341,7 +342,7 @@ We begin by reviewing the construction of standard high order DG formulations fo
 
 \subsubsection{Mathematical notation}
 
-Let the domain $\Omega \subset \mathbb{R}^d$ be decomposed into elements (subdomains) $D^k$, and let $\hat{D}$ denote a $d$-dimensional reference element with boundary $\partial \hat{D}$.  Let $\hat{\bm{x}}$ denote coordinates on $\hat{D}$, and let $\hat{n}_i$ denote and the $i$th component of the unit normal vector on $\partial \hat{D}$.  We assume that $\hat{n}_i$ is constant; i.e., that the faces of the reference element are planar (this assumption holds for all commonly used reference elements \cite{chan2015gpu}).  
+Let the domain $\Omega \subset \mathbb{R}^d$ be decomposed into elements (subdomains) $D^k$, and let $\hat{D}$ denote a $d$-dimensional reference element with boundary $\partial \hat{D}$.  Let $\hat{\bm{x}} = \LRc{\hat{x}_1,\ldots,\hat{x}_d}$ denote coordinates on $\hat{D}$, and let $\hat{n}_i$ denote and the $i$th component of the unit normal vector on $\partial \hat{D}$.  We assume that $\hat{n}_i$ is constant; i.e., that the faces of the reference element are planar (this assumption holds for all commonly used reference elements \cite{chan2015gpu}).  
 
 We will assume that each physical element $D^k$ is the image of $\hat{D}$ under some smoothly differentiable mapping $\bm{\Phi}_k(\hat{\bm{x}})$ such that
 \[
@@ -358,7 +359,11 @@ We define an approximation space using degree $N$ polynomials on the reference e
 \[
 P^N\LRp{\widehat{D}} = \LRc{\hat{x}_1^{i_1}\ldots\hat{x}_d^{i_d}, \quad \hat{\bm{x}} \in \widehat{D}, \quad 0\leq \sum_{k=1}^d i_k \leq N}.
 \]
-Other element types possess different natural polynomial spaces \cite{chan2015gpu}, but typically contain the space of total degree $N$ polynomials.  This work is directly applicable to other elements and spaces as well.  We denote the dimension of the approximation space $P^N$ as $N_p = {\rm dim}\LRp{P^N\LRp{\widehat{D}}}$.
+Other element types possess different natural polynomial spaces \cite{chan2015gpu}, but typically contain the space of total degree $N$ polynomials.  This work is directly applicable to other elements and spaces as well.  We denote the dimension of the approximation space $P^N$ as $N_p = {\rm dim}\LRp{P^N\LRp{\widehat{D}}}$.  We also define trace spaces for each face of the reference element.  Let $\hat{f}$ be a face of the reference element $\hat{D}$.  The trace space over $\hat{f}$ is defined as the space of traces of functions in $P^N\LRp{\hat{D}}$
+\[
+P^N_f \LRp{\hat{f}} = \LRc{ \left.u\right|_{\hat{f}}, \quad u \in P^N\LRp{\hat{D}}}, \qquad \hat{f}\in \partial\hat{D}.
+\]
+We denote the dimension of the trace space as ${\rm dim}P^N_f\LRp{\hat{f}} = N^f_p$.
 
 Finally, we define the $L^2$ norm and inner products over the reference element $\hat{D}$ and the surface of the reference element $\partial \hat{D}$
 \[
@@ -913,58 +918,67 @@ J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}
 \end{align}
 This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the curl of this term is a polynomial of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
 
-This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J\bm{G}_{ij}$ can also be computed in a ``conservative curl'' form
+This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J\bm{G}_{ij}$ can also be computed using the ``conservative curl'' or ``invariant curl'' form, where $J\bm{G}_{ij}$ are constructed by applying the curl to some quantity.  We use the invariant curl form, which is given as
 \begin{align}
+J^k\bm{G}^k_{nj} = -\frac{1}{2}\bm{e}_j\cdot \hat{\Grad} \times \LRp{x_l\hat{\Grad}x_m - x_m\hat{\Grad}x_l}, \qquad j = 1,2,3, \quad (l,m,n) = (1,2,3), \text{ cyclic},
+\label{eq:conscurl}
+\end{align}
+where $\bm{e}_j$ is the $j$th canonical vector and $\hat{\Grad} \times $ denotes the curl with respect to the reference element coordinates.  Expanding and simplifying allows (\ref{eq:conscurl}) to be rewritten as follows \cite{hindenlang2012explicit}:
+\begin{align}
+\bm{r}_i = \pd{\bm{x}}{\hat{x}_i}\times \bm{x}, \qquad
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &= \hat{\Grad}\times \LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}, \qquad i,j,k \text{ cyclic},
-\label{eq:conscurl}
+J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}\LRp{\pd{\bm{r}^k}{\hat{x}_j}-\pd{\bm{r}^j}{\hat{x}_k}}.
 \end{align}
-where $\hat{\Grad} \times $ denotes the curl computed with respect to the reference element coordinates.  A similar ``invariant curl form'' is also described in \cite{kopriva2006metric}.  From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds
+From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds
 \begin{align}
 \hat{\Grad}\cdot \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
 J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
 \end{align}
-The idea of Kopriva is to approximate the geometric terms through 
+The idea of Kopriva is to use (\ref{eq:conscurl}), but to interpolate before applying the curl.  This approximates the geometric terms via
 \begin{align}
+\bm{r}_i = I_N\LRp{ \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &\approx \hat{\Grad}\times I_N\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}, \qquad i,j,k \text{  cyclic},
+J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}\LRp{\pd{\bm{r}^k}{\hat{x}_j}-\pd{\bm{r}^j}{\hat{x}_k}}, 
 \label{eq:iconscurl}
 \end{align}
-where $I_N$ denotes the degree $N$ polynomial interpolation operator.  However, because the geometric terms are computed by applying the curl, the geometric terms are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  
+where $I_N$ denotes the degree $N$ polynomial interpolation operator. Since the geometric terms are still computed by applying a curl, the continuous GCL condition (\ref{eq:gcl}) is still satisfied. We shall also show that this approximation also satisfies the discrete GCL condition. However, because the geometric terms are computed by applying the curl, the geometric terms are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  
 
 We adopt a slight modification of (\ref{eq:iconscurl}) in this work, approximating geometric terms by using the interpolation operator $I_{N+1}$ onto degree $(N+1)$ polynomials, then interpolating back to degree $N$ polynomials 
 \begin{align}
+\bm{r}_i = I_{N+1}\LRp{ \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad 
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &\approx I_N\LRp{\hat{\Grad}\times I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}, \qquad i,j,k \text{ cyclic}.
+J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}I_{N}\LRp{\pd{\bm{r}^k}{\hat{x}_j}-\pd{\bm{r}^j}{\hat{x}_k}}, 
 \label{eq:iconscurl2}
 \end{align}
 We note that the interpolation to degree $N$ polynomials is exact, since the curl of a degree $(N+1)$ polynomial is degree $N$, the approximation generated by (\ref{eq:iconscurl2}) is a degree $N$ polynomial.  
+
+\begin{remark}
+We note that the accuracy of (\ref{eq:iconscurl2}) depends on the choice of interpolation points.  It is well known that interpolating at equispaced points can result in inaccurate polynomial approximations.  One can determine good interpolation point sets by optimizing over some measure of interpolation quality (such as the Lebesgue constant), and in practice, sets of interpolation points are pre-computed for some polynomial degrees $N = 1,\ldots, N_{\max}$ on the reference element and stored \cite{chen1996optimal, hesthaven1998electrostatics}. Interpolation points can also be explicitly computed as the image of equispaced points under an appropriately defined mapping \cite{blyth2006lobatto, warburton2006explicit, chan2015comparison}.  
+\end{remark}
+
+To prove that the construction (\ref{eq:iconscurl2}) satisfies Assumption~\ref{ass:norm}, we must assume that the interpolation points for a degree $N$ element include an appropriate number of points on each face.  
+\begin{assumption}
+Interpolation points are distributed such that $N^f_p$ points lie on each face. 
+\label{ass:interp}
+\end{assumption}
+Assumption~\ref{ass:interp} implies that we cannot utilize interpolation points which lie purely in the interior of an element, such as those introduced in \cite{williams2014symmetric,witherden2015identification}.  We can now show that the geometric terms satisfy all conditions necessary to guarantee entropy stability:
 \begin{theorem}
-Let the geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ denote the approximation of $J^k\bm{G}^k_{ij}$ using (\ref{eq:iconscurl2}), and let the scaled normals $\tilde{n_iJ^k_f}$ be computed using $\tilde{J^k\bm{G}^k_{ij}}$ and (\ref{eq:normalconsistency}).  Then, the geometric terms satisfy both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.  Additionally, the error satisfies
+Let the interpolation points which define the interpolation operators $I_N, I_{N+1}$ satisfy Assumption~\ref{ass:interp}, and let the mesh be watertight, such that the faces between any two neighboring elements are identical and do not contain gaps.  Let the geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ denote the approximation of $J^k\bm{G}^k_{ij}$ using (\ref{eq:iconscurl2}), and let the scaled normals $\tilde{n_iJ^k_f}$ be computed using $\tilde{J^k\bm{G}^k_{ij}}$ and (\ref{eq:normalconsistency}).  Then, the geometric terms satisfy both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.  Additionally, the error satisfies
 \[
 \nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}} \leq C_N h^{N+2}.
 \]
+\label{thm:koprivagcl}
 \end{theorem}
 \begin{proof}
 The satisfaction of (\ref{eq:dgcl}) relies on the fact that $\tilde{J^k\bm{G}^k}_{ij}$ is a degree $N$ polynomial and is equal to its own $L^2$ projection.  Let $\tilde{\bm{JG}^k_{ij}}$ denote the polynomial coefficients of $\tilde{J^k\bm{G}^k}_{ij}$.  
-%Then, 
-%\[
-%\LRs{
-%\begin{array}{c}
-%\bm{V}_q\\
-%\bm{V}_f
-%\end{array}}
-%\bm{P}_q\tilde{\bm{JG}^k_{ij}} = \tilde{\bm{JG}^k_{ij}}
-%\]
-%by the fact that the discrete $L^2$ projection operator applied to $\bm{JG}^k_{ij}$ returns its exact polynomial coefficients.  
 Then, applying $\bm{D}^j_N$ to evaluations of $\tilde{J^k\bm{G}^k_{ij}}$ at volume and surface quadrature points and using (\ref{eq:dnvqvf}), we have
 \[
 \sum_{j=1}^d\bm{D}^j_N \LRs{
@@ -982,9 +996,21 @@ The entries of $\bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}}$ correspond to values of 
 \[
 \sum_{j=1}^d\pd{}{\hat{x}_j}\tilde{J^k\bm{G}^k_{ij}} = 0
 \]
-by the construction using (\ref{eq:iconscurl2}), $\sum_{j=1,\ldots,d} \bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}} = \bm{0}$ as well.
+by construction using (\ref{eq:iconscurl2}), $\sum_{j=1,\ldots,d} \bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}} = \bm{0}$ as well.  
 
-Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied by directly constructing the scaled normals using values of $\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  Equation (\ref{eq:normalsign}) is \note{not proven yet, but I do observe it!}.  The accuracy of the approximation is a result \note{that I still need to show, but it checks out numerically too.}
+Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied by directly constructing the scaled normals $\tilde{\bm{n}}J^k_f$ using values of $\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  We must now prove that the construction of $\tilde{\bm{n}}J^k_f$ implies that Equation (\ref{eq:normalsign}) holds. This is not immediately clear; since the normals are constructed from the approximate geometric terms and the formula (\ref{eq:normalconsistency}), it is not guaranteed that $\tilde{\bm{n}}^+J^{k,+}_f = -\tilde{\bm{n}}J^k_f$ will hold across a shared face.  However, the scaled normal vectors involve only nodal values on the shared face because the normals are computed in terms of the tangential reference derivatives \cite{kopriva2006metric}.  Thus, because interpolation nodes lie on faces and because the mesh is assumed to be watertight, the tangential reference derivatives on a shared face will be approximated in the same way on both neighboring elements.  This is sufficient to ensure that the scaled normal vectors $\tilde{\bm{n}}^+J^{k,+}_f, \tilde{\bm{n}}J^k_f$ will be equal and opposite.  
+
+%We prove (\ref{eq:normalconsistency}) holds for one face of the reference tetrahedron in three dimensions; the argument can be applied to other faces by rotating the coordinate system, and is straightforward to extend to other types of elements.
+%
+%Consider the face $\hat{f}$ of the reference tetrahedron which lies on the plane $\hat{x}_3 = -1$ with reference normal $\hat{\bm{n}} = \LRc{0,0,-1}$.  The normals will be consistent across shared faces if the formula for the normal vectors involves only interpolated values at nodes on the shared face.  Using that $\hat{\bm{n}} = \LRc{0,0,-1}$ for $\hat{f}$, the normal vectors are 
+%\begin{align}
+%n_1 J^k_f &= \pd{\hat{x}_1}{x_1} \hat{n}_1\hat{J}_f + \pd{\hat{x}_2}{x_1} \hat{n}_2\hat{J}_f + \pd{\hat{x}_3}{x_1} \hat{n}_3\hat{J}_f =  \pd{\hat{x}_3}{x_1} \hat{n}_3\hat{J}_f\\
+%n_2 J^k_f &= \pd{\hat{x}_1}{x_2} \hat{n}_1\hat{J}_f + \pd{\hat{x}_2}{x_2} \hat{n}_2\hat{J}_f + \pd{\hat{x}_3}{x_2} \hat{n}_3\hat{J}_f =  \pd{\hat{x}_3}{x_2} \hat{n}_3\hat{J}_f\\
+%n_3 J^k_f &= \pd{\hat{x}_1}{x_3} \hat{n}_1\hat{J}_f + \pd{\hat{x}_2}{x_3} \hat{n}_2\hat{J}_f + \pd{\hat{x}_3}{x_3} \hat{n}_3\hat{J}_f =  \pd{\hat{x}_3}{x_3} \hat{n}_3\hat{J}_f.  
+%\end{align}
+%Thus, the normals depend only on the geometric terms $\pd{\hat{x}_3}{x_1},\pd{\hat{x}_3}{x_2},\pd{\hat{x}_3}{x_3}$.  
+
+The accuracy of the approximation is a result \note{that I still need to show, but it checks out numerically.}
 %of Lemma~\ref{lemma:sobolev} applied to the reference element 
 %\begin{align*}
 %\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}} &= \nor{\hat{\Grad}\times \LRp{\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}- I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}}_{L^2\LRp{\hat{D}}}\\
@@ -993,10 +1019,6 @@ Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied 
 
 \end{proof}
 
-\begin{remark}
-We note that the accuracy of (\ref{eq:iconscurl2}) depends on the choice of interpolation points.  It is well known that interpolating at equispaced points can result in inaccurate polynomial approximations.  One can determine good interpolation point sets by optimizing over some measure of interpolation quality (such as the Lebesgue constant), and in practice, sets of interpolation points are pre-computed for some polynomial degrees $N = 1,\ldots, N_{\max}$ on the reference element and stored \cite{chen1996optimal, hesthaven1998electrostatics}. Interpolation points can also be explicitly computed as the image of equispaced points under an appropriately defined mapping
-\cite{blyth2006lobatto, warburton2006explicit, chan2015comparison}.  
-\end{remark}
 
 We briefly outline how to compute $\tilde{J^k\bm{G}^k_{ij}}$ in three dimensions.  Let $\LRc{\hat{\bm{x}}^N_i}_{i=1}^{N_p}$ denote the set of degree $N$ interpolation points, and let $\ell^N_i(\hat{\bm{x}})$ denote the $i$th degree $N$ Lagrange basis function on the reference element.  We define interpolation matrices $\bm{V}_N^{N+1}$ and $\bm{V}^N_{N+1}$ between degree $N$ and $N+1$ polynomials such that 
 \begin{align}
@@ -1041,7 +1063,7 @@ We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly thro
 \section{Numerical experiments}
 \label{sec:num}
 
-\subsection{Super-convergence of the weight-adjusted projection}
+\subsection{Accuracy of weight-adjusted projection and geometric terms satisfying the discrete GCL}
 
 %\begin{figure}
 %\centering
@@ -1049,9 +1071,11 @@ We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly thro
 %\caption{Warped mesh of degree $N=4$ used to test super-convergence of the difference between the curvilinear $L^2$ and weight-adjusted projection.}
 %\end{figure}
 
-We begin by verifying Theorem~\ref{thm:superconverge}.  Figure~\ref{fig:superconverge}
-
-$H$ is the Heaviside function.
+In this section, we verify Theorems~\ref{thm:superconverge} and \ref{thm:koprivagcl} concerning the accuracy of the weight-adjusted projection and modified construction of geometric terms satisfying the discrete geometric conservation law.  Figure~\ref{fig:superconverge} shows $L^2$ errors for both the standard $L^2$ projection (\ref{eq:l2curv}) and the weight-adjusted projection (\ref{eq:wadgproj}) for a series of warped meshes of degree $N = 4$.  We compute $L^2$ errors for both smooth and discontinuous functions
+\[
+f(\bm{x}) = e^{x+y}\sin\LRp{{\pi x}}\sin\LRp{{\pi y}}, \qquad g(\bm{x}) = f(\bm{x}) + H(x+y-\sin(\pi x)),
+\]
+where $H$ is the Heaviside function.  For the smooth function $f(\bm{x})$, we observe that the difference between the $L^2$ and weight-adjusted projections indeed converges at a rate of $O\LRp{h^{N+2}}$ as predicted by Theorem~\ref{fig:superconverge}, such that the $L^2$ errors for each projection appear identical.  The $L^2$ errors for the $L^2$ and weight-adjusted projections of the discontinuous function $g(\bm{x})$ are also virtually identical, despite the fact that Theorem~\ref{thm:superconverge} only holds for functions with sufficient regularity.  Moreover, the difference between the two projections appears to converge even more rapidly for the discontinuous function $g(\bm{x})$, with the $L^2$ error converging as $O(h^{1/2})$ and the difference converging as $O(h^{2+1/2})$. 
 
 \begin{figure}
 \centering
@@ -1082,7 +1106,7 @@ coordinates{(0.5,0.00237193)(0.25,5.41179e-05)(0.125,7.6934e-07)(0.0625,1.18362e
 \end{loglogaxis}
 \end{tikzpicture}
 }
-\subfloat[$f(\bm{x}) = H(x+y-\sin(\pi x))$]{
+\subfloat[$g(\bm{x}) = f(\bm{x}) + H(x+y-\sin(\pi x))$]{
 \begin{tikzpicture}
 \begin{loglogaxis}[
     legend cell align=left,
@@ -1095,12 +1119,12 @@ coordinates{(0.5,0.00237193)(0.25,5.41179e-05)(0.125,7.6934e-07)(0.0625,1.18362e
 ] 
 
 \addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.5,0.323047)(0.25,0.22788)(0.125,0.160388)(0.0625,0.114753)(0.03125,0.0792918)};
+coordinates{(0.5,0.323258)(0.25,0.227822)(0.125,0.160387)(0.0625,0.114753)(0.03125,0.0792918)};
 \logLogSlopeTriangleFlip{0.4}{0.25}{0.875}{.5}{blue}
 \addplot[color=red,mark=x,dashed,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.5,0.323882)(0.25,0.227986)(0.125,0.160412)(0.0625,0.114756)(0.03125,0.0792924)};
+coordinates{(0.5,0.324117)(0.25,0.227927)(0.125,0.160411)(0.0625,0.114756)(0.03125,0.0792924)};
 \addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.5,0.00428104)(0.25,0.00080429)(0.125,0.000182915)(0.0625,2.96705e-05)(0.03125,5.01885e-06)};
+coordinates{(0.5,0.00466574)(0.25,0.000804201)(0.125,0.000182886)(0.0625,2.96701e-05)(0.03125,5.01885e-06)};
 \logLogSlopeTriangleFlip{0.3}{0.15}{0.18}{2.5}{black}
 
 %\legend{$L^2$ projection,Weight-adjusted, Difference}
@@ -1108,13 +1132,27 @@ coordinates{(0.5,0.00428104)(0.25,0.00080429)(0.125,0.000182915)(0.0625,2.96705e
 \end{loglogaxis}
 \end{tikzpicture}
 }
-\caption{$L^2$ errors in approximating both smooth and discontinuous functions $f(\bm{x})$ using $L^2$ and weight-adjusted projections on a curved mesh.  The approximation order is $N=4$, and a degree $2N$ quadrature rule is used to compute integrals over the reference triangle. }
+\caption{$L^2$ errors in approximating both smooth and discontinuous functions using $L^2$ and weight-adjusted projections on a curved mesh.  The approximation order is $N=4$, and a degree $2N$ quadrature rule is used to compute integrals over the reference triangle. }
 \label{fig:superconverge}
 \end{figure}
 
+We next compare the approximation of the geometric factors on a curved three-dimensional mesh.  We generate a sequence of quasi-uniform unstructured meshes using GMSH \cite{geuzaine2009gmsh} and distort their coordinates using the mapping
+\begin{align}
+\bm{x} = \bm{x} + \frac{1}{8}\cos\LRp{\frac{\pi}{2}x}\cos\LRp{\frac{\pi}{2}y}\cos\LRp{\frac{\pi}{2}z}.  
+\label{eq:mapping}
+\end{align}
+We then computed the maximum $L^2$ error in approximating $J^k\bm{G}^k_{ij}$
+\[
+\max_k \sqrt{\sum_{ij=1}^d \nor{J^k\bm{G}^k_{ij} - \tilde{J^k\bm{G}^k_{ij}}}^2_{L^2\LRp{\hat{D}}}}.  
+\]
+
+% alpha = 1/8
+%coordinates{(0.737185,0.000791584)(0.39984,1.62016e-05)(0.166642,3.92283e-07)(0.0867136,5.76479e-09)};
+%coordinates{(0.737185,0.00171192)(0.39984,8.52393e-05)(0.166642,2.31097e-06)(0.0867136,1.28404e-07)};
 
 
 \subsection{Compressible Euler equations}
+
 \subsubsection{Two dimensional experiments}
 
 \note{Shock propagation on a curved mesh: testing entropy conservation}
@@ -1124,6 +1162,8 @@ coordinates{(0.5,0.00428104)(0.25,0.00080429)(0.125,0.000182915)(0.0625,2.96705e
 \subsubsection{Three dimensional experiments}
 
 \note{Isentropic vortex on curved and non-curved meshes}
+
+\note{Taylor-Green vortex}
 
 \section{Computational results}
 
