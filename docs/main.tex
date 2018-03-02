@@ -1,36 +1,18 @@
 \pdfoutput=1
 
-%\documentclass[preprint,10pt]{elsarticle}
 \documentclass[preprint,10pt]{article}
-%\documentclass[review]{siamart0216}
-%\documentclass{siamart0216}
 
 \usepackage{fullpage}
 \usepackage[colorlinks=true]{hyperref}
-
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}
-\theoremstyle{lemma}
-\newtheorem{lemma}{Lemma}
-\newtheorem*{remark}{Remark}
-\theoremstyle{theorem}
-\newtheorem{theorem}{Theorem}
-\theoremstyle{assumption}
-\newtheorem{assumption}{Assumption}
-
-\usepackage[titletoc,toc,title]{appendix}
-
 \usepackage{array} 
 \usepackage{mathtools}
-\usepackage{pdfpages}
+%\usepackage{pdfpages}
 \usepackage{bm}
 \usepackage{bbm}
-
 \usepackage{tikz}
 \usepackage[normalem]{ulem}
 \usepackage{hhline}
-
 \usepackage{graphicx}
 \usepackage{subfig}
 \usepackage{color}
@@ -229,6 +211,16 @@ legend style={font=\small}
 }
 %%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
 
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{lemma}
+\newtheorem{lemma}{Lemma}
+\newtheorem*{remark}{Remark}
+\theoremstyle{theorem}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{assumption}
+\newtheorem{assumption}{Assumption}
+
 
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\textfraction}{0.1}
@@ -302,8 +294,7 @@ This work addresses is high order schemes for the following system of $n$ nonlin
 \pd{\bm{u}}{t} + \sum_{j=1}^d\pd{\bm{f}_j(\bm{u})}{x_j}  = 0, \qquad \bm{u} \in \mathbb{R}^n, \qquad \bm{f}_j : \mathbb{R}^n\rightarrow \mathbb{R}^n,
 \label{eq:nonlineqs}
 \end{equation}
-where $\bm{u}(\bm{x},t)$ denote the \emph{conservative variables} for this system.  We will specify boundary conditions in a later section.  
-
+where $\bm{u}(\bm{x},t)$ denote the \emph{conservative variables} for this system.  %We assume the system is well-posed under appropriate boundary conditions.
 We are interested in nonlinear conservation laws for which an entropy function $U(\bm{u})$ exists, where $U(\bm{u})$ is convex with respect to the conservative variables $\bm{u}$.  If this function exists, then it is possible to define \emph{entropy variables} $\bm{v}(\bm{u}) = \pd{U}{\bm{u}}$.  These functions symmetrize the system of nonlinear conservation laws (\ref{eq:nonlineqs}) \cite{hughes1986new}.  
 
 It can be shown (see, for example, \cite{mock1980systems}) that symmetrization is equivalent to the existence of an entropy flux function $F(\bm{u})$ and entropy potential $\psi$ such that
@@ -525,9 +516,9 @@ J^k\pd{u}{x_i} = \frac{1}{2}\sum_{j=1}^d \LRp{J^k\bm{G}^k_{ij}\pd{u}{\hat{x}_j} 
 \label{eq:splitderiv}
 \end{equation}
 
-We will require two additional assumptions on the mesh, geometric terms, and normal vectors for this work:
-\begin{assumption}[Consistency of normals]
-We assume that normals are consistent across neighboring elements.  Let $\bm{D}^k$ and $\bm{D}^{k,+}$ be adjacent elements sharing a face $f$.  Then, the scaled outward normal vectors for each element are equal and opposite such that 
+We will require the following assumptions on the mesh, as well as the geometric terms and outward normal vectors:
+\begin{assumption}[Mesh assumptions]
+We assume that the mesh is quasi-uniform.  The mesh is also assumed to be watertight, such that normals are consistent across neighboring elements as follows: for a shared face $f$ between $\bm{D}^k$ and $\bm{D}^{k,+}$, the scaled outward normal vectors for each element are equal and opposite at all points such that 
 \begin{align}
 \bm{n}J^k_f = -\bm{n}^+J^{k,+}_f.
 \label{eq:normalsign}
@@ -540,7 +531,7 @@ We also assume that the scaled matrix of geometric terms transforms scaled refer
 \end{align}
 \label{ass:norm}
 \end{assumption}
-The property (\ref{eq:normalconsistency}) holds at the continuous level \cite{ciarlet1978finite}, and thus at all points where the geometric terms are computed exactly.  However, we will also consider cases where the geometric terms $J^k\bm{G}^k_{ij}$ are modified to enforce a discrete form of (\ref{eq:gcl}); in these situations, it will be important to ensure that (\ref{eq:normalconsistency}) holds after modifications.  
+The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at the continuous level for a watertight mesh \cite{ciarlet1978finite}, and thus at all points where the geometric terms are computed exactly.  However, we will also consider cases where the geometric terms $J^k\bm{G}^k_{ij}$ are modified to enforce a discrete form of (\ref{eq:gcl}); in these situations, it will be important to ensure that (\ref{eq:normalconsistency}) holds after such modifications.  
 
 We define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as 
 \[
@@ -783,84 +774,87 @@ Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h =
 The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \cite{chan2017discretely}.
 \end{proof}
 
-\subsection{Analysis of weight-adjusted projection} 
-
-The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is super-convergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
-
-We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
-\begin{equation}
-\LRp{J^k P_N^k  u, v} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}} =  \LRp{uJ^k, P_N^k  v}.
-\label{eq:PNsym}
-\end{equation}
-Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
-\begin{equation}
-\LRp{T_{1/J^k}^{-1} P_N^k  u,v} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v} = \LRp{\Pi_N(u J^k),v} = \LRp{u J^k,v}, \qquad \forall v\in P^N.
-\label{eq:PNproj}
-\end{equation}
-To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use results from \cite{chan2016weight1,chan2016weight2}.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
-\begin{theorem}
-\label{thm:moment}
-Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in P^N\LRp{D^k}$.  Then, 
-\begin{align*}
-&\LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{T^{-1}_{1/J}u,v}_{\hat{D}}} \leq \\
-&Ch^{2N+2}\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{W^{N+1,2}\LRp{D^k}}.
-\end{align*}
-\end{theorem}
-\begin{proof}
-The proof involves straightforward adaptations of Theorem 4, Theorem 5, and Theorem 6 in \cite{chan2016weight1} to the reference element $\hat{D}$.  
-\end{proof}
-The next result we need is a generalized inverse inequality.  
-\begin{lemma}
-\label{lemma:sobolev}
-Let $v \in P^N\LRp{D^k}$, and let $h = {\rm diam}\LRp{D^k}$.  Then,
-\[
-\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N} h^{-N} \nor{v}_{L^2\LRp{D^k}}.
-\]
-where $C_{N}$ is independent of $h$.
-\end{lemma}
-\begin{proof}
-\note{Formalize this...}
-
-The result is the consequence of a scaling argument $ \pdn{u}{x_i}{N}= O(h^{-N}) \pdn{u}{\hat{x}_i}{N}$ and a Rayleigh quotient bound involving the largest eigenvalue of the generalized eigenvalue problem  
-\[
-\bm{K}_N\bm{u} = \lambda\bm{M}\bm{u},
-\]
-where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product on the reference element  $W^{N+1,2}\LRp{\hat{D}}$.  We emphasize, however, that the constant $C_N$ depends on the largest eigenvalue, which in turn depends on the order $N$ and dimension $d$.  
-\end{proof}
-
-We can now prove that $P_N^k u$ is super-convergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
-\begin{theorem}
-Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
-\[
-\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C_N\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
-\]
-where $C_N$ is a mesh-independent constant which depends on $N, d$.
-\label{thm:superconverge}
-\end{theorem}
-\begin{proof}
-Let $\Pi_N^k u$ be the $L^2$ projection over the curved element $D^k$, such that
-\[
-\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in P^N.
-\]
-Using the fact that $P_N^k  u$ satisfies an analogous property (\ref{eq:PNproj}),  we can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
-\[
-\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
-\]
-Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
-\begin{align*}
-\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k ,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}}\\
-& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N^k  u,v}_{\hat{D}} - \LRp{JP_N^k  u,v}_{\hat{D}}}.
-\end{align*}
-Applying Theorem~\ref{thm:moment} and then Lemma~\ref{lemma:sobolev} yields 
-\begin{align*}
-\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}
-\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
-&\leq Ch^{N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}}.
-\end{align*}
-%where $C_J = $.  
-Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
-\end{proof}
-We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
+%\subsection{Analysis of weight-adjusted projection} 
+%
+%The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is super-convergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
+%
+%We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
+%\begin{equation}
+%\LRp{J^k P_N^k  u, v} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}} =  \LRp{uJ^k, P_N^k  v}.
+%\label{eq:PNsym}
+%\end{equation}
+%Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
+%\begin{equation}
+%\LRp{T_{1/J^k}^{-1} P_N^k  u,v} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v} = \LRp{\Pi_N(u J^k),v} = \LRp{u J^k,v}, \qquad \forall v\in P^N.
+%\label{eq:PNproj}
+%\end{equation}
+%\note{FIX THEOREMS.}
+%To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use results from \cite{chan2016weight1,chan2016weight2}.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
+%\begin{theorem}
+%\label{thm:moment}
+%Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in P^N\LRp{D^k}$.  Then, 
+%\begin{align*}
+%&\LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{T^{-1}_{1/J}u,v}_{\hat{D}}} \leq \\
+%&Ch^{2N+2}\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{W^{N+1,2}\LRp{D^k}}.
+%\end{align*}
+%\end{theorem}
+%\begin{proof}
+%The proof involves straightforward adaptations of Theorem 4, Theorem 5, and Theorem 6 in \cite{chan2016weight1} to the reference element $\hat{D}$.  
+%\end{proof}
+%The next result we need is a generalized inverse inequality.  
+%\begin{lemma}
+%\label{lemma:sobolev}
+%Let $v \in P^N\LRp{D^k}$, and let $h = {\rm diam}\LRp{D^k}$.  Then,
+%\[
+%\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N} h^{-N} \nor{v}_{L^2\LRp{D^k}}.
+%\]
+%where $C_{N}$ is independent of $h$.
+%\end{lemma}
+%\begin{proof}
+%The result is the consequence of a scaling argument \cite{brenner2007mathematical} %and a Rayleigh quotient bound involving the largest eigenvalue of the generalized eigenvalue problem.  The scaling argument yields that
+%\begin{align}
+%\nor{v}_{W^{N+1,2}\LRp{D^k}} = C_1 h^{-(N+1)} \nor{v}_{W^{N+1,2}\LRp{\hat{D}}}.
+%\end{align}
+%The quantity $\nor{v}_{W^{N+1,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\in P^N$.  Since $P^N$ is finite-dimensional, the Sobolev norm can be bounded from above by the $L^2$ norm of $\hat{D}$ (with a constant $C_{2}$ depending on $N, d$.  Then, by another scaling argument, we have 
+%\begin{align}
+%\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \leq C_{2} \nor{v}_{L^2\LRp{\hat{D}}} \leq %C_{2} h \nor{v}_{L^2\LRp{D^k}}.
+%\end{align}
+%%where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product on the reference element  $W^{N+1,2}\LRp{\hat{D}}$.  The constant $C_N$ depends on the largest generalized eigenvalue of \ref{eq:eig}, which in turn depends on the order $N$ and dimension $d$.  
+%\end{proof}
+%
+%We can now prove that $P_N^k u$ is super-convergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
+%\begin{theorem}
+%Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
+%\[
+%\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C_N\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
+%\]
+%where $C_N$ is a mesh-independent constant which depends on $N, d$.
+%\label{thm:superconverge}
+%\end{theorem}
+%\begin{proof}
+%Let $\Pi_N^k u$ be the $L^2$ projection over the curved element $D^k$, such that
+%\[
+%\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in P^N.
+%\]
+%Using the fact that $P_N^k  u$ satisfies an analogous property (\ref{eq:PNproj}),  we can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
+%\[
+%\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
+%\]
+%Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
+%\begin{align*}
+%\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}}\\
+%& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N^k  u,v}_{\hat{D}} - \LRp{JP_N^k  u,v}_{\hat{D}}}.
+%\end{align*}
+%Applying Theorem~\ref{thm:moment} and then Lemma~\ref{lemma:sobolev} yields 
+%\begin{align*}
+%\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}
+%\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
+%&\leq Ch^{N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}}.
+%\end{align*}
+%%where $C_J = $.  
+%Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
+%\end{proof}
+%We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
 
 \subsubsection{A locally conservative high order accurate correction}
 
@@ -915,7 +909,7 @@ J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
 J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}, \qquad i,j,k = 1,2,3, \qquad (i,j,k) \text{ cyclic}.
 \end{align}
-This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the curl of this term is a polynomial of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
+This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the geometric terms $J^k\bm{G}^k_{ij}$ are polynomials of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
 
 This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J\bm{G}_{ij}$ can also be computed using the ``conservative curl'' or ``invariant curl'' form, where $J\bm{G}_{ij}$ are constructed by applying the curl to some quantity.  We use the invariant curl form, which is given as
 \begin{align}
@@ -924,37 +918,37 @@ J^k\bm{G}^k_{nj} = -\frac{1}{2}\bm{e}_j\cdot \hat{\Grad} \times \LRp{x_l\hat{\Gr
 \end{align}
 where $\bm{e}_j$ is the $j$th canonical vector and $\hat{\Grad} \times $ denotes the curl with respect to the reference element coordinates.  Expanding and simplifying allows (\ref{eq:conscurl}) to be rewritten as follows \cite{hindenlang2012explicit}:
 \begin{align}
-\bm{r}_i = \pd{\bm{x}}{\hat{x}_i}\times \bm{x}, \qquad
+\bm{r}^i = \pd{\bm{x}}{\hat{x}_i}\times \bm{x}, \qquad
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
 J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}\LRp{\pd{\bm{r}^k}{\hat{x}_j}-\pd{\bm{r}^j}{\hat{x}_k}}.
 \end{align}
-From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds
-\begin{align}
-\hat{\Grad}\cdot \LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
-\end{align}
+From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds.  
+%\begin{align}
+%\hat{\Grad}\cdot \LRs{\begin{array}{c}
+%J^k\bm{G}^k_{i1}\\
+%J^k\bm{G}^k_{i2}\\
+%J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
+%\end{align}
 The idea of Kopriva is to use (\ref{eq:conscurl}), but to interpolate before applying the curl.  This approximates the geometric terms via
 \begin{align}
-\bm{r}_i = I_N\LRp{ \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad
+\bm{r}^i = { \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}\LRp{\pd{\bm{r}^k}{\hat{x}_j}-\pd{\bm{r}^j}{\hat{x}_k}}, 
+J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}\LRp{\pd{I_N\bm{r}^k}{\hat{x}_j}-\pd{I_N\bm{r}^j}{\hat{x}_k}}, 
 \label{eq:iconscurl}
 \end{align}
 where $I_N$ denotes the degree $N$ polynomial interpolation operator. Since the geometric terms are still computed by applying a curl, the continuous GCL condition (\ref{eq:gcl}) is still satisfied. We shall also show that this approximation also satisfies the discrete GCL condition. However, because the geometric terms are computed by applying the curl, the geometric terms are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  
 
 We adopt a slight modification of (\ref{eq:iconscurl}) in this work, approximating geometric terms by using the interpolation operator $I_{N+1}$ onto degree $(N+1)$ polynomials, then interpolating back to degree $N$ polynomials 
 \begin{align}
-\bm{r}_i = I_{N+1}\LRp{ \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad 
+\bm{r}^i = { \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad 
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}I_{N}\LRp{\pd{\bm{r}^k}{\hat{x}_j}-\pd{\bm{r}^j}{\hat{x}_k}}, 
+J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}I_{N}\LRp{\pd{I_{N+1}\bm{r}^k}{\hat{x}_j}-\pd{I_{N+1}\bm{r}^j}{\hat{x}_k}}, 
 \label{eq:iconscurl2}
 \end{align}
 We note that the interpolation to degree $N$ polynomials is exact, since the curl of a degree $(N+1)$ polynomial is degree $N$, the approximation generated by (\ref{eq:iconscurl2}) is a degree $N$ polynomial.  
@@ -963,16 +957,12 @@ We note that the interpolation to degree $N$ polynomials is exact, since the cur
 We note that the accuracy of (\ref{eq:iconscurl2}) depends on the choice of interpolation points.  It is well known that interpolating at equispaced points can result in inaccurate polynomial approximations.  One can determine good interpolation point sets by optimizing over some measure of interpolation quality (such as the Lebesgue constant), and in practice, sets of interpolation points are pre-computed for some polynomial degrees $N = 1,\ldots, N_{\max}$ on the reference element and stored \cite{chen1996optimal, hesthaven1998electrostatics}. Interpolation points can also be explicitly computed as the image of equispaced points under an appropriately defined mapping \cite{blyth2006lobatto, warburton2006explicit, chan2015comparison}.  
 \end{remark}
 
-To prove that the construction (\ref{eq:iconscurl2}) satisfies Assumption~\ref{ass:norm}, we must assume that the interpolation points for a degree $N$ element include an appropriate number of points on each face.  
-\begin{assumption}
-Interpolation points are distributed such that $N^f_p$ points lie on each face. 
-\label{ass:interp}
-\end{assumption}
-Assumption~\ref{ass:interp} implies that we cannot utilize interpolation points which lie purely in the interior of an element, such as those introduced in \cite{williams2014symmetric,witherden2015identification}.  We can now show that the geometric terms satisfy all conditions necessary to guarantee entropy stability:
+To prove that the construction (\ref{eq:iconscurl2}) satisfies Assumption~\ref{ass:norm}, we must assume that the interpolation points for a degree $N$ element include an appropriate number of points on each face.  We note that these assumptions exclude interpolation points which lie purely in the interior of an element, such as those introduced in \cite{williams2014symmetric,witherden2015identification}.  We can now show that the geometric terms satisfy all conditions necessary to guarantee entropy stability:
 \begin{theorem}
-Let the interpolation points which define the interpolation operators $I_N, I_{N+1}$ satisfy Assumption~\ref{ass:interp}, and let the mesh be watertight, such that the faces between any two neighboring elements are identical and do not contain gaps.  Let the geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ denote the approximation of $J^k\bm{G}^k_{ij}$ using (\ref{eq:iconscurl2}), and let the scaled normals $\tilde{n_iJ^k_f}$ be computed using $\tilde{J^k\bm{G}^k_{ij}}$ and (\ref{eq:normalconsistency}).  Then, the geometric terms satisfy both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.  Additionally, the error satisfies
+Let the mesh satisfy Assumption~\ref{ass:norm}, and let the interpolation points which define the interpolation operator $I_N$ be distributed such that $N^f_p$ points lie on each face. Then, the approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$  and approximate scaled normals $\tilde{n_iJ^k_f}$ computed using (\ref{eq:iconscurl2}) and (\ref{eq:normalconsistency})) satisfy both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.  Additionally, the error in the approximation satisfies
 \[
-\sqrt{\sum_{k}\sum_{ij=1}^d\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}}^2} \leq C_N h^{N+2}.
+%\sqrt{\sum_{k}\sum_{ij=1}^d\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}}^2} \leq C_N h^{N+2} \nor{\cdot}_{W^{N+2,2}\LRp{D^k}}.
+\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\Omega}}^2  \leq C_N \LRb{\Omega} h^{N+2} \sqrt{\sum_k \nor{\bm{r}}^2_{W^{N+2,2}\LRp{D^k}}}.
 \]
 \label{thm:koprivagcl}
 \end{theorem}
@@ -997,27 +987,24 @@ The entries of $\bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}}$ correspond to values of 
 \]
 by construction using (\ref{eq:iconscurl2}), $\sum_{j=1,\ldots,d} \bm{V}_q\bm{D}_i\tilde{\bm{JG}^k_{ij}} = \bm{0}$ as well.  
 
-Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied by directly constructing the scaled normals $\tilde{\bm{n}}J^k_f$ using values of $\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  We must now prove that the construction of $\tilde{\bm{n}}J^k_f$ implies that Equation (\ref{eq:normalsign}) holds. This is not immediately clear; since the normals are constructed from the approximate geometric terms and the formula (\ref{eq:normalconsistency}), it is not guaranteed that $\tilde{\bm{n}}^+J^{k,+}_f = -\tilde{\bm{n}}J^k_f$ will hold across a shared face.  However, the scaled normal vectors involve only nodal values on the shared face because the normals are computed in terms of the tangential reference derivatives \cite{kopriva2006metric}.  Thus, because interpolation nodes lie on faces and because the mesh is assumed to be watertight, the tangential reference derivatives on a shared face will be approximated in the same way on both neighboring elements.  This is sufficient to ensure that the scaled normal vectors $\tilde{\bm{n}}^+J^{k,+}_f, \tilde{\bm{n}}J^k_f$ will be equal and opposite.  
+Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied by directly constructing the scaled normals $\tilde{\bm{n}}J^k_f$ using values of $\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  We must now prove that the construction of $\tilde{\bm{n}}J^k_f$ implies that Equation (\ref{eq:normalsign}) holds. This is not immediately clear; since the normals are constructed from the approximate geometric terms and the formula (\ref{eq:normalconsistency}), it is not guaranteed that $\tilde{\bm{n}}^+J^{k,+}_f = -\tilde{\bm{n}}J^k_f$ will hold across a shared face.  However, the scaled normal vectors involve only nodal values on the shared face because the normals are computed in terms of the tangential reference derivatives \cite{kopriva2006metric}.  Thus, assuming a watertight mesh, the interpolation nodes on two neighboring elements will coincide for a shared face $f$, such that the trace of $\tilde{J^k\bm{G}^k_{ij}}$ from either neighboring element will be the same lower-dimensional polynomial on $f$.  This is sufficient to ensure that the scaled normal vectors $\tilde{\bm{n}}^+J^{k,+}_f, \tilde{\bm{n}}J^k_f$ will be equal and opposite.  
 
-%We prove (\ref{eq:normalconsistency}) holds for one face of the reference tetrahedron in three dimensions; the argument can be applied to other faces by rotating the coordinate system, and is straightforward to extend to other types of elements.
-%
-%Consider the face $\hat{f}$ of the reference tetrahedron which lies on the plane $\hat{x}_3 = -1$ with reference normal $\hat{\bm{n}} = \LRc{0,0,-1}$.  The normals will be consistent across shared faces if the formula for the normal vectors involves only interpolated values at nodes on the shared face.  Using that $\hat{\bm{n}} = \LRc{0,0,-1}$ for $\hat{f}$, the normal vectors are 
-%\begin{align}
-%n_1 J^k_f &= \pd{\hat{x}_1}{x_1} \hat{n}_1\hat{J}_f + \pd{\hat{x}_2}{x_1} \hat{n}_2\hat{J}_f + \pd{\hat{x}_3}{x_1} \hat{n}_3\hat{J}_f =  \pd{\hat{x}_3}{x_1} \hat{n}_3\hat{J}_f\\
-%n_2 J^k_f &= \pd{\hat{x}_1}{x_2} \hat{n}_1\hat{J}_f + \pd{\hat{x}_2}{x_2} \hat{n}_2\hat{J}_f + \pd{\hat{x}_3}{x_2} \hat{n}_3\hat{J}_f =  \pd{\hat{x}_3}{x_2} \hat{n}_3\hat{J}_f\\
-%n_3 J^k_f &= \pd{\hat{x}_1}{x_3} \hat{n}_1\hat{J}_f + \pd{\hat{x}_2}{x_3} \hat{n}_2\hat{J}_f + \pd{\hat{x}_3}{x_3} \hat{n}_3\hat{J}_f =  \pd{\hat{x}_3}{x_3} \hat{n}_3\hat{J}_f.  
-%\end{align}
-%Thus, the normals depend only on the geometric terms $\pd{\hat{x}_3}{x_1},\pd{\hat{x}_3}{x_2},\pd{\hat{x}_3}{x_3}$.  
-
-The accuracy of the approximation is a result \note{that I still need to show, but it checks out numerically.}
-%of Lemma~\ref{lemma:sobolev} applied to the reference element 
-%\begin{align*}
-%\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}} &= \nor{\hat{\Grad}\times \LRp{\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}- I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}}_{L^2\LRp{\hat{D}}}\\
-%&\leq C_N \nor{\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}- I_{N+1}\LRp{\pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}}}_{L^2\LRp{\hat{D}}}
-%\end{align*}
-
+The local $L^2$ error $\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}}$ can be bounded as follows:
+\begin{align*}
+\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}} &\leq \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \nor{\hat{\Grad}\times \LRp{\bm{r}-I_{N+1}\bm{r}}}_{L^2\LRp{\hat{D}}}\\
+&\leq C_1 \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\LRp{\bm{r}-I_{N+1}\bm{r}}}_{H^1\LRp{\hat{D}}} \leq \tilde{C}_N \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\bm{r}}_{W^{N+2,2}\LRp{\hat{D}}},
+\end{align*}
+where we have used the Bramble-Hilbert lemma \cite{brenner2007mathematical} on the reference element in the last step.  Since it is applied on the reference element $\hat{D}$ rather than the physical element $D^k$, the constant $\tilde{C}_N$ depends on the reference element and order of approximation, but not the mesh size $h$.  A scaling argument for quasi-uniform meshes then yields that
+\begin{align}
+\LRb{\bm{r}}_{W^{N+2,2}\LRp{\hat{D}}} \leq C_2 h^{N+2}\nor{\bm{r}}_{W^{N+2,2}\LRp{D^k}}.
+\label{eq:localgeoerr}
+\end{align}
+The global error estimate results from squaring (\ref{eq:localgeoerr}), noting that $\sum_k \nor{\sqrt{J^k}}^2_{L^2\LRp{\hat{D}}} = \LRb{\Omega}$, and summing over all elements.
+%\[
+%%\sqrt{\sum_k \nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}}^2 }
+%\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\Omega}}^2  \leq C_N \LRb{\Omega} h^{N+2} \sqrt{\sum_k \nor{\bm{r}}^2_{W^{N+2,2}\LRp{D^k}}}.
+%\]
 \end{proof}
-
 
 We briefly outline how to compute $\tilde{J^k\bm{G}^k_{ij}}$ in three dimensions.  Let $\LRc{\hat{\bm{x}}^N_i}_{i=1}^{N_p}$ denote the set of degree $N$ interpolation points, and let $\ell^N_i(\hat{\bm{x}})$ denote the $i$th degree $N$ Lagrange basis function on the reference element.  We define interpolation matrices $\bm{V}_N^{N+1}$ and $\bm{V}^N_{N+1}$ between degree $N$ and $N+1$ polynomials such that 
 \begin{align}
@@ -1029,17 +1016,6 @@ where $N_p, (N+1)_p$ denotes the number of interpolation points for degree $N$ a
 \tilde{\bm{x}}_1 = \bm{V}_N^{N+1}\bm{x}_1, \qquad \tilde{\bm{x}}_2 = \bm{V}_N^{N+1}\bm{x}_2, \qquad \tilde{\bm{x}}_3 = \bm{V}_N^{N+1}\bm{x}_3.
 \end{align}
 Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $N+1$ with respect to the $i$th coordinate direction.  The geometric factors are computed as follows:
-% rxJ = Dt*(ys.*z) - Ds*(yt.*z);
-% sxJ = Dr*(yt.*z) - Dt*(yr.*z);
-% txJ = Ds*(yr.*z) - Dr*(ys.*z);
-% 
-% ryJ = -(Dt*(xs.*z) - Ds*(xt.*z));
-% syJ = -(Dr*(xt.*z) - Dt*(xr.*z));
-% tyJ = -(Ds*(xr.*z) - Dr*(xs.*z));
-% 
-% rzJ = -(Dt*(ys.*x) - Ds*(yt.*x));
-% szJ = -(Dr*(yt.*x) - Dt*(yr.*x));
-% tzJ = -(Ds*(yr.*x) - Dr*(ys.*x));
 \begin{align}
 \bm{JG^k}_{11} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}} \\
 \bm{JG^k}_{12} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_3}} \nonumber\\
@@ -1063,12 +1039,6 @@ We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly thro
 \label{sec:num}
 
 \subsection{Accuracy of weight-adjusted projection and geometric terms}
-
-%\begin{figure}
-%\centering
-%
-%\caption{Warped mesh of degree $N=4$ used to test super-convergence of the difference between the curvilinear $L^2$ and weight-adjusted projection.}
-%\end{figure}
 
 In this section, we verify Theorems~\ref{thm:superconverge} and \ref{thm:koprivagcl} concerning the accuracy of the weight-adjusted projection and modified construction of geometric terms satisfying the discrete geometric conservation law.  Figure~\ref{fig:superconverge} shows $L^2$ errors for both the standard $L^2$ projection (\ref{eq:l2curv}) and the weight-adjusted projection (\ref{eq:wadgproj}) for a series of warped meshes of degree $N = 4$.  Errors are estimated using degree $2N+1$ quadratures for triangles and tetrahedra \cite{xiao2010quadrature}.  We compute $L^2$ errors for both smooth and discontinuous functions
 \[
@@ -1146,9 +1116,8 @@ We then compute the $L^2$ error in approximating geometric terms for each elemen
 %\]
 We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Kopriva-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Kopriva-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Kopriva-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Kopriva-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  
 
-We note that the error in both approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge as $O(h^{N+1})$, the same rate as the $L^2$ projection error.  
-Sensititivity to geometry error \cite{toulorge2016optimizing}. 
-
+We note that the error in both the Kopriva-$N$ and Kopriva-$(N+1)$ approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge at a rate of at least $O(h^{N+1})$, matching the rate of convergence of the best approximation error.  
+\note{Optimal rates are observed for $N=5$, geometry order 3 by Hindenlang, but this is be because $J^k\bm{G}^k_{ij} \in Q^{2N_{\rm geo}-2} = Q^4$, so it should not be necessary to enforce the GCL in that situation. Note sensitivity of nonlinear solvers to geometry error \cite{toulorge2016optimizing}}.
 
 \begin{figure}
 \centering
@@ -1168,7 +1137,7 @@ Sensititivity to geometry error \cite{toulorge2016optimizing}.
 coordinates{(0.67574,0.00231891)(0.374388,7.21634e-05)(0.16654,3.2502e-06)(0.0867431,1.31183e-07)};
 \addplot[color=magenta,dashed,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.67574,0.00231891)(0.374388,0.000121059)(0.16654,2.10855e-06)(0.0867431,8.08278e-08)};
-\addplot[color=red,mark=square*,dashed,semithick, mark options={solid,fill=markercolor}]
+\addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.67574,0.00635039)(0.374388,0.000542466)(0.16654,4.85003e-05)(0.0867431,4.03792e-06)};
 \addplot[color=black,dashed,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.67574,0.00952559)(0.374388,0.000897556)(0.16654,3.51441e-05)(0.0867431,2.58651e-06)};
@@ -1198,7 +1167,7 @@ coordinates{(0.67574,0.00952559)(0.374388,0.000897556)(0.16654,3.51441e-05)(0.08
 coordinates{(0.673351,0.000766195)(0.373777,1.44835e-05)(0.166655,2.91207e-07)(0.0867501,5.69685e-09)};
 \addplot[color=magenta,dashed,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.673351,0.000957743)(0.373777,2.80204e-05)(0.166655,2.20143e-07)(0.0867501,4.37946e-09)};
-\addplot[color=red,mark=square*,dashed,semithick, mark options={solid,fill=markercolor}]
+\addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.673351,0.00231677)(0.373777,0.000127702)(0.166655,5.3742e-06)(0.0867501,2.11781e-07)};
 \addplot[color=black,dashed,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.673351,0.00405434)(0.373777,0.000213685)(0.166655,3.7653e-06)(0.0867501,1.43901e-07)};
@@ -1270,28 +1239,28 @@ We begin by testing the propagation of a shock on a two-dimensional curved mesh 
     width=.45\textwidth,    
     xlabel={Time $t$},
     ylabel={Change in entropy $\Delta U(\bm{u})$}, 
-%     ymin=1e-10, ymax=1e-1,    
+     ymin=1e-9, ymax=5e-4,    
     grid style=dashed,
 ] 
 
 \addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.025641,0)(0.128205,1.81455e-05)(0.230769,1.84993e-05)(0.333333,1.81016e-05)(0.435897,2.38212e-05)(0.538462,3.43804e-05)(0.641026,3.75077e-05)(0.74359,3.80509e-05)(0.846154,4.02406e-05)(0.948718,4.57864e-05)(1.05128,5.21023e-05)(1.15385,5.52339e-05)(1.25641,5.93653e-05)(1.35897,6.53204e-05)(1.46154,7.10508e-05)(1.5641,7.58692e-05)(1.66667,8.21148e-05)(1.76923,8.86933e-05)(1.87179,9.52306e-05)(1.97436,0.000102832)};
-\addplot[color=blue,dashed,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.025641,9.95731e-16)(0.128205,4.11303e-15)(0.230769,1.09496e-14)(0.333333,1.86934e-14)(0.435897,1.8624e-14)(0.538462,4.82253e-14)(0.641026,2.80886e-14)(0.74359,3.34073e-14)(0.846154,3.41116e-14)(0.948718,1.12826e-14)(1.05128,1.02106e-14)(1.15385,7.27543e-15)(1.25641,3.21965e-15)(1.35897,2.70617e-15)(1.46154,2.28116e-15)(1.5641,1.01134e-14)(1.66667,9.05179e-15)(1.76923,8.96852e-15)(1.87179,2.69368e-14)(1.97436,1.20043e-15)};
+%\addplot[color=blue,dashed,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.025641,9.95731e-16)(0.128205,4.11303e-15)(0.230769,1.09496e-14)(0.333333,1.86934e-14)(0.435897,1.8624e-14)(0.538462,4.82253e-14)(0.641026,2.80886e-14)(0.74359,3.34073e-14)(0.846154,3.41116e-14)(0.948718,1.12826e-14)(1.05128,1.02106e-14)(1.15385,7.27543e-15)(1.25641,3.21965e-15)(1.35897,2.70617e-15)(1.46154,2.28116e-15)(1.5641,1.01134e-14)(1.66667,9.05179e-15)(1.76923,8.96852e-15)(1.87179,2.69368e-14)(1.97436,1.20043e-15)};
 \addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.0129032,0)(0.116129,9.54018e-07)(0.219355,8.64409e-07)(0.322581,7.28292e-07)(0.425806,1.00547e-06)(0.529032,1.54507e-06)(0.632258,1.58376e-06)(0.735484,1.48926e-06)(0.83871,1.52599e-06)(0.941935,1.77263e-06)(1.04516,2.04306e-06)(1.14839,2.10785e-06)(1.25161,2.25231e-06)(1.35484,2.49471e-06)(1.45806,2.7075e-06)(1.56129,2.86391e-06)(1.66452,3.11015e-06)(1.76774,3.35711e-06)(1.87097,3.6045e-06)(1.97419,3.88568e-06)};
-\addplot[color=red,dotted,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.0129032,1.00787e-15)(0.116129,2.48065e-16)(0.219355,8.43769e-15)(0.322581,1.07483e-14)(0.425806,6.18255e-15)(0.529032,4.95159e-14)(0.632258,1.19835e-14)(0.735484,3.68837e-14)(0.83871,2.35957e-14)(0.941935,1.19904e-14)(1.04516,1.73785e-14)(1.14839,7.88952e-15)(1.25161,2.44249e-14)(1.35484,6.38031e-15)(1.45806,1.78781e-14)(1.56129,5.72459e-16)(1.66452,4.02456e-15)(1.76774,1.7316e-14)(1.87097,2.50425e-14)(1.97419,3.55375e-14)};
+%\addplot[color=red,dotted,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.0129032,1.00787e-15)(0.116129,2.48065e-16)(0.219355,8.43769e-15)(0.322581,1.07483e-14)(0.425806,6.18255e-15)(0.529032,4.95159e-14)(0.632258,1.19835e-14)(0.735484,3.68837e-14)(0.83871,2.35957e-14)(0.941935,1.19904e-14)(1.04516,1.73785e-14)(1.14839,7.88952e-15)(1.25161,2.44249e-14)(1.35484,6.38031e-15)(1.45806,1.78781e-14)(1.56129,5.72459e-16)(1.66452,4.02456e-15)(1.76774,1.7316e-14)(1.87097,2.50425e-14)(1.97419,3.55375e-14)};
 \addplot[color=black,mark=pentagon*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.00647249,0)(0.110032,5.38994e-08)(0.213592,4.43651e-08)(0.317152,3.18878e-08)(0.420712,4.65967e-08)(0.524272,7.64772e-08)(0.627832,7.36288e-08)(0.731392,6.33475e-08)(0.834951,6.22881e-08)(0.938511,7.43794e-08)(1.04207,8.71374e-08)(1.14563,8.67872e-08)(1.24919,9.19998e-08)(1.35275,1.02781e-07)(1.45631,1.11204e-07)(1.55987,1.16121e-07)(1.66343,1.26634e-07)(1.76699,1.36562e-07)(1.87055,1.46567e-07)(1.97411,1.57581e-07)};
-\addplot[color=black,dashdotted,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.00647249,2.19226e-16)(0.110032,5.88071e-15)(0.213592,1.34059e-14)(0.317152,2.30337e-14)(0.420712,8.23647e-15)(0.524272,2.68709e-14)(0.627832,2.53304e-14)(0.731392,2.95527e-14)(0.834951,2.5948e-14)(0.938511,4.56579e-15)(1.04207,2.28428e-14)(1.14563,8.22259e-15)(1.24919,1.51094e-14)(1.35275,7.86871e-15)(1.45631,1.11508e-14)(1.55987,1.57721e-14)(1.66343,6.95624e-15)(1.76699,2.07681e-14)(1.87055,2.72421e-14)(1.97411,1.7028e-14)};
+%\addplot[color=black,dashdotted,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.00647249,2.19226e-16)(0.110032,5.88071e-15)(0.213592,1.34059e-14)(0.317152,2.30337e-14)(0.420712,8.23647e-15)(0.524272,2.68709e-14)(0.627832,2.53304e-14)(0.731392,2.95527e-14)(0.834951,2.5948e-14)(0.938511,4.56579e-15)(1.04207,2.28428e-14)(1.14563,8.22259e-15)(1.24919,1.51094e-14)(1.35275,7.86871e-15)(1.45631,1.11508e-14)(1.55987,1.57721e-14)(1.66343,6.95624e-15)(1.76699,2.07681e-14)(1.87055,2.72421e-14)(1.97411,1.7028e-14)};
 
 % % N = 4, K= 8, dt = .25
  % N = 4, K= 8, dt = .125
  % N = 4, K= 8, dt = .0625
 
-%\legend{$dt = .25$, }
+\legend{${\rm CFL} = .25$,${\rm CFL} = .125$,${\rm CFL} = .0625$ }
 %\legend{Uniform, Optimal, Smoothed}
 \end{semilogyaxis}
 \end{tikzpicture}
@@ -1305,28 +1274,31 @@ coordinates{(0.00647249,2.19226e-16)(0.110032,5.88071e-15)(0.213592,1.34059e-14)
     xlabel={Time $t$},
 %         ymin=1e-10, ymax=1e-1,    
 %     ymin=1e-7, ymax=1e1,
+     ymin=1e-9, ymax=5e-4,    
 %    ylabel={$L^2$ error}, 
     grid style=dashed,
 ] 
 
 \addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.025641,0)(0.128205,4.45681e-05)(0.230769,6.82313e-05)(0.333333,0.000131517)(0.435897,0.000108761)(0.538462,8.51562e-05)(0.641026,2.94791e-05)(0.74359,3.62904e-05)(0.846154,2.97564e-05)(0.948718,9.87886e-05)(1.05128,0.000136806)(1.15385,7.64601e-05)(1.25641,0.000111044)(1.35897,5.72761e-05)(1.46154,4.27e-05)(1.5641,5.03819e-05)(1.66667,4.99789e-05)(1.76923,5.07438e-05)(1.87179,4.26361e-05)(1.97436,2.48694e-05)};
-\addplot[color=blue,dashed,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.025641,5.11743e-16)(0.128205,1.16547e-14)(0.230769,7.91034e-15)(0.333333,1.28231e-14)(0.435897,4.79131e-15)(0.538462,3.44134e-14)(0.641026,6.92502e-15)(0.74359,2.28047e-14)(0.846154,2.15314e-14)(0.948718,4.36456e-15)(1.05128,2.09416e-14)(1.15385,4.86763e-15)(1.25641,3.59088e-15)(1.35897,3.43475e-16)(1.46154,1.03632e-14)(1.5641,1.03598e-14)(1.66667,1.83881e-16)(1.76923,5.94663e-15)(1.87179,3.18252e-14)(1.97436,1.88495e-14)};
+%\addplot[color=blue,dashed,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.025641,5.11743e-16)(0.128205,1.16547e-14)(0.230769,7.91034e-15)(0.333333,1.28231e-14)(0.435897,4.79131e-15)(0.538462,3.44134e-14)(0.641026,6.92502e-15)(0.74359,2.28047e-14)(0.846154,2.15314e-14)(0.948718,4.36456e-15)(1.05128,2.09416e-14)(1.15385,4.86763e-15)(1.25641,3.59088e-15)(1.35897,3.43475e-16)(1.46154,1.03632e-14)(1.5641,1.03598e-14)(1.66667,1.83881e-16)(1.76923,5.94663e-15)(1.87179,3.18252e-14)(1.97436,1.88495e-14)};
 \addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.0129032,0)(0.116129,6.48664e-05)(0.219355,8.24474e-05)(0.322581,0.000152373)(0.425806,0.000138342)(0.529032,0.000126709)(0.632258,1.85501e-05)(0.735484,6.98555e-05)(0.83871,7.53129e-05)(0.941935,0.00013915)(1.04516,0.000196476)(1.14839,0.000133645)(1.25161,0.000173751)(1.35484,0.000126668)(1.45806,0.000116008)(1.56129,0.000127919)(1.66452,0.0001343)(1.76774,0.000140992)(1.87097,0.00013971)(1.97419,0.0001291)};
-\addplot[color=red,dotted,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.0129032,3.00107e-16)(0.116129,6.93196e-15)(0.219355,1.00198e-14)(0.322581,7.79932e-15)(0.425806,2.48759e-15)(0.529032,3.46181e-14)(0.632258,1.7205e-14)(0.735484,2.30718e-14)(0.83871,3.0146e-14)(0.941935,9.4369e-15)(1.04516,1.07969e-14)(1.14839,5.59275e-15)(1.25161,5.34295e-15)(1.35484,5.7801e-15)(1.45806,8.74648e-15)(1.56129,1.24137e-14)(1.66452,2.95597e-15)(1.76774,2.64441e-14)(1.87097,2.58023e-14)(1.97419,6.984e-15)};
+%\addplot[color=red,dotted,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.0129032,3.00107e-16)(0.116129,6.93196e-15)(0.219355,1.00198e-14)(0.322581,7.79932e-15)(0.425806,2.48759e-15)(0.529032,3.46181e-14)(0.632258,1.7205e-14)(0.735484,2.30718e-14)(0.83871,3.0146e-14)(0.941935,9.4369e-15)(1.04516,1.07969e-14)(1.14839,5.59275e-15)(1.25161,5.34295e-15)(1.35484,5.7801e-15)(1.45806,8.74648e-15)(1.56129,1.24137e-14)(1.66452,2.95597e-15)(1.76774,2.64441e-14)(1.87097,2.58023e-14)(1.97419,6.984e-15)};
 \addplot[color=black,mark=pentagon*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,0.000153077)(0.420712,0.000141625)(0.524272,0.000130883)(0.627832,2.58046e-05)(0.731392,6.81127e-05)(0.834951,7.92926e-05)(0.938511,0.000137768)(1.04207,0.000201777)(1.14563,0.000136705)(1.24919,0.000177364)(1.35275,0.000131153)(1.45631,0.000119851)(1.55987,0.000131686)(1.66343,0.000138676)(1.76699,0.00014539)(1.87055,0.000144608)(1.97411,0.000134142)};
-\addplot[color=black,dashdotted,semithick, mark options={solid,fill=markercolor}]
-coordinates{(0.00647249,7.31403e-16)(0.110032,1.05055e-14)(0.213592,2.58127e-15)(0.317152,1.04916e-14)(0.420712,5.12437e-15)(0.524272,4.40203e-14)(0.627832,1.147e-14)(0.731392,2.81025e-14)(0.834951,3.01946e-14)(0.938511,4.51028e-15)(1.04207,1.096e-14)(1.14563,6.11317e-15)(1.24919,3.69843e-15)(1.35275,6.47399e-15)(1.45631,9.41608e-15)(1.55987,1.58901e-15)(1.66343,6.39766e-15)(1.76699,1.56819e-14)(1.87055,2.11949e-14)(1.97411,1.12063e-14)};
+%\addplot[color=black,dashdotted,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.00647249,7.31403e-16)(0.110032,1.05055e-14)(0.213592,2.58127e-15)(0.317152,1.04916e-14)(0.420712,5.12437e-15)(0.524272,4.40203e-14)(0.627832,1.147e-14)(0.731392,2.81025e-14)(0.834951,3.01946e-14)(0.938511,4.51028e-15)(1.04207,1.096e-14)(1.14563,6.11317e-15)(1.24919,3.69843e-15)(1.35275,6.47399e-15)(1.45631,9.41608e-15)(1.55987,1.58901e-15)(1.66343,6.39766e-15)(1.76699,1.56819e-14)(1.87055,2.11949e-14)(1.97411,1.12063e-14)};
 
 %\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
+\legend{${\rm CFL} = .25$,${\rm CFL} = .125$,${\rm CFL} = .0625$ }
 \end{semilogyaxis}
+
 \end{tikzpicture}
 }
-\caption{\note{Finish}.}
+\caption{\note{Finish}.  In both cases, the magnitude of the right hand side is $O\LRp{10^{-14}}$, indicating that  }
 \label{fig:dSconverge}
 \end{figure}
 
