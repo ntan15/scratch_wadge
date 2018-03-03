@@ -3739,7 +3739,7 @@ int main(int argc, char *argv[])
   CN = (N + 1) * (N + 3) / 3;
 #endif
   double dt = CFL * hmin / CN;
-  double FinalTime = .50; // 20*dt;
+  double FinalTime = .10; // 20*dt;
   printf("hmin = %f, dt = %f, Final Time = %f\n", hmin, dt, FinalTime);
 
 #if 0

@@ -774,87 +774,87 @@ Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h =
 The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \cite{chan2017discretely}.
 \end{proof}
 
-%\subsection{Analysis of weight-adjusted projection} 
-%
-%The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is super-convergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
-%
-%We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
-%\begin{equation}
-%\LRp{J^k P_N^k  u, v} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}} =  \LRp{uJ^k, P_N^k  v}.
-%\label{eq:PNsym}
-%\end{equation}
-%Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
-%\begin{equation}
-%\LRp{T_{1/J^k}^{-1} P_N^k  u,v} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v} = \LRp{\Pi_N(u J^k),v} = \LRp{u J^k,v}, \qquad \forall v\in P^N.
-%\label{eq:PNproj}
-%\end{equation}
-%\note{FIX THEOREMS.}
-%To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use results from \cite{chan2016weight1,chan2016weight2}.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
-%\begin{theorem}
-%\label{thm:moment}
-%Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in P^N\LRp{D^k}$.  Then, 
-%\begin{align*}
-%&\LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{T^{-1}_{1/J}u,v}_{\hat{D}}} \leq \\
-%&Ch^{2N+2}\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{W^{N+1,2}\LRp{D^k}}.
-%\end{align*}
-%\end{theorem}
-%\begin{proof}
-%The proof involves straightforward adaptations of Theorem 4, Theorem 5, and Theorem 6 in \cite{chan2016weight1} to the reference element $\hat{D}$.  
-%\end{proof}
-%The next result we need is a generalized inverse inequality.  
-%\begin{lemma}
-%\label{lemma:sobolev}
-%Let $v \in P^N\LRp{D^k}$, and let $h = {\rm diam}\LRp{D^k}$.  Then,
-%\[
-%\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N} h^{-N} \nor{v}_{L^2\LRp{D^k}}.
-%\]
-%where $C_{N}$ is independent of $h$.
-%\end{lemma}
-%\begin{proof}
-%The result is the consequence of a scaling argument \cite{brenner2007mathematical} %and a Rayleigh quotient bound involving the largest eigenvalue of the generalized eigenvalue problem.  The scaling argument yields that
-%\begin{align}
-%\nor{v}_{W^{N+1,2}\LRp{D^k}} = C_1 h^{-(N+1)} \nor{v}_{W^{N+1,2}\LRp{\hat{D}}}.
-%\end{align}
-%The quantity $\nor{v}_{W^{N+1,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\in P^N$.  Since $P^N$ is finite-dimensional, the Sobolev norm can be bounded from above by the $L^2$ norm of $\hat{D}$ (with a constant $C_{2}$ depending on $N, d$.  Then, by another scaling argument, we have 
-%\begin{align}
-%\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \leq C_{2} \nor{v}_{L^2\LRp{\hat{D}}} \leq %C_{2} h \nor{v}_{L^2\LRp{D^k}}.
-%\end{align}
-%%where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product on the reference element  $W^{N+1,2}\LRp{\hat{D}}$.  The constant $C_N$ depends on the largest generalized eigenvalue of \ref{eq:eig}, which in turn depends on the order $N$ and dimension $d$.  
-%\end{proof}
-%
-%We can now prove that $P_N^k u$ is super-convergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
-%\begin{theorem}
-%Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
-%\[
-%\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C_N\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
-%\]
-%where $C_N$ is a mesh-independent constant which depends on $N, d$.
-%\label{thm:superconverge}
-%\end{theorem}
-%\begin{proof}
-%Let $\Pi_N^k u$ be the $L^2$ projection over the curved element $D^k$, such that
-%\[
-%\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in P^N.
-%\]
-%Using the fact that $P_N^k  u$ satisfies an analogous property (\ref{eq:PNproj}),  we can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
-%\[
-%\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
-%\]
-%Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
-%\begin{align*}
-%\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}}\\
-%& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N^k  u,v}_{\hat{D}} - \LRp{JP_N^k  u,v}_{\hat{D}}}.
-%\end{align*}
-%Applying Theorem~\ref{thm:moment} and then Lemma~\ref{lemma:sobolev} yields 
-%\begin{align*}
-%\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}
-%\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
-%&\leq Ch^{N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}}.
-%\end{align*}
-%%where $C_J = $.  
-%Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
-%\end{proof}
-%We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
+\subsection{Analysis of weight-adjusted projection} 
+
+The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is super-convergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
+
+We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
+\begin{equation}
+\LRp{J^k P_N^k  u, v} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}} =  \LRp{uJ^k, P_N^k  v}.
+\label{eq:PNsym}
+\end{equation}
+Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
+\begin{equation}
+\LRp{T_{1/J^k}^{-1} P_N^k  u,v} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v} = \LRp{\Pi_N(u J^k),v} = \LRp{u J^k,v}, \qquad \forall v\in P^N.
+\label{eq:PNproj}
+\end{equation}
+\note{FIX THEOREMS.}
+To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use results from \cite{chan2016weight1,chan2016weight2}.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
+\begin{theorem}
+\label{thm:moment}
+Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in P^N\LRp{D^k}$.  Then, 
+\begin{align*}
+&\LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{T^{-1}_{1/J}u,v}_{\hat{D}}} \leq \\
+&Ch^{2N+2}\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{W^{N+1,2}\LRp{D^k}}.
+\end{align*}
+\end{theorem}
+\begin{proof}
+The proof involves straightforward adaptations of Theorem 4, Theorem 5, and Theorem 6 in \cite{chan2016weight1} to the reference element $\hat{D}$.  
+\end{proof}
+The next result we need is a generalized inverse inequality.  
+\begin{lemma}
+\label{lemma:sobolev}
+Let $v \in P^N\LRp{D^k}$, and let $h = {\rm diam}\LRp{D^k}$.  Then,
+\[
+\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N} h^{-N} \nor{v}_{L^2\LRp{D^k}}.
+\]
+where $C_{N}$ is independent of $h$.
+\end{lemma}
+\begin{proof}
+The result is the consequence of a scaling argument \cite{brenner2007mathematical} %and a Rayleigh quotient bound involving the largest eigenvalue of the generalized eigenvalue problem.  The scaling argument yields that
+\begin{align}
+\nor{v}_{W^{N+1,2}\LRp{D^k}} = C_1 h^{-(N+1)} \nor{v}_{W^{N+1,2}\LRp{\hat{D}}}.
+\end{align}
+The quantity $\nor{v}_{W^{N+1,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\in P^N$.  Since $P^N$ is finite-dimensional, the Sobolev norm can be bounded from above by the $L^2$ norm of $\hat{D}$ (with a constant $C_{2}$ depending on $N, d$.  Then, by another scaling argument, we have 
+\begin{align}
+\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \leq C_{2} \nor{v}_{L^2\LRp{\hat{D}}} \leq %C_{2} h \nor{v}_{L^2\LRp{D^k}}.
+\end{align}
+%where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product on the reference element  $W^{N+1,2}\LRp{\hat{D}}$.  The constant $C_N$ depends on the largest generalized eigenvalue of \ref{eq:eig}, which in turn depends on the order $N$ and dimension $d$.  
+\end{proof}
+
+We can now prove that $P_N^k u$ is super-convergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
+\begin{theorem}
+Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
+\[
+\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C_N\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
+\]
+where $C_N$ is a mesh-independent constant which depends on $N, d$.
+\label{thm:superconverge}
+\end{theorem}
+\begin{proof}
+Let $\Pi_N^k u$ be the $L^2$ projection over the curved element $D^k$, such that
+\[
+\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in P^N.
+\]
+Using the fact that $P_N^k  u$ satisfies an analogous property (\ref{eq:PNproj}),  we can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
+\[
+\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
+\]
+Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
+\begin{align*}
+\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}}\\
+& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N^k  u,v}_{\hat{D}} - \LRp{JP_N^k  u,v}_{\hat{D}}}.
+\end{align*}
+Applying Theorem~\ref{thm:moment} and then Lemma~\ref{lemma:sobolev} yields 
+\begin{align*}
+\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}
+\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
+&\leq Ch^{N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}}.
+\end{align*}
+%where $C_J = $.  
+Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
+\end{proof}
+We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
 
 \subsubsection{A locally conservative high order accurate correction}
 
@@ -989,7 +989,7 @@ by construction using (\ref{eq:iconscurl2}), $\sum_{j=1,\ldots,d} \bm{V}_q\bm{D}
 
 Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied by directly constructing the scaled normals $\tilde{\bm{n}}J^k_f$ using values of $\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  We must now prove that the construction of $\tilde{\bm{n}}J^k_f$ implies that Equation (\ref{eq:normalsign}) holds. This is not immediately clear; since the normals are constructed from the approximate geometric terms and the formula (\ref{eq:normalconsistency}), it is not guaranteed that $\tilde{\bm{n}}^+J^{k,+}_f = -\tilde{\bm{n}}J^k_f$ will hold across a shared face.  However, the scaled normal vectors involve only nodal values on the shared face because the normals are computed in terms of the tangential reference derivatives \cite{kopriva2006metric}.  Thus, assuming a watertight mesh, the interpolation nodes on two neighboring elements will coincide for a shared face $f$, such that the trace of $\tilde{J^k\bm{G}^k_{ij}}$ from either neighboring element will be the same lower-dimensional polynomial on $f$.  This is sufficient to ensure that the scaled normal vectors $\tilde{\bm{n}}^+J^{k,+}_f, \tilde{\bm{n}}J^k_f$ will be equal and opposite.  
 
-The local $L^2$ error $\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}}$ can be bounded as follows:
+The local $L^2$ error $\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}}$ can be bounded \note{(fix this - not exactly curl in formula)} as follows: 
 \begin{align*}
 \nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}} &\leq \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \nor{\hat{\Grad}\times \LRp{\bm{r}-I_{N+1}\bm{r}}}_{L^2\LRp{\hat{D}}}\\
 &\leq C_1 \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\LRp{\bm{r}-I_{N+1}\bm{r}}}_{H^1\LRp{\hat{D}}} \leq \tilde{C}_N \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\bm{r}}_{W^{N+2,2}\LRp{\hat{D}}},
@@ -1221,12 +1221,13 @@ The entropy conservative numerical fluxes for the two-dimensional compressible E
 &f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
 &f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u},&\nonumber\\
 &f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
-&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{v},& \nonumber
+&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg} }\avg{v},& \nonumber
 \end{align}
-where we have defined the auxiliary quantities
-\begin{equation}
-p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad p_{\rm avg}^{\log} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}}, \qquad \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}}.  
-\end{equation}
+where we have defined the auxiliary quantities 
+\begin{gather}
+p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}\LRp{\gamma -1}}   + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}, \\
+ \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
+\end{gather}
 
 We begin by testing the propagation of a shock on a two-dimensional curved mesh using a discontinuous profile.  
 \begin{figure}

@@ -433,9 +433,9 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   VectorXd r = ref_data->r;
   VectorXd s = ref_data->s;
   VectorXd t = ref_data->t;
-
-#if 0
   int N = ref_data->N;
+  
+#if 0
   double a = .05;
   VectorXd dr = Eigen::pow(r.array() + s.array(), N);
   VectorXd ds = Eigen::pow(s.array() + t.array(), N);
@@ -558,129 +558,76 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   nz = nz.array() / sJ.array();
   sJ = sJ.array() * Jf.array();
 
-#if 0 // interpolated conservative curl fomr
-  MatrixXd Dr = ref_data->Dr;
-  MatrixXd Ds = ref_data->Ds;
-  MatrixXd Dt = ref_data->Dt;
+#if 1 // interpolated conservative curl form
 
-  xr = Dr * x;
-  yr = Dr * y;
-  zr = Dr * z;
-  xs = Ds * x;
-  ys = Ds * y;
-  zs = Ds * z;
-  xt = Dt * x;
-  yt = Dt * y;
-  zt = Dt * z;
+  ref_elem_data *ref_data_N2 = build_ref_ops_3D(N+1, 2*N+2, 2*N+2); // build VDM and Dmats for deg N+1  
+  MatrixXd Dr = ref_data_N2->Dr;
+  MatrixXd Ds = ref_data_N2->Ds;
+  MatrixXd Dt = ref_data_N2->Dt;
 
-  MatrixXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ;
-  rxJ = Dt * (ys.array() * z.array()).matrix() -
-        Ds * (yt.array() * z.array()).matrix();
-  sxJ = Dr * (yt.array() * z.array()).matrix() -
-        Dt * (yr.array() * z.array()).matrix();
-  txJ = Ds * (yr.array() * z.array()).matrix() -
-        Dr * (ys.array() * z.array()).matrix();
+  // interpolation matrices
+  VectorXd r2, s2, t2;
+  Nodes3D(N+1, r2, s2, t2);
+  MatrixXd V1 = Vandermonde3D(N, r, s, t);
+  MatrixXd V12tmp = Vandermonde3D(N, r2, s2, t2);
+  MatrixXd V12 = mrdivide(V12tmp,V1);
 
-  ryJ = -(Dt * (xs.array() * z.array()).matrix() -
-          Ds * (xt.array() * z.array()).matrix());
-  syJ = -(Dr * (xt.array() * z.array()).matrix() -
-          Dt * (xr.array() * z.array()).matrix());
-  tyJ = -(Ds * (xr.array() * z.array()).matrix() -
-          Dr * (xs.array() * z.array()).matrix());
+  MatrixXd V2 = Vandermonde3D(N+1, r2, s2, t2);  
+  MatrixXd V21tmp = Vandermonde3D(N+1, r, s, t);  
+  MatrixXd V21 = mrdivide(V21tmp,V2);  
 
-  rzJ = -(Dt * (ys.array() * x.array()).matrix() -
-          Ds * (yt.array() * x.array()).matrix());
-  szJ = -(Dr * (yt.array() * x.array()).matrix() -
-          Dt * (yr.array() * x.array()).matrix());
-  tzJ = -(Ds * (yr.array() * x.array()).matrix() -
-          Dr * (ys.array() * x.array()).matrix());
-#endif
+  MatrixXd x2 = V12*x;
+  MatrixXd y2 = V12*y;
+  MatrixXd z2 = V12*z;
+  xr = Dr * x2;  yr = Dr * y2;  zr = Dr * z2;
+  xs = Ds * x2;  ys = Ds * y2;  zs = Ds * z2;
+  xt = Dt * x2;  yt = Dt * y2;  zt = Dt * z2;
 
-#if 1
-  // div-free projection for free stream preservation
-  bool preserveFreeStream = 1; // default to this
-  if (preserveFreeStream)
-  {
+  //MatrixXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ;
+  rxJ = Dt * (ys.array() * z2.array()).matrix() -
+        Ds * (yt.array() * z2.array()).matrix();
+  sxJ = Dr * (yt.array() * z2.array()).matrix() -
+        Dt * (yr.array() * z2.array()).matrix();
+  txJ = Ds * (yr.array() * z2.array()).matrix() -
+        Dr * (ys.array() * z2.array()).matrix();
 
-    // step 1: compute div-free basis
-    MatrixXd WeakDiv(ref_data->Dr.rows(), 3 * ref_data->Dr.cols());
-    MatrixXd Vq = ref_data->Vq;
-    MatrixXd VqW = Vq.transpose() * ref_data->wq.asDiagonal();
-    MatrixXd M = VqW * Vq;
-    MatrixXd DMr = ref_data->Dr.transpose() * M;
-    MatrixXd DMs = ref_data->Ds.transpose() * M;
-    MatrixXd DMt = ref_data->Dt.transpose() * M;
-    WeakDiv << DMr, DMs, DMt;
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd1(WeakDiv, Eigen::ComputeFullV);
-    VectorXd sigma = svd1.singularValues();
-    double tol = 1e-10;                                 // works up to N=9
-    int NpDivFree = (int)(sigma.array() > tol).count(); // dim of div-free space
-    MatrixXd UDF = svd1.matrixV().rightCols(WeakDiv.cols() - NpDivFree);
+  ryJ = -(Dt * (xs.array() * z2.array()).matrix() -
+          Ds * (xt.array() * z2.array()).matrix());
+  syJ = -(Dr * (xt.array() * z2.array()).matrix() -
+          Dt * (xr.array() * z2.array()).matrix());
+  tyJ = -(Ds * (xr.array() * z2.array()).matrix() -
+          Dr * (xs.array() * z2.array()).matrix());
 
-    // step 2: compute L2 orthogonal complement
-    MatrixXd I3 = MatrixXd::Identity(3, 3);
-    MatrixXd M3 = kron(I3, M);
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd2(M3 * UDF, Eigen::ComputeFullU);
-    MatrixXd UD = svd2.matrixU().rightCols(UDF.rows() - UDF.cols());
+  rzJ = -(Dt * (ys.array() * x2.array()).matrix() -
+          Ds * (yt.array() * x2.array()).matrix());
+  szJ = -(Dr * (yt.array() * x2.array()).matrix() -
+          Dt * (yr.array() * x2.array()).matrix());
+  tzJ = -(Ds * (yr.array() * x2.array()).matrix() -
+          Dr * (ys.array() * x2.array()).matrix());
 
-    // step 3: compute basis for quotient space
-    int Np = (int)ref_data->r.rows();
-    MatrixXd e = MatrixXd::Ones(Np, 1);
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd3(M * e, Eigen::ComputeFullU);
-    MatrixXd Utest = svd3.matrixU().rightCols(Np - 1);
+  // interp back to degree N
+  rxJ = V21*rxJ;  sxJ = V21*sxJ;  txJ = V21*txJ;
+  ryJ = V21*ryJ;  syJ = V21*syJ;  tyJ = V21*tyJ;
+  rzJ = V21*rzJ;  szJ = V21*szJ;  tzJ = V21*tzJ;    
 
-    // step 4: project onto div/div-free components
-    MatrixXd VfqW = ref_data->Vfq.transpose() * ref_data->wfq.asDiagonal();
-    MatrixXd MUDF = UDF.transpose() * M3 * UDF;
-    MatrixXd VUDF = UDF.transpose() * kron(I3, VqW);
-    MatrixXd UDFPq = UDF * mldivide(MUDF, VUDF); // div-free projection
+  // compute normals
+  MatrixXd Vfq = ref_data->Vfq;
+  rxJf = Vfq*rxJ;   sxJf = Vfq*sxJ;   txJf = Vfq*txJ;
+  ryJf = Vfq*ryJ;   syJf = Vfq*syJ;   tyJf = Vfq*tyJ;
+  rzJf = Vfq*rzJ;   szJf = Vfq*szJ;   tzJf = Vfq*tzJ;
+  nxJ = rxJf.array() * nrJ.array() + sxJf.array() * nsJ.array() +
+    txJf.array() * ntJ.array();
+  nyJ = ryJf.array() * nrJ.array() + syJf.array() * nsJ.array() +
+    tyJf.array() * ntJ.array();
+  nzJ = rzJf.array() * nrJ.array() + szJf.array() * nsJ.array() +
+    tzJf.array() * ntJ.array();
 
-    // cout << "Utest dimensions = " << Utest.rows() << "," << Utest.cols() <<
-    // endl;
-    // cout << "UD dimensions = " << UD.rows() << "," << UD.cols() << endl;
-    // cout << "WeakDiv dimensions = " << WeakDiv.rows() << "," <<
-    // WeakDiv.cols() << endl;
-    MatrixXd WUDiv = Utest.transpose() * WeakDiv * UD;
-    MatrixXd UVfqW = Utest.transpose() * VfqW;
-    MatrixXd UDPq = UD * mldivide(WUDiv, UVfqW);
-
-    MatrixXd rstx(3 * rxJ.rows(), rxJ.cols());
-    rstx << rxJ, sxJ, txJ;
-    MatrixXd rsty(3 * rxJ.rows(), rxJ.cols());
-    rsty << ryJ, syJ, tyJ;
-    MatrixXd rstz(3 * rxJ.rows(), rxJ.cols());
-    rstz << rzJ, szJ, tzJ;
-
-    rstx = UDFPq * rstx + UDPq * nxJ;
-    rsty = UDFPq * rsty + UDPq * nyJ;
-    rstz = UDFPq * rstz + UDPq * nzJ;
-
-    rxJ = rstx.topRows(Np);
-    sxJ = rstx.middleRows(Np, Np);
-    txJ = rstx.bottomRows(Np);
-
-    ryJ = rsty.topRows(Np);
-    syJ = rsty.middleRows(Np, Np);
-    tyJ = rsty.bottomRows(Np);
-
-    rzJ = rstz.topRows(Np);
-    szJ = rstz.middleRows(Np, Np);
-    tzJ = rstz.bottomRows(Np);
-
-    // cout << "dimensions of rxJ = " << rxJ.rows() << "," << rxJ.cols() <<
-    // endl;
-
-    // interp to quadrature after using them to define surface geofacs
-    rxJ = Vq * rxJ;
-    sxJ = Vq * sxJ;
-    txJ = Vq * txJ;
-    ryJ = Vq * ryJ;
-    syJ = Vq * syJ;
-    tyJ = Vq * tyJ;
-    rzJ = Vq * rzJ;
-    szJ = Vq * szJ;
-    tzJ = Vq * tzJ;
-  }
+  // eval at qpts
+  MatrixXd Vq = ref_data->Vq;  
+  rxJ = Vq*rxJ;  sxJ = Vq*sxJ;  txJ = Vq*txJ;
+  ryJ = Vq*ryJ;  syJ = Vq*syJ;  tyJ = Vq*tyJ;
+  rzJ = Vq*rzJ;  szJ = Vq*szJ;  tzJ = Vq*tzJ;    
+  
 #endif
 
   geo_elem_data *geo = new geo_elem_data;

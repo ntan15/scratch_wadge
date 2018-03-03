@@ -350,17 +350,6 @@ kernel void euler_vol_3d(const int K, const dfloat *restrict vgeo,
                            beta_i, beta_j, FxS1, FyS1, FzS1, FxS2, FyS2, FzS2,
                            FxS3, FyS3, FzS3, FxS4, FyS4, FzS4, FxS5, FyS5,
                            FzS5);
-              /*
-                if (k==0 && i==0){
-                printf("xfluxes = %f, %f, %f, %f,
-                %f\n",FxS1,FxS2,FxS3,FxS4,FxS5);
-                printf("yfluxes = %f, %f, %f, %f,
-                %f\n",FyS1,FyS2,FyS3,FyS4,FyS5);
-                printf("zfluxes = %f, %f, %f, %f,
-                %f\n",FzS1,FzS2,FzS3,FzS4,FzS5);
-                }
-              */
-
 
               divF1 += Drq_ij * (FxS1 * rxJ + FyS1 * ryJ + FzS1 * rzJ) +
                        Dsq_ij * (FxS1 * sxJ + FyS1 * syJ + FzS1 * szJ) +
