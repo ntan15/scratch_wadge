@@ -130,6 +130,8 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
                                              ops->Nfaces * 3 * E);
   ops->vgeo =
       (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * Nvgeo * E);
+  ops->vfgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
+                                              Nfaces * Nvgeo * E);
   ops->fgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
                                              Nfgeo * Nfaces * E);
 
@@ -148,24 +150,23 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
     }
   }
 
-  /*
-  for (uintloc_t e = 0; e < E; ++e){
-    for (int n = 0; n < Nq*Nvgeo; ++n){
-      printf("vgeo[%d] = %f\n",n,ops->vgeo[n + e*Nq*Nvgeo]);
-    }
-  }
-  */
-  // cout << "sJ = " << endl << geo_data->sJ << endl;
-
   for (uintloc_t e = 0; e < E; ++e)
   {
     for (int n = 0; n < Nfq * Nfaces; ++n)
     {
-
       ops->xyzf[n + 0 * Nfq * Nfaces + e * Nfq * Nfaces * 3] =
           (dfloat_t)geo_data->xf(n, e);
       ops->xyzf[n + 1 * Nfq * Nfaces + e * Nfq * Nfaces * 3] =
           (dfloat_t)geo_data->yf(n, e);
+
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 0 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->rxJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 1 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->ryJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 2 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->sxJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 3 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->syJf(n, e);
 
       ops->fgeo[e * Nfq * Nfaces * Nfgeo + 0 * Nfq * Nfaces + n] =
           (dfloat_t)geo_data->nxJ(n, e);
@@ -241,6 +242,9 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   MatrixXd Dsq = Vq * Ds * Pq - .5 * Vq * Lq * nsJ.asDiagonal() * Vfq * Pq;
   MatrixXd Dtq = Vq * Dt * Pq - .5 * Vq * Lq * ntJ.asDiagonal() * Vfq * Pq;
 
+  MatrixXd Drstq(Drq.rows(),3*Drq.cols());
+  Drstq << Drq,Dsq,Dtq;
+  
   ops->dim = 3;
 
   ops->N = N;
@@ -264,6 +268,8 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   ops->Drq = to_c(Drq);
   ops->Dsq = to_c(Dsq);
   ops->Dtq = to_c(Dtq);
+
+  ops->Drstq = to_c(Drstq);  
 
   ops->Vq = to_c(Vq);
   ops->Pq = to_c(Pq);
@@ -300,6 +306,8 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
                                              ops->Nfaces * 3 * E);
   ops->vgeo =
       (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nq * Nvgeo * E);
+  ops->vfgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
+                                              Nfaces * Nvgeo * E);
   ops->fgeo = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * ops->Nfq *
                                              Nfgeo * Nfaces * E);
 
@@ -333,6 +341,25 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
           (dfloat_t)geo_data->yf(n, e);
       ops->xyzf[n + 2 * Nfq * Nfaces + e * Nfq * Nfaces * 3] =
           (dfloat_t)geo_data->zf(n, e);
+
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 0 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->rxJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 1 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->ryJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 2 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->rzJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 3 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->sxJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 4 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->syJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 5 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->szJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 6 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->txJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 7 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->tyJf(n, e);
+      ops->vfgeo[e * Nfq * Nfaces * Nvgeo + 8 * Nfq * Nfaces + n] =
+          (dfloat_t)geo_data->tzJf(n, e);
 
       ops->fgeo[e * Nfq * Nfaces * Nfgeo + 0 * Nfq * Nfaces + n] =
           (dfloat_t)geo_data->nxJ(n, e);

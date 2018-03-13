@@ -27,6 +27,7 @@ typedef struct
   dfloat_t *xyzq; // volume quad points (to initialize sol)
   dfloat_t *xyzf; // surface quad points
   dfloat_t *vgeo; // volume  geometric factors
+  dfloat_t *vfgeo; // volume  geometric factors  at face points
   dfloat_t *fgeo; // face    geometric factors
   dfloat_t *Jq;
 
@@ -37,6 +38,8 @@ typedef struct
   dfloat_t *nrJ, *nsJ, *ntJ; // ref elem normals
   dfloat_t *Drq, *Dsq, *Dtq; // ref elem derivative operators
 
+  dfloat_t *Drstq;
+  
   dfloat_t *Vq;
   dfloat_t *Pq;
 

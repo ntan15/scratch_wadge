@@ -2600,6 +2600,7 @@ typedef struct app
   host_operators_t *hops;
 
   occaMemory vgeo;
+  occaMemory vfgeo;  
   occaMemory fgeo;
   occaMemory Jq;
 
@@ -2608,6 +2609,7 @@ typedef struct app
 
   occaMemory nrJ, nsJ, ntJ;
   occaMemory Drq, Dsq, Dtq;
+  occaMemory Drstq;
 
   occaMemory Vq;
   occaMemory Pq;
@@ -2759,6 +2761,10 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 
   app->vgeo = device_malloc(app->device, sizeof(dfloat_t) * Nq * Nvgeo * E,
                             app->hops->vgeo);
+
+  app->vfgeo = device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nvgeo * E,
+			     app->hops->vfgeo);  
+
   app->fgeo =
       device_malloc(app->device, sizeof(dfloat_t) * Nfq * Nfaces * Nfgeo * E,
                     app->hops->fgeo);
@@ -2790,6 +2796,10 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->Dtq =
       device_malloc(app->device, sizeof(dfloat_t) * Nq * Nq, app->hops->Dtq);
 #endif
+
+  app->Drstq =
+      device_malloc(app->device, sizeof(dfloat_t) * 3 * Nq * Nq, app->hops->Drstq);
+  
 
   app->Vq =
       device_malloc(app->device, sizeof(dfloat_t) * Np * Nq, app->hops->Vq);
@@ -2884,8 +2894,10 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                                               "test_kernel_2d", info);
 #else
   printf("building 3D kernels\n");
+  // app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
+  //                                             "euler_vol_3d", info);
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-                                             "euler_vol_3d", info);
+					     "euler_vol_3d_curved", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "euler_surf_3d", info);
   app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
@@ -3268,7 +3280,7 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
 {
 
 #if VDIM == 2
-  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
+  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
                 app->Drq, app->Dsq, app->VqLq, app->VfPq, app->Q, app->Qf,
                 app->rhsQ, app->rhsQf);
 
@@ -3280,8 +3292,8 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
                 occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q,
                 app->Qf);
 #else
-  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->nrJ, app->nsJ,
-                app->ntJ, app->Drq, app->Dsq, app->Dtq, app->VqLq, app->VfPq,
+  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
+                app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
                 app->Q, app->Qf, app->rhsQ, app->rhsQf);
 
   occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,

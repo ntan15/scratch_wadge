@@ -420,6 +420,12 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
   geo->sxJ = sxJ;
   geo->ryJ = ryJ;
   geo->syJ = syJ;
+
+  geo->rxJf = rxJf;
+  geo->sxJf = sxJf;
+  geo->ryJf = ryJf;
+  geo->syJf = syJf;
+
   geo->nxJ = nxJ;
   geo->nyJ = nyJ;
   geo->J = J;
@@ -434,7 +440,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   VectorXd s = ref_data->s;
   VectorXd t = ref_data->t;
   int N = ref_data->N;
-  
+
 #if 0
   double a = .05;
   VectorXd dr = Eigen::pow(r.array() + s.array(), N);
@@ -560,30 +566,37 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 
 #if 1 // interpolated conservative curl form
 
-  ref_elem_data *ref_data_N2 = build_ref_ops_3D(N+1, 2*N+2, 2*N+2); // build VDM and Dmats for deg N+1  
+  ref_elem_data *ref_data_N2 = build_ref_ops_3D(
+      N + 1, 2 * N + 2, 2 * N + 2); // build VDM and Dmats for deg N+1
   MatrixXd Dr = ref_data_N2->Dr;
   MatrixXd Ds = ref_data_N2->Ds;
   MatrixXd Dt = ref_data_N2->Dt;
 
   // interpolation matrices
   VectorXd r2, s2, t2;
-  Nodes3D(N+1, r2, s2, t2);
+  Nodes3D(N + 1, r2, s2, t2);
   MatrixXd V1 = Vandermonde3D(N, r, s, t);
   MatrixXd V12tmp = Vandermonde3D(N, r2, s2, t2);
-  MatrixXd V12 = mrdivide(V12tmp,V1);
+  MatrixXd V12 = mrdivide(V12tmp, V1);
 
-  MatrixXd V2 = Vandermonde3D(N+1, r2, s2, t2);  
-  MatrixXd V21tmp = Vandermonde3D(N+1, r, s, t);  
-  MatrixXd V21 = mrdivide(V21tmp,V2);  
+  MatrixXd V2 = Vandermonde3D(N + 1, r2, s2, t2);
+  MatrixXd V21tmp = Vandermonde3D(N + 1, r, s, t);
+  MatrixXd V21 = mrdivide(V21tmp, V2);
 
-  MatrixXd x2 = V12*x;
-  MatrixXd y2 = V12*y;
-  MatrixXd z2 = V12*z;
-  xr = Dr * x2;  yr = Dr * y2;  zr = Dr * z2;
-  xs = Ds * x2;  ys = Ds * y2;  zs = Ds * z2;
-  xt = Dt * x2;  yt = Dt * y2;  zt = Dt * z2;
+  MatrixXd x2 = V12 * x;
+  MatrixXd y2 = V12 * y;
+  MatrixXd z2 = V12 * z;
+  xr = Dr * x2;
+  yr = Dr * y2;
+  zr = Dr * z2;
+  xs = Ds * x2;
+  ys = Ds * y2;
+  zs = Ds * z2;
+  xt = Dt * x2;
+  yt = Dt * y2;
+  zt = Dt * z2;
 
-  //MatrixXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ;
+  // MatrixXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ;
   rxJ = Dt * (ys.array() * z2.array()).matrix() -
         Ds * (yt.array() * z2.array()).matrix();
   sxJ = Dr * (yt.array() * z2.array()).matrix() -
@@ -606,28 +619,57 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
           Dr * (ys.array() * x2.array()).matrix());
 
   // interp back to degree N
-  rxJ = V21*rxJ;  sxJ = V21*sxJ;  txJ = V21*txJ;
-  ryJ = V21*ryJ;  syJ = V21*syJ;  tyJ = V21*tyJ;
-  rzJ = V21*rzJ;  szJ = V21*szJ;  tzJ = V21*tzJ;    
+  rxJ = V21 * rxJ;
+  sxJ = V21 * sxJ;
+  txJ = V21 * txJ;
+  ryJ = V21 * ryJ;
+  syJ = V21 * syJ;
+  tyJ = V21 * tyJ;
+  rzJ = V21 * rzJ;
+  szJ = V21 * szJ;
+  tzJ = V21 * tzJ;
 
   // compute normals
   MatrixXd Vfq = ref_data->Vfq;
-  rxJf = Vfq*rxJ;   sxJf = Vfq*sxJ;   txJf = Vfq*txJ;
-  ryJf = Vfq*ryJ;   syJf = Vfq*syJ;   tyJf = Vfq*tyJ;
-  rzJf = Vfq*rzJ;   szJf = Vfq*szJ;   tzJf = Vfq*tzJ;
+  rxJf = Vfq * rxJ;
+  sxJf = Vfq * sxJ;
+  txJf = Vfq * txJ;
+  ryJf = Vfq * ryJ;
+  syJf = Vfq * syJ;
+  tyJf = Vfq * tyJ;
+  rzJf = Vfq * rzJ;
+  szJf = Vfq * szJ;
+  tzJf = Vfq * tzJ;
   nxJ = rxJf.array() * nrJ.array() + sxJf.array() * nsJ.array() +
-    txJf.array() * ntJ.array();
+        txJf.array() * ntJ.array();
   nyJ = ryJf.array() * nrJ.array() + syJf.array() * nsJ.array() +
-    tyJf.array() * ntJ.array();
+        tyJf.array() * ntJ.array();
   nzJ = rzJf.array() * nrJ.array() + szJf.array() * nsJ.array() +
-    tzJf.array() * ntJ.array();
+        tzJf.array() * ntJ.array();
+
+  // eval at fqpts
+  rxJf = Vfq * rxJ;
+  sxJf = Vfq * sxJ;
+  txJf = Vfq * txJ;
+  ryJf = Vfq * ryJ;
+  syJf = Vfq * syJ;
+  tyJf = Vfq * tyJ;
+  rzJf = Vfq * rzJ;
+  szJf = Vfq * szJ;
+  tzJf = Vfq * tzJ;
 
   // eval at qpts
-  MatrixXd Vq = ref_data->Vq;  
-  rxJ = Vq*rxJ;  sxJ = Vq*sxJ;  txJ = Vq*txJ;
-  ryJ = Vq*ryJ;  syJ = Vq*syJ;  tyJ = Vq*tyJ;
-  rzJ = Vq*rzJ;  szJ = Vq*szJ;  tzJ = Vq*tzJ;    
-  
+  MatrixXd Vq = ref_data->Vq;
+  rxJ = Vq * rxJ;
+  sxJ = Vq * sxJ;
+  txJ = Vq * txJ;
+  ryJ = Vq * ryJ;
+  syJ = Vq * syJ;
+  tyJ = Vq * tyJ;
+  rzJ = Vq * rzJ;
+  szJ = Vq * szJ;
+  tzJ = Vq * tzJ;
+
 #endif
 
   geo_elem_data *geo = new geo_elem_data;
@@ -648,9 +690,21 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   geo->rzJ = rzJ;
   geo->szJ = szJ;
   geo->tzJ = tzJ;
+
+  geo->rxJf = rxJf;
+  geo->sxJf = sxJf;
+  geo->txJf = txJf;
+  geo->ryJf = ryJf;
+  geo->syJf = syJf;
+  geo->tyJf = tyJf;
+  geo->rzJf = rzJf;
+  geo->szJf = szJf;
+  geo->tzJf = tzJf;
+
   geo->nxJ = nxJ;
   geo->nyJ = nyJ;
   geo->nzJ = nzJ;
+
   geo->J = J;
   geo->sJ = sJ;
   return geo;
