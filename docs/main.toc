@@ -1,0 +1,24 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}
+\contentsline {section}{\numberline {2}Systems of nonlinear conservation laws}{2}{section.2}
+\contentsline {subsection}{\numberline {2.1}Standard DG formulations for nonlinear conservation laws}{3}{subsection.2.1}
+\contentsline {subsubsection}{\numberline {2.1.1}Mathematical notation}{3}{subsubsection.2.1.1}
+\contentsline {subsubsection}{\numberline {2.1.2}Discontinuous Galerkin formulations and the $L^2$ projection}{4}{subsubsection.2.1.2}
+\contentsline {section}{\numberline {3}Discretely entropy stable DG methods on curved meshes}{5}{section.3}
+\contentsline {subsection}{\numberline {3.1}Basis and quadrature rules}{5}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Reference element matrices}{5}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Matrices on curved physical elements}{7}{subsection.3.3}
+\contentsline {subsection}{\numberline {3.4}A discretely entropy stable DG formulation on curved meshes}{8}{subsection.3.4}
+\contentsline {section}{\numberline {4}Discretely stable and low storage DG methods on curved meshes}{10}{section.4}
+\contentsline {subsection}{\numberline {4.1}A weight-adjusted approximation to the curvilinear mass matrix}{10}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}A discretely entropy stable low storage DG formulation on curved meshes}{11}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Analysis of weight-adjusted projection}{12}{subsection.4.3}
+\contentsline {subsubsection}{\numberline {4.3.1}A locally conservative high order accurate correction}{14}{subsubsection.4.3.1}
+\contentsline {section}{\numberline {5}Enforcing the discrete geometric conservation law}{15}{section.5}
+\contentsline {section}{\numberline {6}Numerical experiments}{19}{section.6}
+\contentsline {subsection}{\numberline {6.1}Accuracy of weight-adjusted projection and geometric terms}{19}{subsection.6.1}
+\contentsline {subsection}{\numberline {6.2}Compressible Euler equations}{20}{subsection.6.2}
+\contentsline {subsubsection}{\numberline {6.2.1}Two dimensional experiments}{20}{subsubsection.6.2.1}
+\contentsline {subsubsection}{\numberline {6.2.2}Three dimensional experiments}{22}{subsubsection.6.2.2}
+\contentsline {section}{\numberline {7}Computational results}{23}{section.7}
+\contentsline {section}{\numberline {8}Conclusions}{23}{section.8}
+\contentsline {section}{\numberline {9}Acknowledgements}{23}{section.9}

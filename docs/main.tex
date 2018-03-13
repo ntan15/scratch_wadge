@@ -353,13 +353,13 @@ Other element types possess different natural polynomial spaces \cite{chan2015gp
 \[
 P^N_f \LRp{\hat{f}} = \LRc{ \left.u\right|_{\hat{f}}, \quad u \in P^N\LRp{\hat{D}}}, \qquad \hat{f}\in \partial\hat{D}.
 \]
-We denote the dimension of the trace space as ${\rm dim}P^N_f\LRp{\hat{f}} = N^f_p$.
+We denote the dimension of the trace space as ${\rm dim}\LRp{P^N_f\LRp{\hat{f}}} = N^f_p$.
 
-Finally, we define the $L^2$ norm and inner products over the reference element $\hat{D}$ and the surface of the reference element $\partial \hat{D}$
+We next define the $L^2$ norm and inner products over the reference element $\hat{D}$ and the surface of the reference element $\partial \hat{D}$
 \[
 \LRp{\bm{u},\bm{v}}_{\hat{D}} = \int_{\hat{D}} \bm{u}\cdot\bm{v}\diff{\bm{x}} =  \int_{\widehat{D}} \bm{u}\cdot\bm{v} J^k \diff{\widehat{x}}, \qquad \nor{\bm{u}}^2_{\hat{D}} = (\bm{u},\bm{u})_{\hat{D}}, \qquad \LRa{\bm{u},\bm{v}}_{\partial \hat{D}} = \int_{\partial \hat{D}} \bm{u} \cdot \bm{v} \diff{\bm{x}},
 \]
-Finally, we introduce the continuous $L^2$ projection operator $\Pi_N$ and lifting operator $L$.  For $u \in L^2\LRp{\widehat{D}}$, the $L^2$ projection $\Pi_N u$ is defined through
+We also introduce the continuous $L^2$ projection operator $\Pi_N$ and lifting operator $L$.  For $u \in L^2\LRp{\widehat{D}}$, the $L^2$ projection $\Pi_N u$ is defined through
 \begin{equation}
 \int_{\widehat{D}} \Pi_N u v \diff{\hat{\bm{x}}} = \int_{\widehat{D}} u v \diff{\hat{\bm{x}}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
 \label{eq:l2proj}
@@ -369,6 +369,23 @@ Likewise, for a boundary function $u \in L^2\LRp{\partial \hat{D}}$, the lifting
 \LRp{L u,v}_{\hat{D}} = \LRa{u,v}_{\partial \hat{D}}, \qquad \forall v \in P^N\LRp{\hat{D}}.
 \label{eq:lift}
 \end{equation}
+
+Finally, we introduce $L^2, L^{\infty}$ Sobolev norms and spaces, which will be utilized for error estimates.  The $L^2$ space is defined as the space of functions with finite $L^2$ norm.  The Lebesgue $L^\infty$ norm and the associated $L^\infty$ space over a general domain $\Omega$ are 
+\begin{align*}
+\nor{u}_{L^{\infty}\LRp{\Omega}} &= \inf\LRc{C \geq 0: \LRb{u\LRp{\bm{x}}} \leq C \quad \forall \bm{x}\in \Omega}, \qquad
+L^{\infty}\LRp{\Omega} = \LRc{u: \Omega\rightarrow \mathbb{R}, \quad \nor{u}_{L^{\infty}\LRp{\Omega}} < \infty}.
+\end{align*}
+The $L^2, L^{\infty}$ Sobolev norms of degree $s$ are then defined 
+\begin{align*}
+%\LRb{u}_{W^{s,p}\LRp{\Omega}} &= \LRp{\sum_{\LRb{\alpha}= s} \nor{ D^{\alpha} u}_{L^p\LRp{\Omega}}^p}^{1/p}, \qquad \LRb{u}_{W^{s,\infty}\LRp{\Omega}} = \max_{\LRb{\alpha}= s} \nor{D^{\alpha}u}_{L^{\infty}\LRp{\Omega}}\\
+\nor{u}_{W^{s,2}\LRp{\Omega}}^2 &= {\sum_{\LRb{\alpha}\leq s} \nor{ D^{\alpha} u}_{L^2\LRp{\Omega}}^2}, \qquad \nor{u}_{W^{s,\infty}\LRp{\Omega}} = \max_{\LRb{\alpha}\leq s} \nor{D^{\alpha}u}_{L^{\infty}\LRp{\Omega}}.
+\end{align*}
+where $\alpha = \LRc{\alpha_1,\alpha_2,\alpha_3}$ is a multi-index such that
+\[
+D^{\alpha}u = \pd{^{\alpha_1}}{x^{\alpha_1}}\pd{^{\alpha_2}}{y^{\alpha_2}}\pd{^{\alpha_3}}{z^{\alpha_3}} u,
+\]
+The Sobolev spaces $W^{s,2},W^{s,\infty}$ are defined as the spaces of functions with finite $L^2$ and $L^\infty$ Sobolev norms of degree $s$.
+
 
 
 \subsubsection{Discontinuous Galerkin formulations and the $L^2$ projection}
@@ -525,7 +542,7 @@ We assume that the mesh is quasi-uniform.  The mesh is also assumed to be watert
 \end{align}
 We also assume that the scaled matrix of geometric terms transforms scaled reference normal vectors to scaled physical normals, such that
 \begin{align}
-\sum_{j=1}^d J\bm{G}_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}} \circ\LRp{\hat{\bm{n}}_j\hat{\bm{J}}_f}}
+\sum_{j=1}^d J^k\bm{G}^k_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}} \circ\LRp{\hat{\bm{n}}_j\hat{\bm{J}}_f}}
 = \LRp{\bm{n}_i\bm{J}^k_f}.
 \label{eq:normalconsistency}
 \end{align}
@@ -642,13 +659,13 @@ Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.
 \end{theorem}
 \begin{proof}
 Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\ref{eq:sbpk}), the proof of entropy conservation is identical to that of \cite{chan2017discretely}.  
-\note{Expand out!  Do spatial term only, punt for time term.  }
+%\note{Expand out!  Do spatial term only, punt for time term.  }
 %To prove entropy conservation, we multiply on both sides by $\bm{M}_k$ 
 %\begin{align}
 %\bm{M}_k\td{\bm{u}_h}{t} + \LRs{\begin{array}{c}\bm{V}_q \\ \bm{V}_f\end{array}}^T
 %\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f{\rm diag}\LRp{\bm{n}_i\bm{J}^k_f}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
 %\end{align}
-%We now test on both sides by $\bm{v}_h^T$ and note that $\bm{v}_h^T\bm{M} = \bm{v}(\bm{u}_q)^T \bm{W} \bm{J}^k \bm{V}_q$.  For the time term, assuming continuity in time, we have that
+%We now test on both sides by $\bm{v}_h^T$ and note that $\bm{v}_h^T\bm{M} = \bm{v}(\bm{u}_q)^T \bm{W} \bm{J}^k \bm{V}_q$.  For the time term, we assuming continuity in time and use the chain rule
 %\[
 %\bm{v}(\bm{u}_q)^T \bm{W} \bm{J}^k \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T \bm{W} \bm{J}^k \bm{v}(\bm{u}_q)^T\td{\bm{u}_q}{t} = 
 %\bm{1}^T \bm{W} \bm{J}^k \td{U(\bm{u}_q)}{t},
@@ -776,7 +793,7 @@ The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \
 
 \subsection{Analysis of weight-adjusted projection} 
 
-The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is super-convergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
+The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is superconvergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
 
 We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
 \begin{equation}
@@ -788,73 +805,90 @@ Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in
 \LRp{T_{1/J^k}^{-1} P_N^k  u,v} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v} = \LRp{\Pi_N(u J^k),v} = \LRp{u J^k,v}, \qquad \forall v\in P^N.
 \label{eq:PNproj}
 \end{equation}
-\note{FIX THEOREMS.}
-To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use results from \cite{chan2016weight1,chan2016weight2}.  The first theorem we need shows that $T_{1/J}^{-1}$ can be used to approximate weighted curvilinear $L^2$ inner products with order $(2N+2)$ accuracy.  
-\begin{theorem}
-\label{thm:moment}
-Let $u\in W^{N+1,2}\LRp{D^k}$ and $v\in P^N\LRp{D^k}$.  Then, 
+
+To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use a generalized inverse inequality and results from \cite{chan2016weight1,chan2016weight2}.  We first introduce a modification of Theorem 3.1 in \cite{warburton2013low, chan2016weight1}
+\begin{theorem}%[Theorem 3.1 in \cite{warburton2013low, chan2016weight1}]
+Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$, and let $\hat{D}$ be the reference element.  For $N \geq 0$, $w\in W^{N+1,\infty}\LRp{D^k}$, and $u\in W^{r,2}\LRp{D^k}$, 
 \begin{align*}
-&\LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{T^{-1}_{1/J}u,v}_{\hat{D}}} \leq \\
-&Ch^{2N+2}\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{W^{N+1,2}\LRp{D^k}}.
+%\nor{u - \frac{1}{w} \Pi_N\LRp{{u}{w}}}_{L^2\LRp{D^k}} &\leq C h^{N+1}\nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}\LRp{D^k}}\nor{\frac{\sqrt{J^k}}{w}}_{L^{\infty}\LRp{D^k}} \nor{w}_{W^{N+1,\infty}\LRp{D^k}}  \nor{u}_{W^{N+1,2}\LRp{D^k}},\\
+\nor{u - \frac{1}{w} \Pi_N\LRp{{u}{w}}}_{L^2\LRp{\hat{D}}} &\leq C h^{\min\LRp{r,N+1}} \nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}\LRp{D^k}}\nor{\frac{1}{w}}_{L^{\infty}\LRp{D^k}} \nor{w}_{W^{N+1,\infty}\LRp{D^k}} \nor{u}_{W^{r,2}\LRp{D^k}}.
 \end{align*}
+\label{thm:wproj}
 \end{theorem}
-\begin{proof}
-The proof involves straightforward adaptations of Theorem 4, Theorem 5, and Theorem 6 in \cite{chan2016weight1} to the reference element $\hat{D}$.  
-\end{proof}
-The next result we need is a generalized inverse inequality.  
+The proof is a straightforward modification of the proofs presented in \cite{warburton2013low, chan2016weight1} accounting for reduced regularity of $u$ when $r < (N+1)$.  The next result we need is a generalized inverse inequality.  
 \begin{lemma}
 \label{lemma:sobolev}
 Let $v \in P^N\LRp{D^k}$, and let $h = {\rm diam}\LRp{D^k}$.  Then,
 \[
-\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N} h^{-N} \nor{v}_{L^2\LRp{D^k}}.
+\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N}  h^{-N} \nor{\sqrt{J^k}}_{L^{\infty}} \nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}} \nor{\bm{G}^k}_{W^{N,\infty}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
 \]
-where $C_{N}$ is independent of $h$.
+where $C_{N}$ depends on $N$, but is independent of $h$.
 \end{lemma}
 \begin{proof}
-The result is the consequence of a scaling argument \cite{brenner2007mathematical} %and a Rayleigh quotient bound involving the largest eigenvalue of the generalized eigenvalue problem.  The scaling argument yields that
+By applying Fa\'{a} di Bruno's formula, we can express the degree $(N+1)$ Sobolev norm of $v$ on $D^k$ in terms of derivatives of $v$ on the reference element $\hat{D}$.  Noting that all $(N+1)$ derivatives of $v$ disappear for $v\in P^N$ allows us to bound the degree $(N+1)$ Sobolev norm of $v$ by its degree $N$ Sobolev norm
+\[
+\nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_N \nor{\bm{G}^k}_{W^{N,\infty}\LRp{D^k}} \nor{v}_{W^{N,2}\LRp{D^k}},
+\]
+where $\bm{G}^k$ is the matrix of unscaled geometric terms for $D^k$.  Then, a scaling argument \cite{brenner2007mathematical} yields
 \begin{align}
-\nor{v}_{W^{N+1,2}\LRp{D^k}} = C_1 h^{-(N+1)} \nor{v}_{W^{N+1,2}\LRp{\hat{D}}}.
+\nor{v}_{W^{N,2}\LRp{D^k}}  \leq C_1 h^{-N} \nor{\sqrt{J^k}}_{L^{\infty}} \nor{v}_{W^{N,2}\LRp{\hat{D}}}.  
 \end{align}
-The quantity $\nor{v}_{W^{N+1,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\in P^N$.  Since $P^N$ is finite-dimensional, the Sobolev norm can be bounded from above by the $L^2$ norm of $\hat{D}$ (with a constant $C_{2}$ depending on $N, d$.  Then, by another scaling argument, we have 
+The quantity $\nor{v}_{W^{N,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\in P^N$.  Since $P^N$ is finite-dimensional, the Sobolev norm can be bounded from above by the $L^2$ norm of $\hat{D}$ with a constant $C_{2}$ depending on $N, d$.  By another scaling argument, we have 
 \begin{align}
-\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \leq C_{2} \nor{v}_{L^2\LRp{\hat{D}}} \leq %C_{2} h \nor{v}_{L^2\LRp{D^k}}.
+\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \leq C_{2} \nor{v}_{L^2\LRp{\hat{D}}} \leq \nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}} C_{2}  \nor{v}_{L^2\LRp{D^k}}.
 \end{align}
 %where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product on the reference element  $W^{N+1,2}\LRp{\hat{D}}$.  The constant $C_N$ depends on the largest generalized eigenvalue of \ref{eq:eig}, which in turn depends on the order $N$ and dimension $d$.  
 \end{proof}
 
-We can now prove that $P_N^k u$ is super-convergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
+We can now prove that $P_N^k u$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
 \begin{theorem}
-Let $u \in W^{N+1,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
+Let $u \in W^{r,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
 \[
-\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C_N\nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}} h^{N+2}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
+\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C_N C_J h^{\min\LRp{r,N+1}+1}\nor{u}_{W^{N+1,2}\LRp{D^k}},
 \]
-where $C_N$ is a mesh-independent constant which depends on $N, d$.
+where $C_N$ is a mesh-independent constant which depends on $N, d$ and $C_J$ is
+\[
+C_J = \nor{J}_{L^{\infty}\LRp{D^k}}^{1.5}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^{1.5} \nor{\frac{1}{J^k}}_{W^{N+1,\infty}\LRp{D^k}}\nor{J^k}_{W^{N+1,\infty}\LRp{D^k}}\nor{\bm{G}^k}_{W^{N,\infty}\LRp{D^k}}.
+\]
 \label{thm:superconverge}
 \end{theorem}
 \begin{proof}
-Let $\Pi_N^k u$ be the $L^2$ projection over the curved element $D^k$, such that
+We can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
 \[
-\LRp{J\Pi_N^k u,v} = \LRp{u J,v}, \qquad \forall v\in P^N.
-\]
-Using the fact that $P_N^k  u$ satisfies an analogous property (\ref{eq:PNproj}),  we can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
-\[
-\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
+\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ^k}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
 \]
 Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
 \begin{align*}
-\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}}\\
-& = \LRb{\LRp{u,vJ}_{\hat{D}} - \LRp{P_N^k  u,vJ}_{\hat{D}}} = \LRb{\LRp{T_{1/J}^{-1}P_N^k  u,v}_{\hat{D}} - \LRp{JP_N^k  u,v}_{\hat{D}}}.
+\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ^k}_{\hat{D}} - \LRp{P_N^k  u,vJ^k}_{\hat{D}}} = \LRb{\LRp{u,vJ^k}_{\hat{D}} - \LRp{P_N^k  u,vJ^k}_{\hat{D}}} \\
+%&\leq \LRp{J^k,1}_{\hat{D}} \LRb{\LRp{u-P_N^ku,v}_{\hat{D}}} = \LRb{D^k}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}},
+&\leq \nor{J^k}_{L^{\infty}\LRp{D^k}} \LRb{\LRp{u-P_N^ku,v}_{\hat{D}}}.% = \LRb{D^k}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}},
 \end{align*}
-Applying Theorem~\ref{thm:moment} and then Lemma~\ref{lemma:sobolev} yields 
+%where we have applied the Cauchy-Schwarz inequality in the last steps.  
+We can then note that $P_N^ku = \Pi_N\LRp{\frac{1}{J^k} \Pi_N\LRp{uJ^k}}$ to show that
 \begin{align*}
-\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}}^2 &\leq Ch^{2N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}
-\nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \\
-&\leq Ch^{N+2} \nor{J}_{L^{\infty}\LRp{D^k}}  \nor{\frac{1}{J}}_{L^{\infty}\LRp{D^k}}^2 \nor{J}^2_{W^{N+1,\infty}\LRp{D^k}}\nor{u}_{W^{N+1,2}\LRp{D^k}}\nor{v}_{L^2\LRp{D^k}}.
+{\LRp{u-P_N^ku,v}_{\hat{D}}} &= {\LRp{uJ^k,\frac{v}{J^k}}_{\hat{D}}-\LRp{\Pi_N\LRp{\frac{1}{J^k} \Pi_N\LRp{uJ^k}},v}_{\hat{D}}} \\
+&= \LRp{uJ^k,\frac{v}{J^k}}_{\hat{D}}-\LRp{\Pi_N\LRp{uJ^k},\frac{v}{J^k}}_{\hat{D}}. %+ \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}} - \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}\\
+%&= \LRp{uJ^k,\frac{v}{J^k}}_{\hat{D}}-\LRp{\Pi_N\LRp{uJ^k},\frac{v}{J^k}}_{\hat{D}} + \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}} - \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}
 \end{align*}
-%where $C_J = $.  
+Adding and subtracting $\LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}$ and using Theorem~\ref{thm:wproj} (noting that $v\in W^{N+1,2}\LRp{D^k}$ since it is polynomial) gives
+\begin{align*}
+\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}} &\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}}\\
+&= \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{uJ^k - \Pi_N\LRp{uJ^k},\frac{v}{J^k}-\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}} \\
+&\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\nor{uJ^k - \Pi_N\LRp{uJ^k}}_{\hat{D}}\nor{\frac{v}{J^k}-\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}\\
+&\leq C h^{\min\LRp{r,N+1}+N+1} \tilde{C}_J \nor{u}_{W^{r,2}\LRp{D^k}} \nor{v}_{W^{N+1,2}\LRp{D^k}},
+\end{align*}
+where 
+\[
+\tilde{C}_J = \nor{J^k}_{L^{\infty}\LRp{D^k}}\nor{\frac{1}{J^k}}_{L^{\infty}\LRp{D^k}} \nor{J^k}_{W^{N+1,\infty}\LRp{D^k}}\nor{\frac{1}{J^k}}_{W^{N+1,\infty}\LRp{D^k}}.
+\]
+Applying Lemma~\ref{lemma:sobolev} then yields
+\begin{align*}
+\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}}&\leq C_N h^{\min\LRp{r,N+1}+1} C_J \nor{u}_{W^{N+1,2}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
+\end{align*}
 Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
-We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
+Theorem~\ref{thm:wproj} can be used to show that the $L^2$ error between $\Pi^k_N u, P^k_N u$ and $u \in W^{r,2}\LRp{D^k}$ is $O(h^r)$.  Theorem~\ref{thm:superconverge} demonstrates that the $L^2$ difference between $\Pi^k_N u, P^k_N u$ is $O(h^{r+1})$, or at least one order higher than the approximation error.  We note that optimal convergence of the weight-adjusted projection requires that the geometric mapping $\bm{\Phi}_k$ is asymptotically affine (i.e. the Sobolev norm of $J^k, \bm{G}^k$ does not grow under mesh refinement), which is ensured under nested mesh refinement and appropriate curvilinear blending strategies \cite{lenoir1986optimal, warburton2013low, chan2016weight2}.  
+%We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
 
 \subsubsection{A locally conservative high order accurate correction}
 
@@ -863,28 +897,30 @@ It should be noted that, while the weight-adjusted approximation of the mass mat
 \int_{\hat{D}}u J \diff{\hat{\bm{x}}} - \int_{\hat{D}} T_{1/J}^{-1}u \diff{\hat{\bm{x}}} = \bm{1}^T\bm{M}_J\bm{u} - \bm{1}^T\bm{M}\bm{M}_{1/J}^{-1}\bm{M}\bm{u} \neq 0.  
 \label{eq:conserr}
 \end{equation}
-Taking $v = 1$ in Theorem~\ref{thm:moment} shows that the differnece between the true mean and weight-adjusted mean in (\ref{eq:conserr}) converges extremely fast at a rate of $O(h^{2N+2})$.  However, for systems of conservation laws, it is often desired that the element average is preserved exactly up to machine precision.  In \cite{chan2016weight2}, it was shown that a rank one correction of the weight-adjusted mass matrix inverse preserves the mean exactly while avoiding any loss of precision in numerical experiments.  This requires the use of the Sherman-Morrison formula for the inverse of a rank one update.  
+Results in \cite{chan2016weight1} show that the difference between the true mean and weight-adjusted mean in (\ref{eq:conserr}) converges extremely fast at a rate of $O(h^{2N+2})$.  However, for systems of conservation laws, it is often desired that the element average is preserved exactly up to machine precision.  In \cite{chan2016weight2}, it was shown that a rank one correction of the weight-adjusted mass matrix inverse preserves the mean exactly while avoiding any loss of precision in numerical experiments.  This requires the use of the Sherman-Morrison formula for the inverse of a rank one update.  
 
-We present an explicit formula for a conservative correction here which is simpler than this algebraic correction.  Consider a vector $\bm{u}$ which is the 
-%Recall that the weight-adjusted projection $P^k_N u$ is the solution of 
-%\begin{equation}
-%\LRp{P^k_N u,v}_{\hat{D}} = \LRp{f,v}_{\hat{D}}, \qquad \forall v\in P^N.
-%\end{equation}
-%We wish to ensure that $u$ has the same weighted mean as that of $\Pi^k_N u$, which satisfies
-%\begin{equation}
-%\LRp{\Pi^k_Nu,vJ}_{\hat{D}} = \LRp{f,v}_{\hat{D}}, \qquad \forall v\in P^N.
-%\label{eq:conservWadg}.
-%\end{equation}
-
-%have coefficients $\bm{u} = \bm{M}^{-1}\bm{M}_{1/J}\bm{M}^{-1}\bm{b}$, which result from applying the weight-adjusted mass matrix inverse to some vector $\bm{b}$.  We wish to correct $u$ such that its weighted mean is preserved.  
+We present an explicit formula for a conservative correction here which is simpler than this algebraic correction.  Let $u_{\rm WADG}$ be defined through 
+%coefficients 
+%\[
+%\bm{u} = \bm{M}^{-1}\bm{M}_{1/J}\bm{M}^{-1} \LRp{\bm{V}_q^T\bm{W}\bm{f}},
+%\]
+%where $\bm{f}$ are the values of $f$ at quadrature points on $\hat{D}$.  
 \[
-\tilde{P}^k_N u = P^k_N u + \frac{\int_{\hat{D}} f - JP^k_N u}{\int_{\hat{D}} J}.  
+\LRp{T_{1/J}^{-1}u_{\rm WADG},v}_{\hat{D}} = \LRp{f,v}_{\hat{D}}, \qquad \forall v \in P^N\LRp{\hat{D}}.
 \]
-This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.
+For example, if $f = u J$, $u_{\rm WADG} = P^k_N u$.  We define the conservative weight-adjusted $\tilde{u}_{\rm WADG}$ as
+\[
+\tilde{u}_{\rm WADG} = u_{\rm WADG} + \frac{\int_{\hat{D}} f - J u_{\rm WADG}}{\int_{\hat{D}} J}.  
+\]
+It is straightforward to show that 
+\[
+\int_{\hat{D}}\tilde{u}_{\rm WADG}J = \int_{\hat{D}} f.
+\]
+This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.  Moreover, using Theorem 6 in \cite{chan2016weight1}, it is straightforward to show that the $L^2$ norm of the difference $\tilde{u}_{\rm WADG} - u_{\rm WADG}$ is $O(h^{2N+1})$, and does not affect high order accuracy.  
 
 \section{Enforcing the discrete geometric conservation law}
 
-An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J\bm{G}_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
+An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J^k\bm{G}^k_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
 
 From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
 \begin{align*}
@@ -900,7 +936,7 @@ This condition is required to ensure that free-stream preservation holds at the 
 \[
 \pd{\bm{u}}{t} + \Grad \cdot \bm{f}(\bm{u}) = \pd{\bm{u}}{t} = 0.
 \]
-For isoparametric geometric mappings (where the degree of the mapping matches the degree of the polynomial approximation) in two dimensions, the GCL is naturally enforced by noting that the scaled metric terms $J\bm{G}_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly automatically enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D.  
+For isoparametric geometric mappings (where the degree of the mapping matches the degree of the polynomial approximation) in two dimensions, the GCL is naturally enforced by noting that the scaled metric terms $J^k\bm{G}^k_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly automatically enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D.  
 
 In three dimensions, geometric terms are typically computed in ``cross-product'' form
 \begin{align}
@@ -911,7 +947,7 @@ J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}
 \end{align}
 This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the geometric terms $J^k\bm{G}^k_{ij}$ are polynomials of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
 
-This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J\bm{G}_{ij}$ can also be computed using the ``conservative curl'' or ``invariant curl'' form, where $J\bm{G}_{ij}$ are constructed by applying the curl to some quantity.  We use the invariant curl form, which is given as
+This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J^k\bm{G}^k_{ij}$ can also be computed using the ``conservative curl'' or ``invariant curl'' form, where $J^k\bm{G}^k_{ij}$ are constructed by applying the curl to some quantity.  We use the invariant curl form, which is given as
 \begin{align}
 J^k\bm{G}^k_{nj} = -\frac{1}{2}\bm{e}_j\cdot \hat{\Grad} \times \LRp{x_l\hat{\Grad}x_m - x_m\hat{\Grad}x_l}, \qquad j = 1,2,3, \quad (l,m,n) = (1,2,3), \text{ cyclic},
 \label{eq:conscurl}
@@ -931,7 +967,7 @@ From (\ref{eq:conscurl}), it can be observed that, because the divergence of a c
 %J^k\bm{G}^k_{i2}\\
 %J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
 %\end{align}
-The idea of Kopriva is to use (\ref{eq:conscurl}), but to interpolate before applying the curl.  This approximates the geometric terms via
+The idea of Kopriva is to use (\ref{eq:conscurl}), but to interpolate before applying the curl  %This approximates the geometric terms via
 \begin{align}
 \bm{r}^i = { \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad
 \LRs{\begin{array}{c}
@@ -962,7 +998,7 @@ To prove that the construction (\ref{eq:iconscurl2}) satisfies Assumption~\ref{a
 Let the mesh satisfy Assumption~\ref{ass:norm}, and let the interpolation points which define the interpolation operator $I_N$ be distributed such that $N^f_p$ points lie on each face. Then, the approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$  and approximate scaled normals $\tilde{n_iJ^k_f}$ computed using (\ref{eq:iconscurl2}) and (\ref{eq:normalconsistency})) satisfy both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm}.  Additionally, the error in the approximation satisfies
 \[
 %\sqrt{\sum_{k}\sum_{ij=1}^d\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\hat{D}}}^2} \leq C_N h^{N+2} \nor{\cdot}_{W^{N+2,2}\LRp{D^k}}.
-\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\Omega}}^2  \leq C_N \LRb{\Omega} h^{N+2} \sqrt{\sum_k \nor{\bm{r}}^2_{W^{N+2,2}\LRp{D^k}}}.
+\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\Omega}}^2  \leq C_N \LRb{\Omega} h^{N+2} \sqrt{\sum_{i=1}^d \sum_k \nor{\bm{r}^i}^2_{W^{N+2,2}\LRp{D^k}}}.
 \]
 \label{thm:koprivagcl}
 \end{theorem}
@@ -989,17 +1025,19 @@ by construction using (\ref{eq:iconscurl2}), $\sum_{j=1,\ldots,d} \bm{V}_q\bm{D}
 
 Equation (\ref{eq:normalconsistency}) of Assumption~\ref{ass:norm} is satisfied by directly constructing the scaled normals $\tilde{\bm{n}}J^k_f$ using values of $\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  We must now prove that the construction of $\tilde{\bm{n}}J^k_f$ implies that Equation (\ref{eq:normalsign}) holds. This is not immediately clear; since the normals are constructed from the approximate geometric terms and the formula (\ref{eq:normalconsistency}), it is not guaranteed that $\tilde{\bm{n}}^+J^{k,+}_f = -\tilde{\bm{n}}J^k_f$ will hold across a shared face.  However, the scaled normal vectors involve only nodal values on the shared face because the normals are computed in terms of the tangential reference derivatives \cite{kopriva2006metric}.  Thus, assuming a watertight mesh, the interpolation nodes on two neighboring elements will coincide for a shared face $f$, such that the trace of $\tilde{J^k\bm{G}^k_{ij}}$ from either neighboring element will be the same lower-dimensional polynomial on $f$.  This is sufficient to ensure that the scaled normal vectors $\tilde{\bm{n}}^+J^{k,+}_f, \tilde{\bm{n}}J^k_f$ will be equal and opposite.  
 
-The local $L^2$ error $\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}}$ can be bounded \note{(fix this - not exactly curl in formula)} as follows: 
+The local $L^2$ error $\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}}$ can be bounded by noting that, since the error $J^k\bm{G}^k_{ij}-\tilde{J^k\bm{G}^k_{ij}}$ consists of linear combinations of derivatives of the interpolation error $\bm{r}^i-I_{N+1}\bm{r}^i$, it can be bounded by the $H^1$-seminorm of the latter quantity
 \begin{align*}
-\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}} &\leq \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \nor{\hat{\Grad}\times \LRp{\bm{r}-I_{N+1}\bm{r}}}_{L^2\LRp{\hat{D}}}\\
-&\leq C_1 \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\LRp{\bm{r}-I_{N+1}\bm{r}}}_{H^1\LRp{\hat{D}}} \leq \tilde{C}_N \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\bm{r}}_{W^{N+2,2}\LRp{\hat{D}}},
+\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}} &\leq %\nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \nor{\hat{\Grad}\times \LRp{\bm{r}^i-I_{N+1}\bm{r}^i}}_{L^2\LRp{\hat{D}}}\\
+%\leq 
+ \sum_{i=1}^d C_1 \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\LRp{\bm{r}^i-I_{N+1}\bm{r}^i}}_{H^1\LRp{\hat{D}}}\\
+ &\leq  \sum_{i=1}^d \tilde{C}_N \nor{\sqrt{J^k}}_{L^2\LRp{\hat{D}}} \LRb{\bm{r}^i}_{W^{N+2,2}\LRp{\hat{D}}},
 \end{align*}
 where we have used the Bramble-Hilbert lemma \cite{brenner2007mathematical} on the reference element in the last step.  Since it is applied on the reference element $\hat{D}$ rather than the physical element $D^k$, the constant $\tilde{C}_N$ depends on the reference element and order of approximation, but not the mesh size $h$.  A scaling argument for quasi-uniform meshes then yields that
 \begin{align}
-\LRb{\bm{r}}_{W^{N+2,2}\LRp{\hat{D}}} \leq C_2 h^{N+2}\nor{\bm{r}}_{W^{N+2,2}\LRp{D^k}}.
+\LRb{\bm{r}^i}_{W^{N+2,2}\LRp{\hat{D}}} \leq C_2 h^{N+2}\nor{\bm{r}^i}_{W^{N+2,2}\LRp{D^k}}.
 \label{eq:localgeoerr}
 \end{align}
-The global error estimate results from squaring (\ref{eq:localgeoerr}), noting that $\sum_k \nor{\sqrt{J^k}}^2_{L^2\LRp{\hat{D}}} = \LRb{\Omega}$, and summing over all elements.
+The global estimate results from squaring (\ref{eq:localgeoerr}), summing over all elements and using $\nor{\sqrt{J^k}}^2_{L^2\LRp{\hat{D}}} = \LRb{D^k}$.
 %\[
 %%\sqrt{\sum_k \nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{D^k}}^2 }
 %\nor{{J^k\bm{G}^k_{ij}}-\tilde{J^k\bm{G}^k_{ij}}}_{L^2\LRp{\Omega}}^2  \leq C_N \LRb{\Omega} h^{N+2} \sqrt{\sum_k \nor{\bm{r}}^2_{W^{N+2,2}\LRp{D^k}}}.
@@ -1044,7 +1082,9 @@ In this section, we verify Theorems~\ref{thm:superconverge} and \ref{thm:kopriva
 \[
 f(\bm{x}) = e^{x+y}\sin\LRp{{\pi x}}\sin\LRp{{\pi y}}, \qquad g(\bm{x}) = f(\bm{x}) + H(x+y-\sin(\pi x)),
 \]
-where $H$ is the Heaviside function.  For the smooth function $f(\bm{x})$, we observe that the difference between the $L^2$ and weight-adjusted projections indeed converges at a rate of $O\LRp{h^{N+2}}$ as predicted by Theorem~\ref{fig:superconverge}, such that the $L^2$ errors for each projection appear identical.  The $L^2$ errors for the $L^2$ and weight-adjusted projections of the discontinuous function $g(\bm{x})$ are also virtually identical, despite the fact that Theorem~\ref{thm:superconverge} only holds for functions with sufficient regularity.  Moreover, the difference between the two projections appears to converge even more rapidly for the discontinuous function $g(\bm{x})$, with the $L^2$ error converging as $O(h^{1/2})$ and the difference converging as $O(h^{2+1/2})$. 
+where $H$ is the Heaviside function.  For the smooth function $f(\bm{x})$, we observe that the difference between the $L^2$ and weight-adjusted projections indeed converges at a rate of $O\LRp{h^{N+2}}$ as predicted by Theorem~\ref{fig:superconverge}, such that the $L^2$ errors for each projection appear identical.  The $L^2$ errors for the $L^2$ and weight-adjusted projections of the discontinuous function $g(\bm{x})$ are also virtually identical.  However, the difference beteween the $L^2$ and weight-adjusted projection converges faster than estimated by Theorem~\ref{fig:superconverge}, with the $L^2$ error converging as $O(h^{1/2})$ and the difference converging as $O(h^{2+1/2})$. 
+
+%, despite the fact that Theorem~\ref{thm:superconverge} only holds for functions with sufficient regularity.  Moreover, the difference between the two projections appears to converge even more rapidly for the discontinuous function $g(\bm{x})$, with the $L^2$ error converging as $O(h^{1/2})$ and the difference converging as $O(h^{2+1/2})$. 
 
 \begin{figure}
 \centering
