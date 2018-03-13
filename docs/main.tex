@@ -267,7 +267,7 @@ legend style={font=\small}
 
 \date{}
 \author{Jesse Chan, Lucas Wilcox}
-\title{Discretely entropy stable weight-adjusted discontinuous Galerkin methods: curvilinear meshes and GPU acceleration}
+\title{On discretely entropy stable weight-adjusted discontinuous Galerkin methods: curvilinear meshes}% and GPU acceleration}
 \graphicspath{{./figs/}}
 
 
@@ -623,9 +623,12 @@ We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and th
 \begin{align}
 \bm{u}_q = \bm{V}_q \bm{u}_h, \qquad \bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}, \qquad 
 \tilde{\bm{v}} = \LRs{\begin{array}{c}
+\tilde{\bm{v}}_q\\
+\tilde{\bm{v}}_f
+\end{array}} = \LRs{\begin{array}{c}
 \bm{V}_q\\
 \bm{V}_f
-\end{array}}\bm{v}_h, \qquad \tilde{\bm{u}} =  \LRs{\begin{array}{c}
+\end{array}}\bm{v}_h, \qquad \tilde{\bm{u}} = \LRs{\begin{array}{c}
 \tilde{\bm{u}}_q\\
 \tilde{\bm{u}}_f
 \end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
@@ -1226,7 +1229,11 @@ coordinates{(0.673351,0.00405434)(0.373777,0.000213685)(0.166655,3.7653e-06)(0.0
 % N = 3
 \subsection{Compressible Euler equations}
 
-Next, we verify the semi-discrete entropy conservation and accuracy of the proposed high order methods for the compressible Euler equations on curved meshes in two and three dimensions.  
+Next, we verify the semi-discrete entropy conservation and accuracy of the proposed high order methods for the compressible Euler equations on curved meshes in two and three dimensions.  We follow \cite{chan2015gpu} and choose the timestep $dt$ as
+\begin{equation}
+dt = \min_{k} {\rm CFL} \frac{\nor{J}_{L^{\infty}\LRp{D^k}}}{C_N\nor{J^f}_{L^{\infty}\LRp{\partial D^k}}},
+\end{equation}
+where $C_N$ is the $O(N^2)$ order-dependent constant in the trace inequality for \cite{warburton2003constants} and ${\rm CFL}$ is a user-chosen constant.  All numerical experiments in this work utilize the five-stage fourth order low storage Runge Kutta (LSRK-45) time-stepper \cite{carpenter1994fourth}.  
 
 \subsubsection{Two dimensional experiments}
 
@@ -1269,7 +1276,36 @@ p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\
  \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
 \end{gather}
 
-We begin by testing the propagation of a shock on a two-dimensional curved mesh using a discontinuous profile.  
+We begin by testing the propagation of a shock on a two-dimensional curved mesh using a discontinuous profile on the domain $\Omega = [0,20] \times [-5,5]$.   We set the initial velocities to be zero, and initialize the density and pressure as a discontinuous square pulse as in \cite{chan2017discretely}
+\begin{equation}
+\rho(\bm{x},t) = \begin{cases}
+3 & \LRb{x} < 1/2 \text{ and } \LRb{y} < 1/2\\
+2 & \text{otherwise},
+\end{cases} \qquad 
+u(\bm{x},t) = v(\bm{x},t) = 0, \qquad
+p(\bm{x},t) = \rho^\gamma.
+\label{eq:discontin}
+\end{equation}
+To test the scheme (\ref{eq:dgform2}), we utilize an entropy conservative flux and run it on a uniform triangular mesh with a curvilinear warping shown in Figure~\ref{fig:warp2d}.   Theorem~\ref{thm:stab2} ensures that, under an entropy conservative flux, (\ref{eq:dgform2}) is semi-discretely entropy conservative.  This does not hold at the fully discrete level; however, it is possible to verify that (\ref{eq:dgform2}) is entropy stable using other approaches.  
+
+First, can examine the entropy RHS, which we define as the right hand side of (\ref{eq:dgform2}) tested with $\bm{v}_h$
+\begin{equation}
+\text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k {\rm diag}\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)}}.  
+\label{eq:entropyrhs}
+\end{equation}
+For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machine precision.  We can also track the change in entropy $\Delta U = \LRb{U(\bm{u}(\bm{x},t))-U(\bm{u}(\bm{x},0))}$, which should converge to $0$ as the timestep $dt$ approaches zero.  Furthermore, the rate of convergence should match the order of the time-stepper used \cite{gassner2016well,chan2017discretely}.  
+
+\begin{figure}
+\centering
+\subfloat[Uniform mesh]{\includegraphics[width=.35\textwidth]{figs/vortexMeshUniform.png}}
+\hspace{1em}
+\subfloat[Warped mesh]{\includegraphics[width=.35\textwidth]{figs/vortexMeshCurved.png}}
+\caption{Two-dimensional curvilinear meshes used for testing entropy conservation and accuracy.}
+\label{fig:warp2d}
+\end{figure}
+
+Figure~\ref{fig:dSconverge} shows the evolution of entropy $U(\bm{u})$ over time $[0,T]$, where the final time $T = 2$.  We observe that, when the entropy-projected conservative variables $\tilde{\bm{u}}$ are computed using the standard $L^2$ projection, the change in entropy does not decrease as $dt$ decreases (for a fixed mesh and order $N$).  When $\tilde{\bm{u}}$ is defined using the weight-adjusted projection, the entropy decreases as $dt$ decreases.  Moreover, the rate of convergence is approximately $O(dt^{4.675})$, which is slightly higher than the expected rate of $O(dt^4)$ when using LSRK-45.  Additionally, regardless of whether the standard and weight-adjusted projection was used, the entropy RHS (\ref{eq:entropyrhs}) is $O(10^{-14})$, indicating that the proposed scheme is implemented correctly.  
+
 \begin{figure}
 \centering
 \subfloat[With weight-adjusted projection]{
@@ -1336,15 +1372,13 @@ coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,
 %\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
 \legend{${\rm CFL} = .25$,${\rm CFL} = .125$,${\rm CFL} = .0625$ }
 \end{semilogyaxis}
-
 \end{tikzpicture}
 }
-\caption{\note{Finish}.  In both cases, the magnitude of the right hand side is $O\LRp{10^{-14}}$, indicating that  }
+\caption{Change in entropy under an entropy conservative formulation with $N=4$.  In both cases, the magnitude of the entropy RHS (\ref{eq:entropyrhs}) is $O\LRp{10^{-14}}$. }
 \label{fig:dSconverge}
 \end{figure}
 
-\note{Shock propagation on a curved mesh: testing entropy conservation}
-
+We next test the accuracy of the proposed schemes 
 \note{Isentropic vortex on curved and non-curved meshes}
 
 \subsubsection{Three dimensional experiments}
@@ -1437,11 +1471,11 @@ p_{\rm avg} &= \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{
 
 \note{Taylor-Green vortex}
 
-\section{Computational results}
-
-
+%\section{Computational results}
 
 \section{Conclusions}
+
+
 
 \section{Acknowledgements}
 
