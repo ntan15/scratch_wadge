@@ -627,8 +627,8 @@ void *asd_gopt_sort(int *argc, const char **argv, const void *opt_specs)
               }
               if (opt_spec_p->flags & ASD_GOPT_ARG)
               {
-                next_option->arg = strchr((*arg_p) + 2, '=') + 1;
-                if ((char *)0 + 1 == next_option->arg)
+                const char *a = strchr((*arg_p) + 2, '=');
+                if (a == NULL)
                 {
                   ++arg_p;
                   if (!*arg_p || ('-' == (*arg_p)[0] && (*arg_p)[1]))
@@ -639,6 +639,10 @@ void *asd_gopt_sort(int *argc, const char **argv, const void *opt_specs)
                     exit(EX_USAGE);
                   }
                   next_option->arg = *arg_p;
+                }
+                else
+                {
+                  next_option->arg = a + 1;
                 }
               }
               else
