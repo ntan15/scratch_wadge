@@ -2795,11 +2795,10 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 #if VDIM == 3
   app->Dtq =
       device_malloc(app->device, sizeof(dfloat_t) * Nq * Nq, app->hops->Dtq);
-#endif
 
-  app->Drstq =
-      device_malloc(app->device, sizeof(dfloat_t) * 3 * Nq * Nq, app->hops->Drstq);
-  
+  app->Drstq = device_malloc(app->device, sizeof(dfloat_t) * 3 * Nq * Nq,
+                             app->hops->Drstq);
+#endif
 
   app->Vq =
       device_malloc(app->device, sizeof(dfloat_t) * Np * Nq, app->hops->Vq);
