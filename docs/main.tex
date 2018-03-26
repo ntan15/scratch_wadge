@@ -312,7 +312,7 @@ and that
 \pd{U(\bm{u})}{t} + \sum_{j=1}^d \pd{F_j(\bm{u})}{x_j} = 0.
 %\label{eq:entropyeqstrong}
 \end{equation*}
-Let $\Omega\mathbb{R}^d$ now be a closed domain with boundary $\partial \Omega$.  Integrating over $\Omega$ an using Gauss' theorem on the spatial derivative yields
+Let $\Omega \subset \mathbb{R}^d$ be a closed domain with boundary $\partial \Omega$.  Integrating over $\Omega$ and using Gauss' theorem on the spatial derivative yields
 \begin{equation}
 \int_{\Omega}\pd{U(\bm{u})}{t}\diff{x} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}(\bm{u})^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{x} = 0,
 \label{eq:entropyeq}
@@ -356,9 +356,9 @@ P^N_f \LRp{\hat{f}} = \LRc{ \left.u\right|_{\hat{f}}, \quad u \in P^N\LRp{\hat{D
 \]
 We denote the dimension of the trace space as ${\rm dim}\LRp{P^N_f\LRp{\hat{f}}} = N^f_p$.
 
-We next define the $L^2$ norm and inner products over the reference element $\hat{D}$ and the surface of the reference element $\partial \hat{D}$
+We next define the $L^2$ norm and inner products over the reference element $\hat{D}$ and the surface of the reference element $\partial \hat{D}$ as
 \[
-\LRp{\bm{u},\bm{v}}_{\hat{D}} = \int_{\hat{D}} \bm{u}\cdot\bm{v}\diff{\bm{x}} =  \int_{\widehat{D}} \bm{u}\cdot\bm{v} J^k \diff{\widehat{x}}, \qquad \nor{\bm{u}}^2_{\hat{D}} = (\bm{u},\bm{u})_{\hat{D}}, \qquad \LRa{\bm{u},\bm{v}}_{\partial \hat{D}} = \int_{\partial \hat{D}} \bm{u} \cdot \bm{v} \diff{\bm{x}},
+  \LRp{\bm{u},\bm{v}}_{\hat{D}} =  \int_{\widehat{D}} \bm{u}\cdot\bm{v} \diff{\hat{\bm{x}}}, \qquad \nor{\bm{u}}^2_{\hat{D}} = (\bm{u},\bm{u})_{\hat{D}}, \qquad \LRa{\bm{u},\bm{v}}_{\partial \hat{D}} = \int_{\partial \hat{D}} \bm{u} \cdot \bm{v} \diff{\hat{\bm{x}}},
 \]
 We also introduce the continuous $L^2$ projection operator $\Pi_N$ and lifting operator $L$.  For $u \in L^2\LRp{\widehat{D}}$, the $L^2$ projection $\Pi_N u$ is defined through
 \begin{equation}
@@ -376,16 +376,17 @@ Finally, we introduce $L^2, L^{\infty}$ Sobolev norms and spaces, which will be 
 \nor{u}_{L^{\infty}\LRp{\Omega}} &= \inf\LRc{C \geq 0: \LRb{u\LRp{\bm{x}}} \leq C \quad \forall \bm{x}\in \Omega}, \qquad
 L^{\infty}\LRp{\Omega} = \LRc{u: \Omega\rightarrow \mathbb{R}, \quad \nor{u}_{L^{\infty}\LRp{\Omega}} < \infty}.
 \end{align*}
-The $L^2, L^{\infty}$ Sobolev norms of degree $s$ are then defined 
+The $L^2$ and $L^{\infty}$ Sobolev norms of degree $s$ are then defined  as
 \begin{align*}
 %\LRb{u}_{W^{s,p}\LRp{\Omega}} &= \LRp{\sum_{\LRb{\alpha}= s} \nor{ D^{\alpha} u}_{L^p\LRp{\Omega}}^p}^{1/p}, \qquad \LRb{u}_{W^{s,\infty}\LRp{\Omega}} = \max_{\LRb{\alpha}= s} \nor{D^{\alpha}u}_{L^{\infty}\LRp{\Omega}}\\
-\nor{u}_{W^{s,2}\LRp{\Omega}}^2 &= {\sum_{\LRb{\alpha}\leq s} \nor{ D^{\alpha} u}_{L^2\LRp{\Omega}}^2}, \qquad \nor{u}_{W^{s,\infty}\LRp{\Omega}} = \max_{\LRb{\alpha}\leq s} \nor{D^{\alpha}u}_{L^{\infty}\LRp{\Omega}}.
+\nor{u}_{W^{s,2}\LRp{\Omega}}^2 &= {\sum_{\LRb{\alpha}\leq s} \nor{ D^{\alpha} u}_{L^2\LRp{\Omega}}^2}, \qquad \nor{u}_{W^{s,\infty}\LRp{\Omega}} = \max_{\LRb{\alpha}\leq s} \nor{D^{\alpha}u}_{L^{\infty}\LRp{\Omega}},
 \end{align*}
-where $\alpha = \LRc{\alpha_1,\alpha_2,\alpha_3}$ is a multi-index such that
+respectively.  Here $\alpha = \LRc{\alpha_1,\ldots,\alpha_d}$ is a multi-index
+of order $\LRb{\alpha} = \alpha_1 + \cdots + \alpha_d$ such that
 \[
-D^{\alpha}u = \pd{^{\alpha_1}}{x^{\alpha_1}}\pd{^{\alpha_2}}{y^{\alpha_2}}\pd{^{\alpha_3}}{z^{\alpha_3}} u,
+D^{\alpha}u = \pd{^{\alpha_1}}{x_1^{\alpha_1}}\cdots\pd{^{\alpha_d}}{x_d^{\alpha_d}} u.
 \]
-The Sobolev spaces $W^{s,2},W^{s,\infty}$ are defined as the spaces of functions with finite $L^2$ and $L^\infty$ Sobolev norms of degree $s$.
+The Sobolev spaces $W^{s,2}$ and $W^{s,\infty}$ are defined as the spaces of functions with finite $L^2$ and $L^\infty$ Sobolev norms of degree $s$, respectively.
 
 
 
