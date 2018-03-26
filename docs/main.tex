@@ -294,10 +294,10 @@ This work addresses high order accurate schemes for the following system of $n$ 
   \pd{\bm{u}}{t} + \sum_{j=1}^d\pd{\bm{f}_j(\bm{u})}{x_j}  = 0, \qquad \bm{u} : \mathbb{R}^d \times [0,\infty) \rightarrow  \mathbb{R}^n, \qquad \bm{f}_j : \mathbb{R}^n\rightarrow \mathbb{R}^n,
 \label{eq:nonlineqs}
 \end{equation}
-where $\bm{u}(\bm{x},t)$ denote the \emph{conservative variables} for this system.  %We assume the system is well-posed under appropriate boundary conditions.
+where $\bm{u}(\bm{x},t)$ denotes the \emph{conservative variables} for this system.  %We assume the system is well-posed under appropriate boundary conditions.
 We are interested in nonlinear conservation laws for which an entropy function $U(\bm{u})$ exists, where $U(\bm{u})$ is convex with respect to the conservative variables $\bm{u}$.  If this function exists, then it is possible to define \emph{entropy variables} $\bm{v}(\bm{u}) = \pd{U}{\bm{u}}$.  These functions symmetrize the system of nonlinear conservation laws (\ref{eq:nonlineqs}) \cite{hughes1986new}.  
 
-It can be shown (see, for example, \cite{mock1980systems}) that symmetrization is equivalent to the existence of an entropy flux function $F(\bm{u})$ and entropy potential $\psi$ such that
+It can be shown (see, for example, \cite{mock1980systems}) that symmetrization is equivalent to the existence of entropy flux function $F_j(\bm{u})$ and entropy potentials $\psi_j$ such that
 \[
 \bm{v}^T \pd{\bm{f}_j}{\bm{u}} = \pd{F_j(\bm{u})}{\bm{u}}^T, \qquad \psi_j(\bm{v}) = \bm{v}^T\bm{f}_j(\bm{u}(\bm{v})) - F_j(\bm{u}(\bm{v})), \qquad \psi_j'(\bm{v}) = \bm{f}_j(\bm{u}(\bm{v})).
 \]
