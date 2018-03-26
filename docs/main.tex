@@ -254,7 +254,7 @@ legend style={font=\small}
 \newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
 \newcommand{\Grad} {\ensuremath{\nabla}}
 \newcommand{\note}[1]{{\color{blue}{#1}}}
-\newcommand{\lcwnote}[1]{{\color{gray}{#1}}}
+\newcommand{\lcwnote}[1]{{\color{gray}{LCW: #1}}}
 \renewcommand{\d}{\partial}
 
 
@@ -392,9 +392,9 @@ The Sobolev spaces $W^{s,2}$ and $W^{s,\infty}$ are defined as the spaces of fun
 
 \subsubsection{Discontinuous Galerkin formulations and the $L^2$ projection}
 
-Discontinuous Galerkin methods have been widely applied to systems of nonlinear conservation laws (\ref{eq:nonlineqs}) \cite{cockburn1989tvb, cockburn1998runge, cockburn2001devising, karniadakis2013spectral}.  The development of new discontinuous Galerkin methods for nonlinear conservation laws have focused heavily on the choice of numerical flux \cite{qiu2006numerical} or the development of  slope limiters \cite{krivodonova2007limiters, zhang2012maximum, dumbser2014posteriori} and artificial viscosity strategies \cite{persson2006sub, barter2010shock, klockner2011viscous}.  However, the treatment of the underlying volume discretization remains relatively unchanged between each of these approaches.  
+Discontinuous Galerkin methods have been widely applied to systems of nonlinear conservation laws (\ref{eq:nonlineqs}) \cite{cockburn1989tvb, cockburn1998runge, cockburn2001devising, karniadakis2013spectral}.  The development of new discontinuous Galerkin methods for nonlinear conservation laws has focused heavily on the choice of numerical flux \cite{qiu2006numerical} or the development of  slope limiters \cite{krivodonova2007limiters, zhang2012maximum, dumbser2014posteriori} and artificial viscosity strategies \cite{persson2006sub, barter2010shock, klockner2011viscous}.  However, the treatment of the underlying volume discretization remains relatively unchanged between each of these approaches.  
 
-Ignoring terms involving filters, limiters, or artificial viscosity, a semi-discrete ``weak'' DG formulation  for (\ref{eq:nonlineqs}) can be given locally over an element $D^k$: find $\bm{u}\in \LRp{P^N\LRp{D^k}}^n$ such that
+Ignoring terms involving filters, limiters, or artificial viscosity, a semi-discrete ``weak'' DG formulation  for (\ref{eq:nonlineqs}) can be given locally over an element $D^k$: find $\bm{u}\in \LRp{P^N\LRp{D^k} \times [0,\infty)}^n$ such that
 \begin{align}
 \int_{D^k} \LRp{\pd{\bm{u}}{t}\cdot \bm{v} - \sum_{j=1}^d\bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i}} \diff{\bm{x}} 
 + \sum_{j=1}^d \int_{\partial D^k} \LRp{\bm{f}^*_j\LRp{\bm{u}^+,\bm{u}} }\cdot \bm{v} n_j  \diff{\bm{x}} = 0, \qquad \forall \bm{v}\in \LRp{P^N\LRp{D^k}}^n,
@@ -402,19 +402,20 @@ Ignoring terms involving filters, limiters, or artificial viscosity, a semi-disc
 \end{align}
 where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on both $D^k$ and neighboring elements.  
 
-Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux  function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  To account for the inexactness of quadrature, we rewrite (\ref{eq:weakdg}) in strong form using a discrete quadrature-based $L^2$ projection.  
+Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due to the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux  function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  To account for the inexactness of quadrature, we rewrite (\ref{eq:weakdg}) in strong form using a discrete quadrature-based $L^2$ projection.  
 
-For polynomial approximation spaces, $\pd{\bm{v}}{x_i}$ is polynomial.  Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
+For polynomial approximation spaces, $\pd{\bm{v}}{x_i}$ is polynomial \lcwnote{(Is this true when have a non-affine element mapping?)}.  Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
 \[
 \int_{D^k} \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} \diff{\bm{x}} = \int_{\hat{D}} \Pi_N \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} J^k\diff{\bm{x}}.
 \]
+\lcwnote{I don't understand the previous equation.  Should the geometry terms be included in the argument to the $L^2$ projection?  If so we might need to introduce $\bm{G}^k$ here.}
 Thus, integrating by parts (\ref{eq:weakdg}) recovers a ``strong'' DG formulation involving the projection operator
 \begin{align}
 &\int_{D^k} \LRp{\pd{\bm{u}}{t} - \sum_{j=1}^d \pd{\Pi_N \bm{f}_j(\bm{u})}{x_j}} \cdot \bm{v} \diff{\bm{x}} \nonumber\\
 &+ \sum_{j=1}^d \int_{\partial D^k} \LRp{\bm{f}^*_j\LRp{\bm{u}^+,\bm{u}} - \Pi_N\bm{f}_j(\bm{u})}\cdot \bm{v} n_j  \diff{\bm{x}} = 0, \qquad \forall \bm{v}\in \LRp{P^N\LRp{D^k}}^n.  
 \label{eq:strongdg}
 \end{align}
-From this, we see that our discrete scheme does not differentiation the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ exactly, but instead differentiates the projection of $\Pi_N \bm{f}_j\LRp{\bm{u}}$ onto polynomials of degree $N$.  Because the $L^2$ projection operator is introduced, the chain rule no longer holds at the discrete level and step (\ref{eq:chainrule}) of the proof of entropy conservation is no longer valid.  Thus, ensuring discrete entropy stability will require a discrete formulation of the system of nonlinear conservation laws (\ref{eq:nonlineqs}) from which we can prove a discrete entropy inequality without relying on the chain rule.  
+From this, we see that our discrete scheme does not differentiate the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ exactly, but instead differentiates the projection of $\Pi_N \bm{f}_j\LRp{\bm{u}}$ onto polynomials of degree $N$.  Because the $L^2$ projection operator is introduced, the chain rule no longer holds at the discrete level and step (\ref{eq:chainrule}) of the proof of entropy conservation is no longer valid.  Thus, ensuring discrete entropy stability will require a discrete formulation of the system of nonlinear conservation laws (\ref{eq:nonlineqs}) from which we can prove a discrete entropy inequality without relying on the chain rule.  
 
 %We note that it is not strictly necessary to introduce the projection operator; however, constructing a ``strong'' DG formulation without a projection operator requires an analytical expression for derivatives of the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$, which can be complex or expensive to compute.  Moreover, because polynomial quadrature rules are typically used in practice to evaluate integrals, it is not possible to use integration by parts when the nonlinear flux function is rational due to errors in approximating integrals.  Introducing the $L^2$ projection operator resolves both issues, as the integrands involved in integration by parts are polynomials of degree $2N-1$, for which efficient quadratures exist. 
 
