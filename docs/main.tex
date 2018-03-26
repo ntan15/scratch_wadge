@@ -276,7 +276,7 @@ legend style={font=\small}
 \maketitle
 
 \begin{abstract}
-We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guaranteeing that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order accurate curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
+We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guarantee that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order accurate curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
 \end{abstract}
 
 \tableofcontents
@@ -289,7 +289,7 @@ Matrix WADG: GPU efficiency of WADG vs storing weighted inverses \cite{chan2017w
 
 \section{Systems of nonlinear conservation laws}
 
-This work addresses is high order accurate schemes for the following system of $n$ nonlinear conservation laws in $d$ dimensions 
+This work addresses high order accurate schemes for the following system of $n$ nonlinear conservation laws in $d$ dimensions 
 \begin{equation}
 \pd{\bm{u}}{t} + \sum_{j=1}^d\pd{\bm{f}_j(\bm{u})}{x_j}  = 0, \qquad \bm{u} \in \mathbb{R}^n, \qquad \bm{f}_j : \mathbb{R}^n\rightarrow \mathbb{R}^n,
 \label{eq:nonlineqs}
