@@ -276,7 +276,7 @@ legend style={font=\small}
 \maketitle
 
 \begin{abstract}
-We construct entropy conservative and entropy stable high order discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guaranteeing that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
+We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guaranteeing that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order accurate curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
 \end{abstract}
 
 \tableofcontents
@@ -289,7 +289,7 @@ Matrix WADG: GPU efficiency of WADG vs storing weighted inverses \cite{chan2017w
 
 \section{Systems of nonlinear conservation laws}
 
-This work addresses is high order schemes for the following system of $n$ nonlinear conservation laws in $d$ dimensions 
+This work addresses is high order accurate schemes for the following system of $n$ nonlinear conservation laws in $d$ dimensions 
 \begin{equation}
 \pd{\bm{u}}{t} + \sum_{j=1}^d\pd{\bm{f}_j(\bm{u})}{x_j}  = 0, \qquad \bm{u} \in \mathbb{R}^n, \qquad \bm{f}_j : \mathbb{R}^n\rightarrow \mathbb{R}^n,
 \label{eq:nonlineqs}
@@ -328,7 +328,7 @@ which results from considering solutions of an appropriate viscous form of the e
 
 \subsection{Standard DG formulations for nonlinear conservation laws}
 
-We begin by reviewing the construction of standard high order DG formulations for (\ref{eq:nonlineqs}).  
+We begin by reviewing the construction of standard high order accurate DG formulations for (\ref{eq:nonlineqs}).  
 
 \subsubsection{Mathematical notation}
 
@@ -418,7 +418,7 @@ From this, we see that our discrete scheme does not differentiation the nonlinea
 
 \section{Discretely entropy stable DG methods on curved meshes}
 
-We will first show how to construct discretely entropy stable high order DG methods on curvilinear meshes, but will present this using a matrix formulation as opposed to a continuous formulation.  This is to ensure that the effects of discretization, nonlinear, and quadrature are accounted for in the proof of semi-discrete entropy stability.  We first introduce quadrature-based matrices, which we will then use to construct discretely entropy stable DG formulations.
+We will first show how to construct discretely entropy stable high order accurate DG methods on curvilinear meshes, but will present this using a matrix formulation as opposed to a continuous formulation.  This is to ensure that the effects of discretization, nonlinear, and quadrature are accounted for in the proof of semi-discrete entropy stability.  We first introduce quadrature-based matrices, which we will then use to construct discretely entropy stable DG formulations.
 
 
 \subsection{Basis and quadrature rules}
@@ -1229,7 +1229,7 @@ coordinates{(0.673351,0.00405434)(0.373777,0.000213685)(0.166655,3.7653e-06)(0.0
 % N = 3
 \subsection{Compressible Euler equations}
 
-Next, we verify the semi-discrete entropy conservation and accuracy of the proposed high order methods for the compressible Euler equations on curved meshes in two and three dimensions.  We follow \cite{chan2015gpu} and choose the timestep $dt$ as
+Next, we verify the semi-discrete entropy conservation and accuracy of the proposed high order accurate methods for the compressible Euler equations on curved meshes in two and three dimensions.  We follow \cite{chan2015gpu} and choose the timestep $dt$ as
 \begin{equation}
 dt = \min_{k} {\rm CFL} \frac{\nor{J}_{L^{\infty}\LRp{D^k}}}{C_N\nor{J^f}_{L^{\infty}\LRp{\partial D^k}}},
 \end{equation}
