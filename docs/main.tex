@@ -426,19 +426,19 @@ We will first show how to construct discretely entropy stable high order accurat
 
 \subsection{Basis and quadrature rules}
 
-{We now introduce quadrature-based matrices for the $d$-dimensional reference element $\widehat{D}$, which we will use to construct matrix-vector formulations of DG methods.   Assuming $u(\bm{x}) \in P^N\LRp{\widehat{D}}$, it can be represented in terms of the vector of coefficients $\bm{u}$ using some polynomial basis $\phi_i$ of degree $N$ and dimension $N_p$ 
+{We now introduce quadrature-based matrices for the $d$-dimensional reference element $\widehat{D}$, which we will use to construct matrix-vector formulations of DG methods.   Assuming $u(\hat{\bm{x}}) \in P^N\LRp{\widehat{D}}$, it can be represented in terms of the vector of coefficients $\bm{u}$ using some polynomial basis $\phi_i$ of degree $N$ and dimension $N_p$ 
 \[
-u(\bm{x}) = \sum_{j=1}^{N_p}\bm{u}_j \phi_j(\widehat{\bm{x}}), \qquad P^N\LRp{\widehat{D}} = {\rm span}\LRc{\phi_i(\widehat{x})}_{i=1}^{N_p}.
+  u(\hat{\bm{x}}) = \sum_{j=1}^{N_p}\bm{u}_j \phi_j(\widehat{\bm{x}}), \qquad P^N\LRp{\widehat{D}} = {\rm span}\LRc{\phi_i(\widehat{x})}_{i=1}^{N_p}.
 \]
 
-We construct quadrature-based based on $\phi_i$ and appropriate volume and surface quadrature rules.  The volume and surface quadrature rules are given by points and positive weights $\LRc{(\bm{x}_i, w_i)}_{i=1}^{N_q}$ and $\LRc{(\bm{x}^f_i, w^f_i)}_{i=1}^{N^f_q}$, respectively.  We make the following assumptions on the strength of these quadratures: %\note{finish!  Note that we want quadratures such that discrete IBP holds.  For example, GLL or $2N-1$ vol and $2N$ surface. }
+We construct quadrature-based matrices based on $\phi_i$ and appropriate volume and surface quadrature rules.  The volume and surface quadrature rules are given by points and positive weights $\LRc{(\hat{\bm{x}}_i, \hat{w}_i)}_{i=1}^{N_q}$ and $\LRc{(\hat{\bm{x}}^f_i, \hat{w}^f_i)}_{i=1}^{N^f_q}$, respectively.  We make the following assumptions on the strength of these quadratures: %\note{finish!  Note that we want quadratures such that discrete IBP holds.  For example, GLL or $2N-1$ vol and $2N$ surface. }
 \begin{assumption}[Integration by parts under quadrature]
-The volume quadrature rule  $\LRc{(\bm{x}_i, w_i)}_{i=1}^{N_q}$ is exact for polynomials of degree $2N-1$.  Additionally, 
+  The volume quadrature rule  $\LRc{(\hat{\bm{x}}_i, \hat{w}_i)}_{i=1}^{N_q}$ is exact for polynomials of degree $2N-1$.  Additionally, 
 for any $u, v \in P^N\LRp{\hat{D}}$, integration by parts 
 \[
-\LRp{\pd{u}{x_i},v}_{\hat{D}} = \LRa{u,vn_i}_{\partial \hat{D}} - \LRp{u,\pd{v}{x_i}}_{\hat{D}}
+  \LRp{\pd{u}{\hat{x}_i},v}_{\hat{D}} = \LRa{u,v\hat{n}_i}_{\partial \hat{D}} - \LRp{u,\pd{v}{\hat{x}_i}}_{\hat{D}}
 \]
-holds when volume and surface integrals are approximated using quadrature.
+holds when the volume and surface integrals are approximated using quadrature.
 \label{ass:quad}
 \end{assumption}
 Assumption (\ref{ass:quad}) holds, for example, for any surface quadrature rule which is exact for degree $2N$ polynomials on the boundary of the reference element $\partial \hat{D}$.  
