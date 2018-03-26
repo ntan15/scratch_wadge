@@ -291,7 +291,7 @@ Matrix WADG: GPU efficiency of WADG vs storing weighted inverses \cite{chan2017w
 
 This work addresses high order accurate schemes for the following system of $n$ nonlinear conservation laws in $d$ dimensions 
 \begin{equation}
-\pd{\bm{u}}{t} + \sum_{j=1}^d\pd{\bm{f}_j(\bm{u})}{x_j}  = 0, \qquad \bm{u} \in \mathbb{R}^n, \qquad \bm{f}_j : \mathbb{R}^n\rightarrow \mathbb{R}^n,
+  \pd{\bm{u}}{t} + \sum_{j=1}^d\pd{\bm{f}_j(\bm{u})}{x_j}  = 0, \qquad \bm{u} : \mathbb{R}^d \times [0,\infty) \rightarrow  \mathbb{R}^n, \qquad \bm{f}_j : \mathbb{R}^n\rightarrow \mathbb{R}^n,
 \label{eq:nonlineqs}
 \end{equation}
 where $\bm{u}(\bm{x},t)$ denote the \emph{conservative variables} for this system.  %We assume the system is well-posed under appropriate boundary conditions.
