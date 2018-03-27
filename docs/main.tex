@@ -623,6 +623,7 @@ The numerical flux $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R}$ is entropy conservative
 \LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} \leq \psi_i\LRp{\bm{u}_L}-\psi_i\LRp{\bm{u}_R}.
 \]
 \end{enumerate}
+\label{def:entropyflux}
 \end{definition}
 
 We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and the entropy-projected conservative variables $\tilde{\bm{u}}$ 
@@ -651,18 +652,18 @@ We now introduce a semi-discrete DG formulation for $\bm{u}_h$
 \end{align}
 where $\tilde{\bm{u}}^+$ denotes the values of the entropy-projected conservative variables on the neighboring element across each face of $D^k$, and $\bm{f}^*$ on the boundary denotes some numerical flux through which boundary conditions are imposed.
 
-Define the boundary quadrature matrix $\bm{W}_{\partial \Omega}$ such that
+Define the diagonal boundary quadrature matrix $\bm{W}_{\partial \Omega}$ such that
 \[
 \LRp{\bm{W}_{\partial \Omega} }_{ii} = \begin{cases}
-  \bm{W}_f\diag\LRp{\bm{J}^k_f}, & \text{if $\hat{\bm{x}}^f_i$ is on the $\partial \Omega$}\\
+  \bm{W}_f, & \text{if $\hat{\bm{x}}^f_i$ is on the $\partial \Omega$}\\
 0, & \text{otherwise}. 
 \end{cases}
 \]
 We have the following semi-discrete statement of entropy conservation:
 \begin{theorem}
-Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform1}) is entropy conservative in the sense that
+  Let $\bm{f}_{i,S}$ be an entropy conservative flux from Definition~\ref{def:entropyflux} and assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform1}) is entropy conservative in the sense that
 \[
-\sum_k \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
+  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
 \]
 \label{thm:stab1}
 \end{theorem}
@@ -772,9 +773,9 @@ A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the varia
 \end{align}
 Since the  weight-adjusted mass matrix inverse is low-storage, and since the matrices $\bm{D}^j_k$ in (\ref{eq:dik}) can be assembled from reference matrices $\bm{D}^i_N$ and the values of geometric terms at quadrature points, the overall scheme requires only $O(N^d)$ storage per element.  We can additionally show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab2}: 
 \begin{theorem}
-Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform2}) is entropy conservative in the sense that
+  Let $\bm{f}_{i,S}$ be an entropy conservative flux from Definition~\ref{def:entropyflux} and assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform2}) is entropy conservative in the sense that
 \[
-\sum_k \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
+  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
 \]
 \label{thm:stab2}
 \end{theorem}
