@@ -499,7 +499,7 @@ Then, $\bm{Q}_N^i$ satisfies the following discrete analogue of integration by p
 \begin{equation}
 \bm{Q}_N^i + \LRp{\bm{Q}_N^i}^T = \bm{B}^i_N, \qquad \bm{B}_N = \LRp{\begin{array}{cc}
 \bm{0}&\\
-& \bm{W}_f \diag\LRp{\hat{\bm{n}}_i\hat{\bm{J}}_f}
+& \bm{W}_f \diag\LRp{\hat{\bm{n}}_i\circ\hat{\bm{J}}_f}
 \end{array}}.
 \label{eq:sbpprop1}
 \end{equation}
@@ -522,11 +522,11 @@ The matrix $\bm{D}_N^i$ reduces to polynomial differentiation when applied to po
 
 The key difference between curvilinear and affine meshes is that geometric terms now vary spatially over each element.  In practice, derivatives are computed over the reference element and mapped to the physical element $D^k$ through a change of variables formula
 \[
-\pd{u}{x_i} = \sum_{j=1}^d \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad \bm{G}^k_{ij} = \pd{\hat{x}_j}{x_i}.
+\pd{u}{x_i} = \sum_{j=1}^d \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad \bm{G}^k_{ij} = \pd{\hat{x}_j}{x_i},
 \]
-where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$.
+where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$ \lcwnote{(What about $\bm{J}^{\bm{G}^k_{ij}}$ instead of $\bm{JG}^k_{ij}$ to make it look more like a single object? I am debating if I should revert the changes to add the Hadamard product to the other surface terms.)}.
 
-We assume in this work that the mesh is stationary.  It can be shown at the continuous level that, for any differentiable and invertible mapping, the quantity $J^k\bm{G}^k$ satisfies a geometric conservation law (GCL) \cite{thomas1979geometric, kopriva2006metric}
+We assume in this work that the mesh is stationary.  It can be shown at the continuous level that, for any differentiable and invertible mapping, the quantity $J^k\bm{G}^k$ satisfies a geometric conservation law (GCL) \cite{kopriva2006metric, thomas1979geometric}
 \begin{equation}
 \sum_{j=1}^d\pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0,
 \label{eq:gcl}
@@ -539,22 +539,24 @@ J^k\pd{u}{x_i} = \frac{1}{2}\sum_{j=1}^d \LRp{J^k\bm{G}^k_{ij}\pd{u}{\hat{x}_j} 
 
 We will require the following assumptions on the mesh, as well as the geometric terms and outward normal vectors:
 \begin{assumption}[Mesh assumptions]
-We assume that the mesh is quasi-uniform.  The mesh is also assumed to be watertight, such that normals are consistent across neighboring elements as follows: for a shared face $f$ between $\bm{D}^k$ and $\bm{D}^{k,+}$, the scaled outward normal vectors for each element are equal and opposite at all points such that 
+We assume that the mesh is quasi-uniform.  The mesh is also assumed to be watertight, such that normals are consistent across neighboring elements as follows: for a shared face $f$ between $D^k$ and $D^{k,+}$, the scaled outward normal vectors for each element are equal and opposite at all points such that 
 \begin{align}
 \bm{n}J^k_f = -\bm{n}^+J^{k,+}_f.
 \label{eq:normalsign}
 \end{align}
 We also assume that the scaled matrix of geometric terms transforms scaled reference normal vectors to scaled physical normals, such that
 \begin{align}
-\sum_{j=1}^d J^k\bm{G}^k_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}} \circ\LRp{\hat{\bm{n}}_j\hat{\bm{J}}_f}}
-= \LRp{\bm{n}_i\bm{J}^k_f}.
+\sum_{j=1}^d J^k\bm{G}^k_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}}_f \circ\LRp{\hat{\bm{n}}_j\circ\hat{\bm{J}}_f}}
+= \LRp{\bm{n}_i\circ\bm{J}^k_f},
 \label{eq:normalconsistency}
 \end{align}
+where $\bm{n}_i$ and $\bm{J}^k_f$ are vectors containing evaluations of the physical unit normals and face Jacobian factors for $D^k$ at surface quadrature points, respectively.
+Likewise, $\LRp{\bm{JG}^k_{ij}}_f$ \lcwnote{(This could be written as $\bm{J}_f^{\bm{G}^k_{ij}}$.)} is a vector containing evaluations of $J^k\bm{G}^k_{ij}$ at the surface quadrature points.
 \label{ass:norm}
 \end{assumption}
 The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at the continuous level for a watertight mesh \cite{ciarlet1978finite}, and thus at all points where the geometric terms are computed exactly.  However, we will also consider cases where the geometric terms $J^k\bm{G}^k_{ij}$ are modified to enforce a discrete form of (\ref{eq:gcl}); in these situations, it will be important to ensure that (\ref{eq:normalconsistency}) holds after such modifications.  
 
-We define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as 
+Similar to what is done in finite difference discretizations~\cite{nordstrom2006cfdf}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as 
 \[
 \bm{D}^i_k = \sum_{j=1}^d \diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}.
 \]
@@ -569,10 +571,9 @@ where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the 
 \LRp{\begin{array}{cc}
 \bm{0}&\\
 & \bm{W}_f \diag\LRp{\bm{n}_i\bm{J}^k_f}
-\end{array}},
+\end{array}}.
 \label{eq:sbpk}
 \end{equation}
-where $\bm{n}_i$ and $\bm{J}^k_f$ are vectors containing evaluations of the physical unit normals and face Jacobian factors for $D^k$ at surface quadrature points, respectively.  
 
 Curvilinear mappings also imply that integrals over each physical element $D^k$ are no longer simple scalings of integrals over $\hat{D}$.  The $L^2$ projection of $u\in L^2\LRp{D^k}$ over a curvilinear element $D^k$ is defined through 
 \begin{equation}
