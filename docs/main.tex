@@ -221,6 +221,7 @@ legend style={font=\small}
 \theoremstyle{assumption}
 \newtheorem{assumption}{Assumption}
 
+\DeclareMathOperator{\diag}{diag}
 
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\textfraction}{0.1}
@@ -477,15 +478,15 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 \begin{equation}
 \bm{D}_N^i =\LRs{
 \begin{array}{cc}
-\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q {\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  {\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\\
-- \frac{1}{2}{\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}{\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}
+\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q \diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  \diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\\
+- \frac{1}{2}\diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}\diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}
 \end{array}
 }
 \label{eq:decoupledsbp}
 \end{equation}
 where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
-\LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
+\LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag\LRp{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
 \]
 It was shown in \cite{chan2017discretely} that the matrix $\bm{D}_N^i$ satisfies several key properties.  First, it can be observed that $\bm{D}_N^i\bm{1} = 0$, where $\bm{1}$ is the vector of all ones.  Second, $\bm{D}_N^i$ satisfies a summation-by-parts property.  Let $\bm{Q}_N^i$ be the scaling of $\bm{D}_N^i$ by the diagonal matrix of volume and surface quadrature weights 
 \[
@@ -498,7 +499,7 @@ Then, $\bm{Q}_N^i$ satisfies the following discrete analogue of integration by p
 \begin{equation}
 \bm{Q}_N^i + \LRp{\bm{Q}_N^i}^T = \bm{B}^i_N, \qquad \bm{B}_N = \LRp{\begin{array}{cc}
 \bm{0}&\\
-& \bm{W}_f {\rm diag}\LRp{\hat{\bm{n}}_i\hat{\bm{J}}_f}
+& \bm{W}_f \diag\LRp{\hat{\bm{n}}_i\hat{\bm{J}}_f}
 \end{array}}.
 \label{eq:sbpprop1}
 \end{equation}
@@ -555,7 +556,7 @@ The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at th
 
 We define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as 
 \[
-\bm{D}^i_k = \sum_{j=1}^d {\rm diag}\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}^k_{ij}}.
+\bm{D}^i_k = \sum_{j=1}^d \diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}.
 \]
 Using properties of the Hadamard product \cite{horn2012matrix}, we can rewrite $\bm{D}^i_k$ as 
 \begin{equation}
@@ -567,7 +568,7 @@ where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the 
 \bm{Q}^i_k + \LRp{\bm{Q}^i_k}^T = \bm{B}^i_k, \qquad \bm{B}^i_k = 
 \LRp{\begin{array}{cc}
 \bm{0}&\\
-& \bm{W}_f {\rm diag}\LRp{\bm{n}_i\bm{J}^k_f}
+& \bm{W}_f \diag\LRp{\bm{n}_i\bm{J}^k_f}
 \end{array}},
 \label{eq:sbpk}
 \end{equation}
@@ -592,7 +593,7 @@ Discretizing (\ref{eq:l2curvmap}) requires a weighted mass matrix.  We define a 
 \end{equation}
 Then, a curvilinear $L^2$ projection and lift matrices can be defined in a manner analogous to (\ref{eq:projlift})
 \begin{equation}
-\bm{P}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_q^T\bm{W}{\rm diag}\LRp{\bm{J}^k}, \qquad \bm{L}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_f^T\bm{W}_f{\rm diag}\LRp{\bm{J}^k_f}.  
+\bm{P}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k}, \qquad \bm{L}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_f^T\bm{W}_f\diag\LRp{\bm{J}^k_f}.  
 \label{eq:projliftcurved}
 \end{equation}
 These matrices are distinct from element to element, reflecting the fact that problem (\ref{eq:l2curvmap}) is distinct from element to element.  
@@ -642,7 +643,7 @@ In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\bm{P}^k_q & \bm{L}^k_q\end{array}}
-\sum_{j=1}^d \LRp{\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{L}^k_q {\rm diag}\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
+\sum_{j=1}^d \LRp{\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{L}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
 &\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
 &\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces},\nonumber
 \end{align}
@@ -651,7 +652,7 @@ where $\tilde{\bm{u}}^+$ denotes the values of the entropy-projected conservativ
 Define the boundary quadrature matrix $\bm{W}_{\partial \Omega}$ such that
 \[
 \LRp{\bm{W}_{\partial \Omega} }_{ii} = \begin{cases}
-\bm{W}_f{\rm diag}\LRp{\bm{J}^k_f}, & \text{if $\bm{x}^f_i$ is on the $\partial \Omega$}\\
+\bm{W}_f\diag\LRp{\bm{J}^k_f}, & \text{if $\bm{x}^f_i$ is on the $\partial \Omega$}\\
 0, & \text{otherwise}. 
 \end{cases}
 \]
@@ -669,7 +670,7 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %To prove entropy conservation, we multiply on both sides by $\bm{M}_k$ 
 %\begin{align}
 %\bm{M}_k\td{\bm{u}_h}{t} + \LRs{\begin{array}{c}\bm{V}_q \\ \bm{V}_f\end{array}}^T
-%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f{\rm diag}\LRp{\bm{n}_i\bm{J}^k_f}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
+%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_i\bm{J}^k_f}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
 %\end{align}
 %We now test on both sides by $\bm{v}_h^T$ and note that $\bm{v}_h^T\bm{M} = \bm{v}(\bm{u}_q)^T \bm{W} \bm{J}^k \bm{V}_q$.  For the time term, we assuming continuity in time and use the chain rule
 %\[
@@ -678,7 +679,7 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %\]
 %where we have used that $\bm{W}$ is diagonal, that $\bm{v}(\bm{u}) = \pd{U(\bm{u})}{\bm{u}}$, and the chain rule in time.  The right hand side terms
 %\[
-%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f{\rm diag}\LRp{\bm{n}_i\bm{J}^k_f}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
+%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_i\bm{J}^k_f}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
 %\]
 %\note{Finish proof}
 \end{proof}
@@ -712,7 +713,7 @@ Roughly speaking, $T_{w} u$ approximates $u/w$.  Thus, taking $w = 1/J^k$ provid
 
 Computing $T_{1/J^k}^{-1}u$ requires solving (\ref{eq:wadgTw}).  Let $u \in P^N$, and let $\bm{u}_J$ denote coefficients for the polynomial $T_{1/J^k}^{-1}u$.  This results in the following matrix system
 \[
-\bm{M}_{1/J^k}\bm{u}_{J} = \bm{M}\bm{u}, \qquad {\bm{M}_{1/J^k}} = \bm{V}_q^T \bm{W}{\rm diag}\LRp{1/\bm{J}^k}\bm{V}_q,%\LRp{\frac{1}{J^k}\phi_i,\phi_j}_{\hat{D}},
+\bm{M}_{1/J^k}\bm{u}_{J} = \bm{M}\bm{u}, \qquad {\bm{M}_{1/J^k}} = \bm{V}_q^T \bm{W}\diag\LRp{1/\bm{J}^k}\bm{V}_q,%\LRp{\frac{1}{J^k}\phi_i,\phi_j}_{\hat{D}},
 \]
 which implies that, when restricted to polynomials, the matrix form of $T_{1/J^k}^{-1}$ is $\bm{M}_{1/J^k}^{-1}\bm{M}$.  Then, the weight-adjusted mass matrix is the Gram matrix with respect to the weight-adjusted inner product $\LRp{T_{1/J^k}^{-1} u,v}_{\hat{D}}$, such that
 \[
@@ -720,7 +721,7 @@ which implies that, when restricted to polynomials, the matrix form of $T_{1/J^k
 \]
 The inverse of the weight-adjusted mass matrix can be applied in a matrix-free fashion by using quadrature to form $\bm{M}_{1/J^k} $.  This requires storage of the inverse reference mass matrix and the values of $\bm{J}^k$ at quadrature points.  Assuming that the number of quadrature points scales as $O(N^d)$ in $d$ dimensions, this yields a storage cost of $O(N^d)$ per-element compared to an $O(N^{2d})$ per element storage cost required for the storage of inverse weighted mass matrices $\LRp{\bm{M}^k}^{-1}$.  This application of the weight-adjusted mass matrix is typically applied using the $L^2$ projection matrix $\bm{P}_q$ as follows
 \[
-\bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1} = \bm{P}_q {\rm diag}\LRp{1/\bm{J}^k} \bm{V}_q \bm{M}^{-1}.
+\bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1} = \bm{P}_q \diag\LRp{1/\bm{J}^k} \bm{V}_q \bm{M}^{-1}.
 \]
 When evaluating the right hand side of a semi-discrete formulation such as (\ref{eq:dgform1}), the inverse mass matrix is typically merged into operations on the right hand side, such that the main work in applying the weight-adjusted mass matrix consists of applying the interpolation matrix $\bm{V}_q$, scaling by pointwise values of $1/\bm{J}^k$ at quadrature points, and multiplying by the $L^2$ projection matrix $\bm{P}_q$.
 
@@ -738,13 +739,13 @@ P^k_N u = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}},
 \end{equation}
 where $\Pi_N$ is the $L^2$ projection operator on the reference element $\hat{D}$.  We can discretize $P^k_N$ using quadrature to yield a weight-adjusted projection matrix $\tilde{\bm{P}}_q$ 
 \begin{align}
-\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_q^T\bm{W}{\rm diag}\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W}{\rm diag}\LRp{1/\bm{J}^k} \bm{V}_q\bm{P}_q{\rm diag}\LRp{\bm{J}^k} \bm{V}_q \nonumber\\
-&= \bm{P}_q {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q {\rm diag}\LRp{\bm{J}^k}.
+\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{1/\bm{J}^k} \bm{V}_q\bm{P}_q\diag\LRp{\bm{J}^k} \bm{V}_q \nonumber\\
+&= \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q \diag\LRp{\bm{J}^k}.
 \label{eq:wadgproj}
 \end{align}
 We can similarly define a weight-adjusted lifting matrix $\tilde{\bm{L}}_q$ by replacing the weighted mass matrix in (\ref{eq:projliftcurved}) with the weight-adjusted mass matrix
 \begin{equation}
-\tilde{\bm{L}}^k_q = \bm{P}_q {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{L}_q {\rm diag}\LRp{\bm{J}^k_f}.
+\tilde{\bm{L}}^k_q = \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{L}_q \diag\LRp{\bm{J}^k_f}.
 \label{eq:wadglift}
 \end{equation}
 
@@ -763,7 +764,7 @@ We can now introduce the weight-adjusted projection of the entropy variables $\b
 A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the variables defined in (\ref{eq:evars2})
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\tilde{\bm{P}}^k_q & \tilde{\bm{L}}^k_q\end{array}}
-\sum_{j=1}^d \LRp{\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q {\rm diag}\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
+\sum_{j=1}^d \LRp{\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
 &\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
 &\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
 \end{align}
@@ -779,19 +780,19 @@ Assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.
 The proof is similar to that of Theorem~\ref{thm:stab1}.  
 First, we note that 
 \begin{align}
-\tilde{\bm{P}}^k_q &= \bm{P}_q {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q {\rm diag}\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W} {\rm diag}\LRp{{1}/{\bm{J}^k}} \bm{V}_q \bm{M}^{-1} \bm{V}_q^T \bm{W}{\rm diag}\LRp{\bm{J}^k} \nonumber\\
-&= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_q^T \bm{W}{\rm diag}\LRp{\bm{J}^k}\label{eq:projidentity}\\
-\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_f^T \bm{W}_f{\rm diag}\LRp{\bm{J}^k_f} \label{eq:liftidentity}.
+\tilde{\bm{P}}^k_q &= \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q \diag\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W} \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q \bm{M}^{-1} \bm{V}_q^T \bm{W}\diag\LRp{\bm{J}^k} \nonumber\\
+&= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_q^T \bm{W}\diag\LRp{\bm{J}^k}\label{eq:projidentity}\\
+\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{J}^k_f} \label{eq:liftidentity}.
 \end{align}
 Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}$ on both sides and using (\ref{eq:projidentity}), (\ref{eq:liftidentity}) yields 
 \[
 \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}{\bm{V}}_q^T & {\bm{V}}_f^T\end{array}}
-\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f {\rm diag}\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
+\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
 \]
 Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h = \tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}$ and using (\ref{eq:projidentity}) then yields for the time term
 \begin{align*}
-\LRp{\tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}{\rm diag}\LRp{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
-&= \bm{v}\LRp{\bm{u}_q}^T\bm{W}{\rm diag}\LRp{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}{\rm diag}\LRp{\bm{J}^k} \bm{v}\LRp{\bm{u}_q}^T\td{\bm{u}_q}{t} \\
+\LRp{\tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
+&= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}\diag\LRp{\bm{J}^k} \bm{v}\LRp{\bm{u}_q}^T\td{\bm{u}_q}{t} \\
 &= \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t}.
 \end{align*}
 The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \cite{chan2017discretely}.
@@ -930,7 +931,7 @@ An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_
 
 From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
 \begin{align*}
-\bm{Q}^j_k\bm{1} = \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\circ \avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ {\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N{\rm diag}\LRp{\bm{JG}_{ij}^k}\bm{1}} \\
+\bm{Q}^j_k\bm{1} = \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\circ \avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ \diag\LRp{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N\diag\LRp{\bm{JG}_{ij}^k}\bm{1}} \\
 &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
 \end{align*}
 where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that a discrete version of the GCL (\ref{eq:gcl}) holds
@@ -1293,7 +1294,7 @@ To test the scheme (\ref{eq:dgform2}), we utilize an entropy conservative flux a
 
 First, can examine the entropy RHS, which we define as the right hand side of (\ref{eq:dgform2}) tested with $\bm{v}_h$
 \begin{equation}
-\text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k {\rm diag}\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)}}.  
+\text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)}}.  
 \label{eq:entropyrhs}
 \end{equation}
 For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machine precision.  We can also track the change in entropy $\Delta U = \LRb{U(\bm{u}(\bm{x},t))-U(\bm{u}(\bm{x},0))}$, which should converge to $0$ as the timestep $dt$ approaches zero.  Furthermore, the rate of convergence should match the order of the time-stepper used \cite{gassner2016well,chan2017discretely}.  
