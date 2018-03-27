@@ -570,7 +570,7 @@ where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the 
 \bm{Q}^i_k + \LRp{\bm{Q}^i_k}^T = \bm{B}^i_k, \qquad \bm{B}^i_k = 
 \LRp{\begin{array}{cc}
 \bm{0}&\\
-& \bm{W}_f \diag\LRp{\bm{n}_i\bm{J}^k_f}
+& \bm{W}_f \diag\LRp{\bm{n}_i\circ\bm{J}^k_f}
 \end{array}}.
 \label{eq:sbpk}
 \end{equation}
@@ -589,12 +589,13 @@ For affine elements, $J$ is constant and can be cancelled.  Thus, the $L^2$ proj
 
 Discretizing (\ref{eq:l2curvmap}) requires a weighted mass matrix.  We define a curved mass matrix over an element $D^k$ by weighting the discrete $L^2$ norm with values of $J$ at quadrature points
 \begin{equation}
-\bm{M}^k = \bm{V}_q^T \bm{W}_{J^k} \bm{V}_q, \qquad \LRp{\bm{W}_J}_{ij} = \delta_{ij} w_i J^k(\bm{x}_i), \qquad i = 1,\ldots,N_q.
+\bm{M}^k = \bm{V}_q^T \bm{W}\diag\LRp{\bm{J}^k}\bm{V}_q,
 \label{eq:curvedmass}
 \end{equation}
+where $\bm{J}^k$ is a vector containing evaluation of the physical Jacobian factors for $D^k$ at volume quadrature points.
 Then, a curvilinear $L^2$ projection and lift matrices can be defined in a manner analogous to (\ref{eq:projlift})
 \begin{equation}
-\bm{P}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k}, \qquad \bm{L}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_f^T\bm{W}_f\diag\LRp{\bm{J}^k_f}.  
+\bm{P}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k}, \qquad \bm{L}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_f^T\bm{W}_f\diag\LRp{\bm{J}^k_f}.
 \label{eq:projliftcurved}
 \end{equation}
 These matrices are distinct from element to element, reflecting the fact that problem (\ref{eq:l2curvmap}) is distinct from element to element.  
