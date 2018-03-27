@@ -558,7 +558,7 @@ The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at th
 
 Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
 \[
-\bm{D}^i_k = \sum_{j=1}^d \diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}.
+\bm{D}^i_k = \frac12 \sum_{j=1}^d \diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}.
 \]
 Using properties of the Hadamard product \cite{horn2012matrix}, we can rewrite $\bm{D}^i_k$ as 
 \begin{equation}
