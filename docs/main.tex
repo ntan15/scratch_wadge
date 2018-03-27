@@ -441,30 +441,30 @@ for any $u, v \in P^N\LRp{\hat{D}}$, integration by parts
 holds when the volume and surface integrals are approximated using quadrature.
 \label{ass:quad}
 \end{assumption}
-Assumption (\ref{ass:quad}) holds, for example, for any surface quadrature rule which is exact for degree $2N$ polynomials on the boundary of the reference element $\partial \hat{D}$.  
+Assumption~\ref{ass:quad} holds, for example, for any surface quadrature rule which is exact for degree $2N$ polynomials on the boundary of the reference element $\partial \hat{D}$.  
 
 
 \subsection{Reference element matrices}
 \label{sec:matrix}
 
-Let $\bm{W}, \bm{W}_f$ denote diagonal matrices whose entries are volume and surface quadrature weights, respectively.  The surface quadrature weights are given by quadrature weights on reference faces, which are mapped to faces of the reference element.  We define the volume and surface quadrature interpolation matrices $\bm{V}_q$ and $\bm{V}_f$
+Let $\bm{W}, \bm{W}_f$ denote diagonal matrices whose entries are volume and surface quadrature weights, respectively.  The surface quadrature weights are given by quadrature weights on reference faces, which are mapped to faces of the reference element.  We define the volume and surface quadrature interpolation matrices $\bm{V}_q$ and $\bm{V}_f$ such that
 \begin{align}
 \LRp{\bm{V}_q}_{ij} &= \phi_j(\hat{\bm{x}}_i), \qquad 1 \leq j \leq N_p, \qquad 1 \leq i \leq N_q, \nonumber\\
 \LRp{\bm{V}_f}_{ij} &= \phi_j(\hat{\bm{x}}^f_i), \qquad 1 \leq j \leq N_p, \qquad 1 \leq i \leq N^f_q,\label{eq:qinterp}
 \end{align}
 which map coefficients $\bm{u}$ to evaluations of $u$ at volume and surface quadrature points.  
 
-Next, let ${\bm{D}}_i$ denote the differentiation matrix with respect to the $i$th coordinate, defined implicitly through the relation
+Next, let ${\bm{D}}_i$ denote the differentiation matrix with respect to the $i$th coordinate, defined implicitly through the relations
 \[
 u(\hat{\bm{x}}) = \sum_{j=1}^{N_p} \bm{u}_j \phi_j(\hat{\bm{x}}), \qquad \pd{u}{\hat{\bm{x}}_i} = \sum_{j=1}^{N_p} \LRp{{\bm{D}}_i \bm{u}}_j\phi_j(\hat{\bm{x}}).
 \]
-The matrix ${\bm{D}}_i$ maps basis coefficients of some polynomial $u \in P^N$ to coefficients of its $i$th derivative with respect to the reference coordinate $\hat{\bm{x}}$, and is sometimes referred to as a ``modal'' differentiation matrix (with respect to a general non-nodal ``modal'' basis \cite{hicken2016multidimensional}).  
+The matrix ${\bm{D}}_i$ maps basis coefficients of some polynomial $u \in P^N\LRp{\hat{D}}$ to coefficients of its $i$th derivative with respect to the reference coordinate $\hat{\bm{x}}$, and is sometimes referred to as a ``modal'' differentiation matrix (with respect to a general non-nodal ``modal'' basis \cite{hicken2016multidimensional}).  
 
 Using the volume quadrature interpolation matrix $\bm{V}_q$, we can compute a quadrature-based mass matrix $\bm{M}$ by evaluating $L^2$ inner products of different basis functions using quadrature
 \[
-\bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \qquad \bm{M}_{ij} = \sum_{k=1}^{N_q} w_k \phi_j(\bm{x}_k)\phi_i(\bm{x}_k) \approx \int_{\hat{D}}\phi_j\phi_i \diff{\hat{\bm{x}}} = \LRp{\phi_j,\phi_i}_{\hat{D}}.
+  \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \qquad \bm{M}_{ij} = \sum_{k=1}^{N_q} \hat{w}_k \phi_j(\hat{\bm{x}}_k)\phi_i(\hat{\bm{x}}_k) \approx \int_{\hat{D}}\phi_j\phi_i \diff{\hat{\bm{x}}} = \LRp{\phi_j,\phi_i}_{\hat{D}}.
 \]
-The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
+The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad} \lcwnote{(It seems to be positive definite due to the fact we have a positive weight quadrature, not Assumption~\ref{ass:quad}.)}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
 
 The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2proj}) and lift operators (\ref{eq:lift}) using quadrature.  The result are quadrature-based $L^2$ projection and lift operators $\bm{P}_q, \bm{L}_q$, 
 \begin{equation}
