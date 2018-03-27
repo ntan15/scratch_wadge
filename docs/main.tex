@@ -474,7 +474,7 @@ The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2pro
 \end{equation}
 which are discretizations of the continuous $L^2$ projection operator $\Pi_N$ and continuous lift operator $L$.  The matrix $\bm{P}_q$ maps a function (in terms of its evaluation at quadrature points) to coefficients of the $L^2$ projection in the basis $\phi_j(x)$, while the matrix $\bm{L}_q$ ``lifts'' a function (evaluated at surface quadrature points) from the boundary of an element to coefficients of a basis defined in the interior of the element.  
 
-Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used to construct discretizations of our nonlinear conservation laws.  This operator was introduced in \cite{chan2017discretely} as a ``decoupled summation by parts'' operator
+Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used to construct discretizations of our nonlinear conservation laws.  This operator was introduced in \cite{chan2017discretely} as a ``decoupled summation-by-parts'' operator
 \begin{equation}
 \bm{D}_N^i =\LRs{
 \begin{array}{cc}
@@ -565,7 +565,7 @@ Using properties of the Hadamard product \cite{horn2012matrix}, we can rewrite $
 \bm{D}^i_k = \sum_{j=1}^d \LRp{\bm{D}^j_N \circ \avg{\bm{JG}^k_{ij}}}, \qquad \avg{\bm{JG}^k_{ij}}_{mn} = \frac{1}{2}\LRp{\LRp{\bm{JG}^k_{ij}}_m + \LRp{\bm{JG}^k_{ij}}_n},
 \label{eq:dik}
 \end{equation}
-where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the entries of $\bm{JG}^k_{ij}$.  From (\ref{eq:dik}), it is straightforward to show that (because $\avg{\bm{JG}^k_{ij}}$ is symmetric) $\bm{Q}^i_k = \bm{W}_N\bm{D}^i_k$ also satisfies a summation by parts property
+where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the entries of $\bm{JG}^k_{ij}$.  From (\ref{eq:dik}), it is straightforward to show that (because $\avg{\bm{JG}^k_{ij}}$ is symmetric) $\bm{Q}^i_k = \bm{W}_N\bm{D}^i_k$ also satisfies a summation-by-parts property
 \begin{equation}
 \bm{Q}^i_k + \LRp{\bm{Q}^i_k}^T = \bm{B}^i_k, \qquad \bm{B}^i_k = 
 \LRp{\begin{array}{cc}
