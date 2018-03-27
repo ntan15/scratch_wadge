@@ -477,13 +477,13 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 \begin{equation}
 \bm{D}_N^i =\LRs{
 \begin{array}{cc}
-\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q {\rm diag}\LRp{\hat{\bm{n}}_i\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  {\rm diag}\LRp{\hat{\bm{n}}_i\bm{\hat{J}}_f}\\
-- \frac{1}{2}{\rm diag}\LRp{\hat{\bm{n}}_i\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}{\rm diag}\LRp{\hat{\bm{n}}_i\bm{\hat{J}}_f}
+\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q {\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  {\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\\
+- \frac{1}{2}{\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}{\rm diag}\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}
 \end{array}
 }
 \label{eq:decoupledsbp}
 \end{equation}
-where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ contains values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
+where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
 \]
