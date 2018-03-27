@@ -558,7 +558,7 @@ The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at th
 
 Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
 \[
-\bm{D}^i_k = \frac12 \sum_{j=1}^d \diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}.
+  \bm{D}^i_k = \frac12 \sum_{j=1}^d \left(\diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}\right).
 \]
 Using properties of the Hadamard product \cite{horn2012matrix}, we can rewrite $\bm{D}^i_k$ as 
 \begin{equation}
@@ -593,7 +593,7 @@ Discretizing (\ref{eq:l2curvmap}) requires a weighted mass matrix.  We define a 
 \label{eq:curvedmass}
 \end{equation}
 where $\bm{J}^k$ is a vector containing evaluation of the physical Jacobian factors for $D^k$ at volume quadrature points.
-Then, a curvilinear $L^2$ projection and lift matrices can be defined in a manner analogous to (\ref{eq:projlift})
+Then, curvilinear $L^2$ projection and lift matrices can be defined in a manner analogous to (\ref{eq:projlift})
 \begin{equation}
 \bm{P}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k}, \qquad \bm{L}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_f^T\bm{W}_f\diag\LRp{\bm{J}^k_f}.
 \label{eq:projliftcurved}
@@ -608,15 +608,15 @@ Given the matrices in Section~\ref{sec:curv}, we can now define a local entropy 
 \]
 Since the coefficients are vector valued, we assume that all matrices act component-wise on $\bm{u}_h$ in the Kronecker product sense.  
 
-We first define the numerical fluxes $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R}$ as the bivariate function of ``left'' and ``right'' conservative variable states $\bm{u}_L, \bm{u}_R$.  Such a numerical flux is referred to as entropy conservative (or entropy stable) if it satisfies the following conditions:
+We first define the numerical fluxes $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R}$ as the bivariate function of ``left'' and ``right'' conservative variable states $\bm{u}_L, \bm{u}_R$.  % Such a numerical flux is referred to as entropy conservative (or entropy stable) if it satisfies the following conditions:
 \begin{definition}
-The numerical flux $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R}$ is entropy conservative (or entropy stable) if it satisfies the following conditions
+The numerical flux $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R}$ is entropy conservative (or entropy stable) if it satisfies the following conditions:
 \begin{enumerate}
-\item $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} = \bm{f}_{i,S}\LRp{\bm{u}_R,\bm{u}_L}$ (symmetry),
-\item $\bm{f}_{i,S}\LRp{\bm{u},\bm{u}} = \bm{f}_i\LRp{\bm{u}}$ (consistency),
+\item $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} = \bm{f}_{i,S}\LRp{\bm{u}_R,\bm{u}_L}$ (symmetry).
+\item $\bm{f}_{i,S}\LRp{\bm{u},\bm{u}} = \bm{f}_i\LRp{\bm{u}}$ (consistency).
 \item $\bm{f}_{i,S}$ is referred to as entropy conservative if it satisfies conditions 1, 2, and  
 \[
-\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} = \psi_i\LRp{\bm{u}_L}-\psi_i\LRp{\bm{u}_R}.
+  \LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} = \psi_i\LRp{\bm{u}_L}-\psi_i\LRp{\bm{u}_R}.
 \]
 \item $\bm{f}_{i,S}$ is referred to as entropy stable if it satisfies conditions 1, 2, and  
 \[
@@ -654,7 +654,7 @@ where $\tilde{\bm{u}}^+$ denotes the values of the entropy-projected conservativ
 Define the boundary quadrature matrix $\bm{W}_{\partial \Omega}$ such that
 \[
 \LRp{\bm{W}_{\partial \Omega} }_{ii} = \begin{cases}
-\bm{W}_f\diag\LRp{\bm{J}^k_f}, & \text{if $\bm{x}^f_i$ is on the $\partial \Omega$}\\
+  \bm{W}_f\diag\LRp{\bm{J}^k_f}, & \text{if $\hat{\bm{x}}^f_i$ is on the $\partial \Omega$}\\
 0, & \text{otherwise}. 
 \end{cases}
 \]
