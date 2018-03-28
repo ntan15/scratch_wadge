@@ -556,7 +556,7 @@ Likewise, $\LRp{\bm{JG}^k_{ij}}_f$ \lcwnote{(This could be written as $\bm{J}_f^
 \end{assumption}
 The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at the continuous level for a watertight mesh \cite{ciarlet1978finite}, and thus at all points where the geometric terms are computed exactly.  However, we will also consider cases where the geometric terms $J^k\bm{G}^k_{ij}$ are modified to enforce a discrete form of (\ref{eq:gcl}); in these situations, it will be important to ensure that (\ref{eq:normalconsistency}) holds after such modifications.  
 
-Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
+Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf} \lcwnote{(Check to see if we can find an earlier reference to this type of approximation.)}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
 \[
   \bm{D}^i_k = \frac12 \sum_{j=1}^d \left(\diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}\right).
 \]
