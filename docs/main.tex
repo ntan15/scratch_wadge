@@ -646,7 +646,7 @@ In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\bm{P}^k_q & \bm{L}^k_q\end{array}}
-\sum_{j=1}^d \LRp{\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{L}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
+\sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{L}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
 &\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
 &\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces},\nonumber
 \end{align}
@@ -663,7 +663,7 @@ We have the following semi-discrete statement of entropy conservation:
 \begin{theorem}
   Let $\bm{f}_{i,S}$ be an entropy conservative flux from Definition~\ref{def:entropyflux} and assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform1}) is entropy conservative in the sense that
 \[
-  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
+  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{n}_j\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
 \]
 \label{thm:stab1}
 \end{theorem}
@@ -706,7 +706,7 @@ The presence of the weighted $L^2$ inner product $\LRp{J^k \Pi_N^k u,v}_{\hat{D}
 
 To define a weight-adjusted approximation to the curvilinear $L^2$ inner product, we first define the operator $T_{w}^{-1}: L^2\rightarrow P^N$ as follows
 \begin{equation}
-\LRp{wT_{w}^{-1} u,v}_{\hat{D}} = \LRp{ u,v}_{\hat{D}}, \qquad \forall v\in P^N.
+  \LRp{wT_{w}^{-1} u,v}_{\hat{D}} = \LRp{ u,v}_{\hat{D}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
 \label{eq:wadgTw}
 \end{equation}
 Roughly speaking, $T_{w} u$ approximates $u/w$.  Thus, taking $w = 1/J^k$ provides an approximation of the curvilinear $L^2$ inner product
@@ -714,7 +714,7 @@ Roughly speaking, $T_{w} u$ approximates $u/w$.  Thus, taking $w = 1/J^k$ provid
 \LRp{J^k u,v}_{\hat{D}} \approx \LRp{T_{1/J^k}^{-1} u,v}_{\hat{D}}.
 \end{equation*}
 
-Computing $T_{1/J^k}^{-1}u$ requires solving (\ref{eq:wadgTw}).  Let $u \in P^N$, and let $\bm{u}_J$ denote coefficients for the polynomial $T_{1/J^k}^{-1}u$.  This results in the following matrix system
+Computing $T_{1/J^k}^{-1}u$ requires solving (\ref{eq:wadgTw}).  Let $u \in P^N\LRp{\hat{D}}$, and let $\bm{u}_J$ denote coefficients for the polynomial $T_{1/J^k}^{-1}u$.  This results in the following matrix system
 \[
 \bm{M}_{1/J^k}\bm{u}_{J} = \bm{M}\bm{u}, \qquad {\bm{M}_{1/J^k}} = \bm{V}_q^T \bm{W}\diag\LRp{1/\bm{J}^k}\bm{V}_q,%\LRp{\frac{1}{J^k}\phi_i,\phi_j}_{\hat{D}},
 \]
@@ -767,15 +767,15 @@ We can now introduce the weight-adjusted projection of the entropy variables $\b
 A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the variables defined in (\ref{eq:evars2})
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\tilde{\bm{P}}^k_q & \tilde{\bm{L}}^k_q\end{array}}
-\sum_{j=1}^d \LRp{\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
+\sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
 &\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
 &\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
 \end{align}
-Since the  weight-adjusted mass matrix inverse is low-storage, and since the matrices $\bm{D}^j_k$ in (\ref{eq:dik}) can be assembled from reference matrices $\bm{D}^i_N$ and the values of geometric terms at quadrature points, the overall scheme requires only $O(N^d)$ storage per element.  We can additionally show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab2}: 
+Since the  weight-adjusted mass matrix inverse is low-storage, and since the matrices $\bm{D}^j_k$ in (\ref{eq:dik}) can be assembled from reference matrices $\bm{D}^i_N$ and the values of geometric terms at quadrature points, the overall scheme requires only $O(N^d)$ storage per element.  We can additionally show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab1}: 
 \begin{theorem}
   Let $\bm{f}_{i,S}$ be an entropy conservative flux from Definition~\ref{def:entropyflux} and assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform2}) is entropy conservative in the sense that
 \[
-  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u})}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
+  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{n}\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
 \]
 \label{thm:stab2}
 \end{theorem}
