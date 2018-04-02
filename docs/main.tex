@@ -547,10 +547,10 @@ We assume that the mesh is quasi-uniform.  The mesh is also assumed to be watert
 We also assume that the scaled matrix of geometric terms transforms scaled reference normal vectors to scaled physical normals, such that
 \begin{align}
 \sum_{j=1}^d J^k\bm{G}^k_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}}_f \circ\LRp{\hat{\bm{n}}_j\circ\hat{\bm{J}}_f}}
-= \LRp{\bm{n}_i\circ\bm{J}^k_f},
+= \LRp{\bm{n}_j\circ\bm{J}^k_f},
 \label{eq:normalconsistency}
 \end{align}
-where $\bm{n}_i$ and $\bm{J}^k_f$ are vectors containing evaluations of the physical unit normals and face Jacobian factors for $D^k$ at surface quadrature points, respectively.
+where $\bm{n}_j$ and $\bm{J}^k_f$ are vectors containing evaluations of the physical unit normals and face Jacobian factors for $D^k$ at surface quadrature points, respectively.
 Likewise, $\LRp{\bm{JG}^k_{ij}}_f$ \lcwnote{(This could be written as $\bm{J}_f^{\bm{G}^k_{ij}}$.)} is a vector containing evaluations of $J^k\bm{G}^k_{ij}$ at the surface quadrature points.
 \label{ass:norm}
 \end{assumption}
@@ -646,11 +646,11 @@ In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\bm{P}^k_q & \bm{L}^k_q\end{array}}
-\sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{L}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
-&\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
-&\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces},\nonumber
+  \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{L}^k_q \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
+  &\LRp{\bm{F}_{j,S}}_{mn} = \bm{f}_{j,S}\LRp{\LRp{\tilde{\bm{u}}}_m,\LRp{\tilde{\bm{u}}}_n}, \qquad 1 \leq m,n \leq N_q + N^f_q,\nonumber\\
+  &\bm{f}_j^* = \bm{f}_{j,S}(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces},\nonumber
 \end{align}
-where $\tilde{\bm{u}}^+$ denotes the values of the entropy-projected conservative variables on the neighboring element across each face of $D^k$, and $\bm{f}^*$ on the boundary denotes some numerical flux through which boundary conditions are imposed.
+where $\tilde{\bm{u}}^+$ denotes the values of the entropy-projected conservative variables on the neighboring element across each face of $D^k$, and $\bm{f}_j^*$ on the boundary denotes the $j$th component of some numerical flux through which boundary conditions are imposed.
 
 Define the diagonal boundary quadrature matrix $\bm{W}_{\partial \Omega}$ such that
 \[
@@ -673,7 +673,7 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %To prove entropy conservation, we multiply on both sides by $\bm{M}_k$ 
 %\begin{align}
 %\bm{M}_k\td{\bm{u}_h}{t} + \LRs{\begin{array}{c}\bm{V}_q \\ \bm{V}_f\end{array}}^T
-%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_i\bm{J}^k_f}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
+%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_j\bm{J}^k_f}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 %\end{align}
 %We now test on both sides by $\bm{v}_h^T$ and note that $\bm{v}_h^T\bm{M} = \bm{v}(\bm{u}_q)^T \bm{W} \bm{J}^k \bm{V}_q$.  For the time term, we assuming continuity in time and use the chain rule
 %\[
@@ -682,7 +682,7 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %\]
 %where we have used that $\bm{W}$ is diagonal, that $\bm{v}(\bm{u}) = \pd{U(\bm{u})}{\bm{u}}$, and the chain rule in time.  The right hand side terms
 %\[
-%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_i\bm{J}^k_f}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
+%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_j\bm{J}^k_f}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 %\]
 %\note{Finish proof}
 \end{proof}
@@ -767,15 +767,15 @@ We can now introduce the weight-adjusted projection of the entropy variables $\b
 A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the variables defined in (\ref{eq:evars2})
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\tilde{\bm{P}}^k_q & \tilde{\bm{L}}^k_q\end{array}}
-\sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
-&\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
-&\bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
+  \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
+  &\LRp{\bm{F}_{j,S}}_{ij} = \bm{f}_{j,S}\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
+  &\bm{f}_j^* = \bm{f}_{j,S}(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
 \end{align}
 Since the  weight-adjusted mass matrix inverse is low-storage, and since the matrices $\bm{D}^j_k$ in (\ref{eq:dik}) can be assembled from reference matrices $\bm{D}^i_N$ and the values of geometric terms at quadrature points, the overall scheme requires only $O(N^d)$ storage per element.  We can additionally show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab1}: 
 \begin{theorem}
   Let $\bm{f}_{i,S}$ be an entropy conservative flux from Definition~\ref{def:entropyflux} and assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform2}) is entropy conservative in the sense that
 \[
-  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{n}\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}^*}.
+  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{n}_j\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
 \]
 \label{thm:stab2}
 \end{theorem}
@@ -790,7 +790,7 @@ First, we note that
 Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}$ on both sides and using (\ref{eq:projidentity}), (\ref{eq:liftidentity}) yields 
 \[
 \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}{\bm{V}}_q^T & {\bm{V}}_f^T\end{array}}
-\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)} = 0.
+\sum_{j=1}^d \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
 Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h = \tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}$ and using (\ref{eq:projidentity}) then yields for the time term
 \begin{align*}
@@ -1297,7 +1297,7 @@ To test the scheme (\ref{eq:dgform2}), we utilize an entropy conservative flux a
 
 First, can examine the entropy RHS, which we define as the right hand side of (\ref{eq:dgform2}) tested with $\bm{v}_h$
 \begin{equation}
-\text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_S}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag\LRp{\bm{n}_i}\LRp{\bm{f}^* - \bm{f}(\tilde{\bm{u}}_f)}}.  
+  \text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}.  
 \label{eq:entropyrhs}
 \end{equation}
 For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machine precision.  We can also track the change in entropy $\Delta U = \LRb{U(\bm{u}(\bm{x},t))-U(\bm{u}(\bm{x},0))}$, which should converge to $0$ as the timestep $dt$ approaches zero.  Furthermore, the rate of convergence should match the order of the time-stepper used \cite{gassner2016well,chan2017discretely}.  
