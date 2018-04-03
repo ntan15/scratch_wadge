@@ -222,6 +222,7 @@ legend style={font=\small}
 \newtheorem{assumption}{Assumption}
 
 \DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\diam}{diam}
 
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\textfraction}{0.1}
@@ -819,7 +820,7 @@ Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in
 
 To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use a generalized inverse inequality and results from \cite{chan2016weight1,chan2016weight2}.  We first introduce a modification of Theorem 3.1 in \cite{warburton2013low, chan2016weight1}
 \begin{theorem}%[Theorem 3.1 in \cite{warburton2013low, chan2016weight1}]
-Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$, and let $\hat{D}$ be the reference element.  For $N \geq 0$, $w\in W^{N+1,\infty}\LRp{D^k}$, and $u\in W^{r,2}\LRp{D^k}$, 
+Let $D^k$ be a quasi-regular element with representative size $h = \diam\LRp{D^k}$, and let $\hat{D}$ be the reference element.  For $N \geq 0$, $w\in W^{N+1,\infty}\LRp{D^k}$, and $u\in W^{r,2}\LRp{D^k}$, 
 \begin{align*}
 %\nor{u - \frac{1}{w} \Pi_N\LRp{{u}{w}}}_{L^2\LRp{D^k}} &\leq C h^{N+1}\nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}\LRp{D^k}}\nor{\frac{\sqrt{J^k}}{w}}_{L^{\infty}\LRp{D^k}} \nor{w}_{W^{N+1,\infty}\LRp{D^k}}  \nor{u}_{W^{N+1,2}\LRp{D^k}},\\
 \nor{u - \frac{1}{w} \Pi_N\LRp{{u}{w}}}_{L^2\LRp{\hat{D}}} &\leq C h^{\min\LRp{r,N+1}} \nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}\LRp{D^k}}\nor{\frac{1}{w}}_{L^{\infty}\LRp{D^k}} \nor{w}_{W^{N+1,\infty}\LRp{D^k}} \nor{u}_{W^{r,2}\LRp{D^k}}.
@@ -829,7 +830,7 @@ Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LR
 The proof is a straightforward modification of the proofs presented in \cite{warburton2013low, chan2016weight1} accounting for reduced regularity of $u$ when $r < (N+1)$.  The next result we need is a generalized inverse inequality.  
 \begin{lemma}
 \label{lemma:sobolev}
-Let $v \in P^N\LRp{D^k}$, and let $h = {\rm diam}\LRp{D^k}$.  Then,
+Let $v \in P^N\LRp{D^k}$, and let $h = \diam\LRp{D^k}$.  Then,
 \[
 \nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N}  h^{-N} \nor{\sqrt{J^k}}_{L^{\infty}} \nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}} \nor{\bm{G}^k}_{W^{N,\infty}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
 \]
