@@ -981,7 +981,7 @@ From (\ref{eq:conscurl}), it can be observed that, because the divergence of a c
 %J^k\bm{G}^k_{i2}\\
 %J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
 %\end{align}
-The idea of Kopriva is to use (\ref{eq:conscurl}), but to interpolate before applying the curl  %This approximates the geometric terms via
+The idea of Kopriva~\cite{kopriva2006metric} is to use (\ref{eq:conscurl}), but to interpolate before applying the curl  %This approximates the geometric terms via
 \begin{align}
 \bm{r}_i = { \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad
 \LRs{\begin{array}{c}
@@ -1168,9 +1168,9 @@ We then compute the $L^2$ error in approximating geometric terms for each elemen
 %\[
 %\sqrt{\sum_{k}\sum_{ij=1}^d \nor{J^k\bm{G}^k_{ij} - \tilde{J^k\bm{G}^k_{ij}}}^2_{L^2\LRp{\hat{D}}}}.  
 %\]
-We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Kopriva-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Kopriva-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Kopriva-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Kopriva-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  
+We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Geo-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Geo-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Geo-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Geo-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  
 
-We note that the error in both the Kopriva-$N$ and Kopriva-$(N+1)$ approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge at a rate of at least $O(h^{N+1})$, matching the rate of convergence of the best approximation error.  
+We note that the error in both the Geo-$N$ and Geo-$(N+1)$ approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge at a rate of at least $O(h^{N+1})$, matching the rate of convergence of the best approximation error.  
 \note{Optimal rates are observed for $N=5$, geometry order 3 by Hindenlang, but this is be because $J^k\bm{G}^k_{ij} \in Q^{2N_{\rm geo}-2} = Q^4$, so it should not be necessary to enforce the GCL in that situation. Note sensitivity of nonlinear solvers to geometry error \cite{toulorge2016optimizing}}.
 
 \begin{figure}
@@ -1199,7 +1199,7 @@ coordinates{(0.67574,0.00952559)(0.374388,0.000897556)(0.16654,3.51441e-05)(0.08
 %coordinates{(0.5,0.00237193)(0.25,5.41179e-05)(0.125,7.6934e-07)(0.0625,1.18362e-08)(0.03125,1.84801e-10)};
 %\logLogSlopeTriangleFlip{0.3}{0.15}{0.225}{6}{black}
 
-\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
+\legend{Geo-$(N+1)$, $h^{N+2}$, Geo-$N$, $h^{N+1}$}
 %\legend{Uniform, Optimal, Smoothed}
 \end{loglogaxis}
 \end{tikzpicture}
@@ -1229,7 +1229,7 @@ coordinates{(0.673351,0.00405434)(0.373777,0.000213685)(0.166655,3.7653e-06)(0.0
 %coordinates{(0.5,0.00237193)(0.25,5.41179e-05)(0.125,7.6934e-07)(0.0625,1.18362e-08)(0.03125,1.84801e-10)};
 %\logLogSlopeTriangleFlip{0.3}{0.15}{0.225}{6}{black}
 
-\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
+\legend{Geo-$(N+1)$, $h^{N+2}$, Geo-$N$, $h^{N+1}$}
 \end{loglogaxis}
 \end{tikzpicture}
 }
@@ -1380,7 +1380,7 @@ coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,
 %\addplot[color=black,dashdotted,semithick, mark options={solid,fill=markercolor}]
 %coordinates{(0.00647249,7.31403e-16)(0.110032,1.05055e-14)(0.213592,2.58127e-15)(0.317152,1.04916e-14)(0.420712,5.12437e-15)(0.524272,4.40203e-14)(0.627832,1.147e-14)(0.731392,2.81025e-14)(0.834951,3.01946e-14)(0.938511,4.51028e-15)(1.04207,1.096e-14)(1.14563,6.11317e-15)(1.24919,3.69843e-15)(1.35275,6.47399e-15)(1.45631,9.41608e-15)(1.55987,1.58901e-15)(1.66343,6.39766e-15)(1.76699,1.56819e-14)(1.87055,2.11949e-14)(1.97411,1.12063e-14)};
 
-%\legend{Kopriva-$(N+1)$, $h^{N+2}$, Kopriva-$N$, $h^{N+1}$}
+%\legend{Geo-$(N+1)$, $h^{N+2}$, Geo-$N$, $h^{N+1}$}
 \legend{${\rm CFL} = .25$,${\rm CFL} = .125$,${\rm CFL} = .0625$ }
 \end{semilogyaxis}
 \end{tikzpicture}
