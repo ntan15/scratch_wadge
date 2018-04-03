@@ -906,10 +906,10 @@ Theorem~\ref{thm:wproj} can be used to show that the $L^2$ error between $\Pi^k_
 
 It should be noted that, while the weight-adjusted approximation of the mass matrix is high order accurate and efficient, it does not preserve the average over a physical element, which is equivalent to the $J$-weighted average over the reference element.  This is due to the fact that, in general,
 \begin{equation}
-\int_{\hat{D}}u J \diff{\hat{\bm{x}}} - \int_{\hat{D}} T_{1/J}^{-1}u \diff{\hat{\bm{x}}} = \bm{1}^T\bm{M}_J\bm{u} - \bm{1}^T\bm{M}\bm{M}_{1/J}^{-1}\bm{M}\bm{u} \neq 0.  
+\int_{\hat{D}}u J \diff{\hat{\bm{x}}} - \int_{\hat{D}} T_{1/J}^{-1}u \diff{\hat{\bm{x}}} \approx \bm{1}^T\bm{M}_J\bm{u} - \bm{1}^T\bm{M}\bm{M}_{1/J}^{-1}\bm{M}\bm{u} \neq 0.  
 \label{eq:conserr}
 \end{equation}
-Results in \cite{chan2016weight1} show that the difference between the true mean and weight-adjusted mean in (\ref{eq:conserr}) converges extremely fast at a rate of $O(h^{2N+2})$.  However, for systems of conservation laws, it is often desired that the element average is preserved exactly up to machine precision.  In \cite{chan2016weight2}, it was shown that a rank one correction of the weight-adjusted mass matrix inverse preserves the mean exactly while avoiding any loss of precision in numerical experiments.  This requires the use of the Sherman-Morrison formula for the inverse of a rank one update.  
+Results in \cite{chan2016weight1} show that the difference between the true mean and weight-adjusted mean in (\ref{eq:conserr}) converges extremely fast at a rate of $O(h^{2N+2})$.  However, for systems of conservation laws, it is often desired that the element average is preserved exactly up to machine precision.  In \cite{chan2016weight2}, it was shown that a rank one correction of the weight-adjusted mass matrix inverse preserves the mean exactly while avoiding any loss of precision in numerical experiments.  This requires the use of the Sherman--Morrison formula for the inverse of a rank one update.  
 
 We present an explicit formula for a conservative correction here which is simpler than this algebraic correction.  Let $u_{\rm WADG}$ be defined through 
 %coefficients 
@@ -922,12 +922,13 @@ We present an explicit formula for a conservative correction here which is simpl
 \]
 For example, if $f = u J$, $u_{\rm WADG} = P^k_N u$.  We define the conservative weight-adjusted $\tilde{u}_{\rm WADG}$ as
 \[
-\tilde{u}_{\rm WADG} = u_{\rm WADG} + \frac{\int_{\hat{D}} f - J u_{\rm WADG}}{\int_{\hat{D}} J}.  
+  \tilde{u}_{\rm WADG} = u_{\rm WADG} + \frac{\int_{\hat{D}} \left(f  - J u_{\rm WADG}\right)\diff{\hat{\bm{x}}}}{\int_{\hat{D}} J \diff{\hat{\bm{x}}}}.  
 \]
 It is straightforward to show that 
 \[
-\int_{\hat{D}}\tilde{u}_{\rm WADG}J = \int_{\hat{D}} f.
+  \int_{\hat{D}}\tilde{u}_{\rm WADG}J \diff{\hat{\bm{x}}} = \int_{\hat{D}} f \diff{\hat{\bm{x}}}.
 \]
+To satisfy conservation to machine precision, the integrals above are discretized using the volume quadrature of the method.
 This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.  Moreover, using Theorem 6 in \cite{chan2016weight1}, it is straightforward to show that the $L^2$ norm of the difference $\tilde{u}_{\rm WADG} - u_{\rm WADG}$ is $O(h^{2N+1})$, and does not affect high order accuracy.  
 
 \section{Enforcing the discrete geometric conservation law}
