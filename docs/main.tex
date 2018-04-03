@@ -578,15 +578,15 @@ where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the 
 
 Curvilinear mappings also imply that integrals over each physical element $D^k$ are no longer simple scalings of integrals over $\hat{D}$.  The $L^2$ projection of $u\in L^2\LRp{D^k}$ over a curvilinear element $D^k$ is defined through 
 \begin{equation}
-\LRp{\Pi^k_N u,v}_{D^k} = \LRp{u,v}_{D^k}.
+\LRp{\Pi^k_N u,v}_{D^k} = \LRp{u,v}_{D^k}, \qquad \forall v\in P^N\LRp{\hat{D}}.
 \label{eq:l2curv}
 \end{equation}
 Mapping integrals to the reference element $\hat{D}$ yields
 \begin{equation}
-\LRp{\Pi^k_N u,v J}_{\hat{D}} = \LRp{u,vJ}_{\hat{D}}.
+\LRp{\Pi^k_N u,v J^k}_{\hat{D}} = \LRp{u,vJ^k}_{\hat{D}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
 \label{eq:l2curvmap}
 \end{equation}
-For affine elements, $J$ is constant and can be cancelled.  Thus, the $L^2$ projection over affine elements is equivalent to simply taking the $L^2$ projection of a function over the reference element.  However, for curved elements, $J$ acts as a spatially varying weight within the $L^2$ inner product.  
+For affine elements, $J^k$ is constant and can be cancelled.  Thus, the $L^2$ projection over affine elements is equivalent to simply taking the $L^2$ projection of a function over the reference element.  However, for curved elements, $J$ acts as a spatially varying weight within the $L^2$ inner product.  
 
 Discretizing (\ref{eq:l2curvmap}) requires a weighted mass matrix.  We define a curved mass matrix over an element $D^k$ by weighting the discrete $L^2$ norm with values of $J$ at quadrature points
 \begin{equation}
@@ -869,7 +869,7 @@ We can rewrite the norm of the difference between the weight-adjusted and $L^2$ 
 \[
 \nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ^k}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
 \]
-Because $v \in P^N\LRp{D^k}$, we can also evaluate the squared error as
+Because $v \in P^N\LRp{\hat{D}}$, we can also evaluate the squared error as
 \begin{align*}
 \nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ^k}_{\hat{D}} - \LRp{P_N^k  u,vJ^k}_{\hat{D}}} = \LRb{\LRp{u,vJ^k}_{\hat{D}} - \LRp{P_N^k  u,vJ^k}_{\hat{D}}} \\
 %&\leq \LRp{J^k,1}_{\hat{D}} \LRb{\LRp{u-P_N^ku,v}_{\hat{D}}} = \LRb{D^k}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}},
@@ -884,7 +884,7 @@ We can then note that $P_N^ku = \Pi_N\LRp{\frac{1}{J^k} \Pi_N\LRp{uJ^k}}$ to sho
 \end{align*}
 Adding and subtracting $\LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}$ and using Theorem~\ref{thm:wproj} (noting that $v\in W^{N+1,2}\LRp{D^k}$ since it is polynomial) gives
 \begin{align*}
-\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}} &\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}}\\
+\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}}^2 &\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}}\\
 &= \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{uJ^k - \Pi_N\LRp{uJ^k},\frac{v}{J^k}-\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}} \\
 &\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\nor{uJ^k - \Pi_N\LRp{uJ^k}}_{\hat{D}}\nor{\frac{v}{J^k}-\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}\\
 &\leq C h^{\min\LRp{r,N+1}+N+1} \tilde{C}_J \nor{u}_{W^{r,2}\LRp{D^k}} \nor{v}_{W^{N+1,2}\LRp{D^k}},
@@ -895,7 +895,7 @@ where
 \]
 Applying Lemma~\ref{lemma:sobolev} then yields
 \begin{align*}
-\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}}&\leq C_N h^{\min\LRp{r,N+1}+1} C_J \nor{u}_{W^{N+1,2}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
+\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}}^2 &\leq C_N h^{\min\LRp{r,N+1}+1} C_J \nor{u}_{W^{N+1,2}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
 \end{align*}
 Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
