@@ -316,14 +316,14 @@ and that
 \end{equation*}
 Let $\Omega \subset \mathbb{R}^d$ be a closed domain with boundary $\partial \Omega$.  Integrating over $\Omega$ and using Gauss' theorem on the spatial derivative yields
 \begin{equation}
-\int_{\Omega}\pd{U(\bm{u})}{t}\diff{x} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}(\bm{u})^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{x} = 0,
+  \int_{\Omega}\pd{U(\bm{u})}{t}\diff{\bm{x}} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}{(\bm{u})}^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{\bm{x}} = 0,
 \label{eq:entropyeq}
 \end{equation}
 where $\bm{n} = \LRp{n_1,\ldots,n_d}^T$ denotes the unit outward normal vector on $\partial \Omega$.  
 
 General solutions (including non-smooth solutions such as shocks) satisfy an entropy \emph{inequality}
 \begin{equation}
-\int_{\Omega}\pd{U(\bm{u})}{t}\diff{x} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}(\bm{u})^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{x} \leq 0,
+  \int_{\Omega}\pd{U(\bm{u})}{t}\diff{\bm{x}} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}{(\bm{u})}^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{\bm{x}} \leq 0,
 \label{eq:entropyineq}
 \end{equation}
 which results from considering solutions of an appropriate viscous form of the equations (\ref{eq:nonlineqs}) and taking the limit as viscosity vanishes.  In this work, schemes which satisfy a discrete form of (\ref{eq:entropyineq}) will be constructed by first enforcing a discrete version of entropy conservation (\ref{eq:entropyeq}), then adding an appropriate numerical dissipation which will enforce the entropy inequality (\ref{eq:entropyineq}).  
@@ -899,7 +899,7 @@ Applying Lemma~\ref{lemma:sobolev} then yields
 \end{align*}
 Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
-Theorem~\ref{thm:wproj} can be used to show that the $L^2$ error between $\Pi^k_N u, P^k_N u$ and $u \in W^{r,2}\LRp{D^k}$ is $O(h^r)$.  Theorem~\ref{thm:superconverge} demonstrates that the $L^2$ difference between $\Pi^k_N u, P^k_N u$ is $O(h^{r+1})$, or at least one order higher than the approximation error.  We note that optimal convergence of the weight-adjusted projection requires that the geometric mapping $\bm{\Phi}_k$ is asymptotically affine (i.e. the Sobolev norm of $J^k, \bm{G}^k$ does not grow under mesh refinement), which is ensured under nested mesh refinement and appropriate curvilinear blending strategies \cite{lenoir1986optimal, warburton2013low, chan2016weight2}.  
+Theorem~\ref{thm:wproj} can be used to show that the $L^2$ error between $\Pi^k_N u, P^k_N u$ and $u \in W^{r,2}\LRp{D^k}$ is $O(h^r)$.  Theorem~\ref{thm:superconverge} demonstrates that the $L^2$ difference between $\Pi^k_N u, P^k_N u$ is $O(h^{r+1})$, or at least one order higher than the approximation error.  We note that optimal convergence of the weight-adjusted projection requires that the geometric mapping $\bm{\Phi}_k$ is asymptotically affine (i.e., the Sobolev norm of $J^k, \bm{G}^k$ does not grow under mesh refinement), which is ensured under nested mesh refinement and appropriate curvilinear blending strategies \cite{lenoir1986optimal, warburton2013low, chan2016weight2}.  
 %We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
 
 \subsubsection{A locally conservative high order accurate correction}
