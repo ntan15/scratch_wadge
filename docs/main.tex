@@ -956,7 +956,7 @@ In three dimensions, geometric terms are typically computed in ``cross-product''
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{i1}\\
 J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}, \qquad i,j,k = 1,2,3, \qquad (i,j,k) \text{ cyclic}.
+J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}, \qquad (i,j,k) = (1,2,3), \text{ cyclic}.
 \end{align}
 Note the abuse of notation here and in the sequel, the superscript $k$ refers to the element number and the subscript $k$ to the cyclic index. 
 This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the geometric terms $J^k\bm{G}^k_{ij}$ are polynomials of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
