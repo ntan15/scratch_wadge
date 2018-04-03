@@ -628,7 +628,7 @@ The numerical flux $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R}$ is entropy conservative
 
 We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and the entropy-projected conservative variables $\tilde{\bm{u}}$ 
 \begin{align}
-\bm{u}_q = \bm{V}_q \bm{u}_h, \qquad \bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}, \qquad 
+\bm{u}_q = \bm{V}_q \bm{u}_h, \qquad \bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}, \qquad 
 \tilde{\bm{v}} = \LRs{\begin{array}{c}
 \tilde{\bm{v}}_q\\
 \tilde{\bm{v}}_f
@@ -641,6 +641,7 @@ We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and th
 \end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
 \label{eq:evars1}
 \end{align}
+\lcwnote{I changed $\bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}$ to $\bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}$.  Is this correct?}
 In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u}}$ denote the evaluation of the conservative variables in terms of the projected entropy variables at volume and face quadrature points.  We note that, under an appropriate choice of quadrature on quadrilaterals and hexahedra, this approach is equivalent to the approach taken in \cite{parsani2016entropy}, where the entropy variables are evaluated at Gauss nodes, then interpolated to a different set of nodes and used to compute the nonlinear fluxes.  
 
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
@@ -742,19 +743,20 @@ P^k_N u = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}},
 \end{equation}
 where $\Pi_N$ is the $L^2$ projection operator on the reference element $\hat{D}$.  We can discretize $P^k_N$ using quadrature to yield a weight-adjusted projection matrix $\tilde{\bm{P}}_q$ 
 \begin{align}
-\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{1/\bm{J}^k} \bm{V}_q\bm{P}_q\diag\LRp{\bm{J}^k} \bm{V}_q \nonumber\\
+\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{1/\bm{J}^k} \bm{V}_q\bm{P}_q\diag\LRp{\bm{J}^k} \nonumber\\
 &= \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q \diag\LRp{\bm{J}^k}.
 \label{eq:wadgproj}
 \end{align}
 We can similarly define a weight-adjusted lifting matrix $\tilde{\bm{L}}_q$ by replacing the weighted mass matrix in (\ref{eq:projliftcurved}) with the weight-adjusted mass matrix
-\begin{equation}
-\tilde{\bm{L}}^k_q = \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{L}_q \diag\LRp{\bm{J}^k_f}.
+\begin{align}
+\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_f^T\bm{W}_f\diag\LRp{\bm{J}^k_f} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{1/\bm{J}^k} \bm{V}_q\bm{L}_q\diag\LRp{\bm{J}^k_f} \nonumber\\
+&= \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{L}_q \diag\LRp{\bm{J}^k_f}.
 \label{eq:wadglift}
-\end{equation}
+\end{align}
 
 We can now introduce the weight-adjusted projection of the entropy variables $\bm{v}_h$ and the corresponding entropy-projected conservative variables $\tilde{\bm{u}}$ 
 \begin{align}
-\bm{u}_q = \bm{V}_q \bm{u}_h, \qquad \bm{v}_h = \tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}, \qquad 
+\bm{u}_q = \bm{V}_q \bm{u}_h, \qquad \bm{v}_h = \tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}, \qquad 
 \tilde{\bm{v}} = \LRs{\begin{array}{c}
 \bm{V}_q\\
 \bm{V}_f
@@ -768,7 +770,7 @@ A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the varia
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\tilde{\bm{P}}^k_q & \tilde{\bm{L}}^k_q\end{array}}
   \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
-  &\LRp{\bm{F}_{j,S}}_{ij} = \bm{f}_{j,S}\LRp{\LRp{\tilde{\bm{u}}}_i,\LRp{\tilde{\bm{u}}}_j}, \qquad 1 \leq i,j \leq N_q + N^f_q,\nonumber\\
+  &\LRp{\bm{F}_{j,S}}_{mn} = \bm{f}_{j,S}\LRp{\LRp{\tilde{\bm{u}}}_m,\LRp{\tilde{\bm{u}}}_n}, \qquad 1 \leq m,n \leq N_q + N^f_q,\nonumber\\
   &\bm{f}_j^* = \bm{f}_{j,S}(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
 \end{align}
 Since the  weight-adjusted mass matrix inverse is low-storage, and since the matrices $\bm{D}^j_k$ in (\ref{eq:dik}) can be assembled from reference matrices $\bm{D}^i_N$ and the values of geometric terms at quadrature points, the overall scheme requires only $O(N^d)$ storage per element.  We can additionally show that formulation (\ref{eq:dgform2}) is entropy conservative in the same sense as Theorem~\ref{thm:stab1}: 
@@ -781,29 +783,28 @@ Since the  weight-adjusted mass matrix inverse is low-storage, and since the mat
 \end{theorem}
 \begin{proof}
 The proof is similar to that of Theorem~\ref{thm:stab1}.  
-First, we note that 
+First, recall from the definitions of the weight-adjusted projection matrix~(\ref{eq:wadgproj}) and weight-adjusted lift matrix~(\ref{eq:wadglift}) that
 \begin{align}
-\tilde{\bm{P}}^k_q &= \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q \diag\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W} \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q \bm{M}^{-1} \bm{V}_q^T \bm{W}\diag\LRp{\bm{J}^k} \nonumber\\
-&= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_q^T \bm{W}\diag\LRp{\bm{J}^k}\label{eq:projidentity}\\
-\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{J}^k_f} \label{eq:liftidentity}.
+\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_q^T \bm{W}  \diag\LRp{\bm{J}^k  }\label{eq:projidentity},\\
+\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{J}^k_f}\label{eq:liftidentity}.
 \end{align}
-Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}$ on both sides and using (\ref{eq:projidentity}), (\ref{eq:liftidentity}) yields 
+Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}$ on both sides of (\ref{eq:dgform2}) and using (\ref{eq:projidentity}), (\ref{eq:liftidentity}) yields 
 \[
 \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}{\bm{V}}_q^T & {\bm{V}}_f^T\end{array}}
 \sum_{j=1}^d \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
-Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h = \tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}$ and using (\ref{eq:projidentity}) then yields for the time term
+Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h = \tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}$ and using (\ref{eq:projidentity}) then yields for the time term
 \begin{align*}
-\LRp{\tilde{\bm{P}}_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
-&= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}\diag\LRp{\bm{J}^k} \bm{v}\LRp{\bm{u}_q}^T\td{\bm{u}_q}{t} \\
-&= \bm{1}^T\bm{J}^k\bm{W}\td{U(\bm{u})}{t}.
+\LRp{\tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
+                                                                                               &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}\diag\LRp{\bm{J}^k} \left(\bm{v}\LRp{\bm{u}_q}\circ\td{\bm{u}_q}{t}\right) \\
+                                                                                               &= \bm{1}^T\bm{W}\diag\LRp{\bm{J}^k} \td{U(\bm{u}_q)}{t}.
 \end{align*}
 The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \cite{chan2017discretely}.
 \end{proof}
 
 \subsection{Analysis of weight-adjusted projection} 
 
-The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is superconvergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
+The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$ \lcwnote{(I find it a little confusing that the matrix version, $\tilde{\bm{P}}^k_q$, has a tilde but this one doesn't.  I am not sure what to do, if anything, about it.)}.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is superconvergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
 
 We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
 \begin{equation}
