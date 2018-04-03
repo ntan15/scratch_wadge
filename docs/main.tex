@@ -809,16 +809,16 @@ The construction of the discretely entropy stable weight-adjusted DG formulation
 
 We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
 \begin{equation}
-\LRp{J^k P_N^k  u, v} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}} =  \LRp{uJ^k, P_N^k  v}.
+  \LRp{J^k P_N^k  u, v}_{\hat{D}} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k}_{\hat{D}} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}}_{\hat{D}} =  \LRp{uJ^k, P_N^k  v}_{\hat{D}}.
 \label{eq:PNsym}
 \end{equation}
-Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
+Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N\LRp{\hat{D}}$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
 \begin{equation}
-\LRp{T_{1/J^k}^{-1} P_N^k  u,v} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v} = \LRp{\Pi_N(u J^k),v} = \LRp{u J^k,v}, \qquad \forall v\in P^N.
+  \LRp{T_{1/J^k}^{-1} P_N^k  u,v}_{\hat{D}} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v}_{\hat{D}} = \LRp{\Pi_N(u J^k),v}_{\hat{D}} = \LRp{u J^k,v}_{\hat{D}}, \qquad \forall v\in P^N{\hat{D}}.
 \label{eq:PNproj}
 \end{equation}
 
-To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$, we use a generalized inverse inequality and results from \cite{chan2016weight1,chan2016weight2}.  We first introduce a modification of Theorem 3.1 in \cite{warburton2013low, chan2016weight1}
+To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\hat{D}}} = O(h^{N+2})$, we use a generalized inverse inequality and results from \cite{chan2016weight1,chan2016weight2}.  We first introduce a modification of Theorem 3.1 in \cite{warburton2013low, chan2016weight1}
 \begin{theorem}%[Theorem 3.1 in \cite{warburton2013low, chan2016weight1}]
 Let $D^k$ be a quasi-regular element with representative size $h = \diam\LRp{D^k}$, and let $\hat{D}$ be the reference element.  For $N \geq 0$, $w\in W^{N+1,\infty}\LRp{D^k}$, and $u\in W^{r,2}\LRp{D^k}$, 
 \begin{align*}
@@ -830,14 +830,14 @@ Let $D^k$ be a quasi-regular element with representative size $h = \diam\LRp{D^k
 The proof is a straightforward modification of the proofs presented in \cite{warburton2013low, chan2016weight1} accounting for reduced regularity of $u$ when $r < (N+1)$.  The next result we need is a generalized inverse inequality.  
 \begin{lemma}
 \label{lemma:sobolev}
-Let $v \in P^N\LRp{D^k}$, and let $h = \diam\LRp{D^k}$.  Then,
+Let $v \in P^N\LRp{\hat{D}}$, and let $h = \diam\LRp{D^k}$.  Then,
 \[
 \nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_{N}  h^{-N} \nor{\sqrt{J^k}}_{L^{\infty}} \nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}} \nor{\bm{G}^k}_{W^{N,\infty}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
 \]
 where $C_{N}$ depends on $N$, but is independent of $h$.
 \end{lemma}
 \begin{proof}
-By applying Fa\'{a} di Bruno's formula, we can express the degree $(N+1)$ Sobolev norm of $v$ on $D^k$ in terms of derivatives of $v$ on the reference element $\hat{D}$.  Noting that all $(N+1)$ derivatives of $v$ disappear for $v\in P^N$ allows us to bound the degree $(N+1)$ Sobolev norm of $v$ by its degree $N$ Sobolev norm
+  By applying Fa\`{a} di Bruno's formula, we can express the degree $(N+1)$ Sobolev norm of $v$ on $D^k$ in terms of derivatives of $v$ on the reference element $\hat{D}$.  Noting that all $(N+1)$ derivatives of $v$ disappear for $v\in P^N\LRp{\hat{D}}$ allows us to bound the degree $(N+1)$ Sobolev norm of $v$ by its degree $N$ Sobolev norm
 \[
 \nor{v}_{W^{N+1,2}\LRp{D^k}} \leq C_N \nor{\bm{G}^k}_{W^{N,\infty}\LRp{D^k}} \nor{v}_{W^{N,2}\LRp{D^k}},
 \]
@@ -845,7 +845,7 @@ where $\bm{G}^k$ is the matrix of unscaled geometric terms for $D^k$.  Then, a s
 \begin{align}
 \nor{v}_{W^{N,2}\LRp{D^k}}  \leq C_1 h^{-N} \nor{\sqrt{J^k}}_{L^{\infty}} \nor{v}_{W^{N,2}\LRp{\hat{D}}}.  
 \end{align}
-The quantity $\nor{v}_{W^{N,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\in P^N$.  Since $P^N$ is finite-dimensional, the Sobolev norm can be bounded from above by the $L^2$ norm of $\hat{D}$ with a constant $C_{2}$ depending on $N, d$.  By another scaling argument, we have 
+The quantity $\nor{v}_{W^{N,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\in P^N\LRp{\hat{D}}$.  Since $P^N\LRp{\hat{D}}$ is finite-dimensional, the Sobolev norm can be bounded from above by the $L^2$ norm of $\hat{D}$ with a constant $C_{2}$ depending on $N, d$.  By another scaling argument, we have 
 \begin{align}
 \nor{v}_{W^{N+1,2}\LRp{\hat{D}}} \leq C_{2} \nor{v}_{L^2\LRp{\hat{D}}} \leq \nor{\frac{1}{\sqrt{J^k}}}_{L^{\infty}} C_{2}  \nor{v}_{L^2\LRp{D^k}}.
 \end{align}
