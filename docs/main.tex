@@ -1063,7 +1063,7 @@ We briefly outline how to compute $\tilde{J^k\bm{G}^k_{ij}}$ in three dimensions
 \LRp{\bm{V}_N^{N+1}}_{ij} &= \ell^N_j(\hat{\bm{x}}^{N+1}_i) , \qquad 1\leq i \leq N_p, \qquad \qquad 1\leq i \leq (N+1)_p\\
 \LRp{\bm{V}^N_{N+1}}_{ij} &= \ell^{N+1}_j(\hat{\bm{x}}^{N}_i) , \qquad 1\leq i \leq (N+1)_p, \qquad \qquad 1\leq i \leq N_p, \nonumber
 \end{align}
-where $N_p, (N+1)_p$ denotes the number of interpolation points for degree $N$ and $N+1$ polynomials, respectively.  Next, let $\bm{x}_1,\bm{x}_2,\bm{x}_3$ denote vectors containing $x,y,z$ coordinates of degree $N$ interpolation points on a curved physical element $D^k$, and let $\tilde{\bm{x}}_1,\tilde{\bm{x}}_2,\tilde{\bm{x}}_3$ denote their evaluation at degree $(N+1)$ interpolation points
+where $N_p, (N+1)_p$ denotes the number of interpolation points for degree $N$ and $N+1$ polynomials, respectively.  Next, let $\bm{x}_1,\bm{x}_2,\bm{x}_3$ denote vectors containing $x_1,x_2,x_3$ coordinates of degree $N$ interpolation points on a curved physical element $D^k$, and let $\tilde{\bm{x}}_1,\tilde{\bm{x}}_2,\tilde{\bm{x}}_3$ denote their evaluation at degree $(N+1)$ interpolation points
 \begin{align}
 \tilde{\bm{x}}_1 = \bm{V}_N^{N+1}\bm{x}_1, \qquad \tilde{\bm{x}}_2 = \bm{V}_N^{N+1}\bm{x}_2, \qquad \tilde{\bm{x}}_3 = \bm{V}_N^{N+1}\bm{x}_3.
 \end{align}
@@ -1094,7 +1094,7 @@ We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly thro
 
 In this section, we verify Theorems~\ref{thm:superconverge} and \ref{thm:koprivagcl} concerning the accuracy of the weight-adjusted projection and modified construction of geometric terms satisfying the discrete geometric conservation law.  Figure~\ref{fig:superconverge} shows $L^2$ errors for both the standard $L^2$ projection (\ref{eq:l2curv}) and the weight-adjusted projection (\ref{eq:wadgproj}) for a series of warped meshes of degree $N = 4$.  Errors are estimated using degree $2N+1$ quadratures for triangles and tetrahedra \cite{xiao2010quadrature}.  We compute $L^2$ errors for both smooth and discontinuous functions
 \[
-f(\bm{x}) = e^{x+y}\sin\LRp{{\pi x}}\sin\LRp{{\pi y}}, \qquad g(\bm{x}) = f(\bm{x}) + H(x+y-\sin(\pi x)),
+f(\bm{x}) = e^{x_1+x_2}\sin\LRp{{\pi x_1}}\sin\LRp{{\pi x_2}}, \qquad g(\bm{x}) = f(\bm{x}) + H(x_1+x_2-\sin(\pi x_1)),
 \]
 where $H$ is the Heaviside function.  For the smooth function $f(\bm{x})$, we observe that the difference between the $L^2$ and weight-adjusted projections indeed converges at a rate of $O\LRp{h^{N+2}}$ as predicted by Theorem~\ref{fig:superconverge}, such that the $L^2$ errors for each projection appear identical.  The $L^2$ errors for the $L^2$ and weight-adjusted projections of the discontinuous function $g(\bm{x})$ are also virtually identical.  However, the difference beteween the $L^2$ and weight-adjusted projection converges faster than estimated by Theorem~\ref{fig:superconverge}, with the $L^2$ error converging as $O(h^{1/2})$ and the difference converging as $O(h^{2+1/2})$. 
 
@@ -1161,7 +1161,7 @@ coordinates{(0.5,0.00466574)(0.25,0.000804201)(0.125,0.000182886)(0.0625,2.96701
 
 We next compare the approximation of the geometric factors on a curved three-dimensional mesh.  We generate a sequence of quasi-uniform unstructured tetrahedral meshes using GMSH \cite{geuzaine2009gmsh} and construct a curvilinear mesh from the distorted coordinates $\tilde{\bm{x}}$, where
 \begin{align}
-\tilde{\bm{x}} = \bm{x} + \frac{1}{8}\cos\LRp{\frac{\pi}{2}x}\cos\LRp{\frac{\pi}{2}y}\cos\LRp{\frac{\pi}{2}z}.  
+\tilde{\bm{x}} = \bm{x} + \frac{1}{8}\cos\LRp{\frac{\pi}{2}x_1}\cos\LRp{\frac{\pi}{2}x_2}\cos\LRp{\frac{\pi}{2}x_3}.  
 \label{eq:mapping}
 \end{align}
 We then compute the $L^2$ error in approximating geometric terms for each element $D^k$ by computing $J^k\bm{G}^k_{ij}-\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  
@@ -1403,19 +1403,19 @@ In three dimensions, the compressible Euler equations are given by
 \rho w\\
 E
 \end{array}} +
-\pd{}{x}\LRp{\begin{array}{c}
+\pd{}{x_1}\LRp{\begin{array}{c}
 \rho u\\
 \rho u^2+p\\
 \rho uv\\
 \rho uw\\
 u(E+p)
-\end{array}} + \pd{}{y}\LRp{\begin{array}{c}
+\end{array}} + \pd{}{x_2}\LRp{\begin{array}{c}
 \rho v\\
 \rho uv\\
 \rho v^2+p\\
 \rho vw\\
 v(E+p)
-\end{array}}  + \pd{}{z}\LRp{\begin{array}{c}
+\end{array}}  + \pd{}{x_3}\LRp{\begin{array}{c}
 \rho w\\
 \rho uw\\
 \rho vw\\
