@@ -548,7 +548,7 @@ We assume that the mesh is quasi-uniform.  The mesh is also assumed to be watert
 We also assume that the scaled matrix of geometric terms transforms scaled reference normal vectors to scaled physical normals, such that
 \begin{align}
 \sum_{j=1}^d J^k\bm{G}^k_{ij} \hat{n}_j\hat{J}_f = n_i J^k_f, \qquad \LRp{\sum_{j=1}^d \LRp{\bm{JG}^k_{ij}}_f \circ\LRp{\hat{\bm{n}}_j\circ\hat{\bm{J}}_f}}
-= \LRp{\bm{n}_j\circ\bm{J}^k_f},
+= \LRp{\bm{n}_i\circ\bm{J}^k_f},
 \label{eq:normalconsistency}
 \end{align}
 where $\bm{n}_j$ and $\bm{J}^k_f$ are vectors containing evaluations of the physical unit normals and face Jacobian factors for $D^k$ at surface quadrature points, respectively.
