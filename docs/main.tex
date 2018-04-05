@@ -949,14 +949,14 @@ This condition is required to ensure that free-stream preservation holds at the 
 \[
 \pd{\bm{u}}{t} + \Grad \cdot \bm{f}(\bm{u}) = \pd{\bm{u}}{t} = 0.
 \]
-For isoparametric geometric mappings (where the degree of the mapping matches the degree of the polynomial approximation) in two dimensions, the GCL is naturally enforced by noting that the scaled metric terms $J^k\bm{G}^k_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly automatically enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D.  
+For isoparametric geometric mappings (where the degree of the mapping matches the degree of the polynomial approximation) in two dimensions, the GCL is naturally enforced by the ``cross-product'' form, noting that the scaled metric terms $J^k\bm{G}^k_{ij}$ are exactly polynomials of degree $N$.  As a result, computing the metric terms exactly automatically enforces that both the continuous GCL (\ref{eq:gcl}) and the discrete GCL (\ref{eq:dgcl}) are satisfied.  However, the discrete GCL is not always maintained at the discrete level in 3D.  
 
 In three dimensions, geometric terms are typically computed in ``cross-product'' form
 \begin{align}
 \LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}, \qquad (i,j,k) = (1,2,3), \text{ cyclic}.
+J^k\bm{G}^k_{1i}\\
+J^k\bm{G}^k_{2i}\\
+J^k\bm{G}^k_{3i}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}_k}, \qquad (i,j,k) = (1,2,3), \text{ cyclic}.
 \end{align}
 Note the abuse of notation here and in the sequel, the superscript $k$ refers to the element number and the subscript $k$ to the cyclic index. 
 This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the geometric terms $J^k\bm{G}^k_{ij}$ are polynomials of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
@@ -970,24 +970,24 @@ where $\bm{e}_j$ is the $j$th canonical vector and $\hat{\Grad} \times $ denotes
 \begin{align}
 \bm{r}_i = \pd{\bm{x}}{\hat{x}_i}\times \bm{x}, \qquad
 \LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}\LRp{\pd{\bm{r}_k}{\hat{x}_j}-\pd{\bm{r}_j}{\hat{x}_k}}.
+J^k\bm{G}^k_{1i}\\
+J^k\bm{G}^k_{2i}\\
+J^k\bm{G}^k_{3i}\end{array}} = -\frac{1}{2}\LRp{\pd{\bm{r}_k}{\hat{x}_j}-\pd{\bm{r}_j}{\hat{x}_k}}.
 \end{align}
 From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds.  
 %\begin{align}
 %\hat{\Grad}\cdot \LRs{\begin{array}{c}
-%J^k\bm{G}^k_{i1}\\
-%J^k\bm{G}^k_{i2}\\
-%J^k\bm{G}^k_{i3}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
+%J^k\bm{G}^k_{1i}\\
+%J^k\bm{G}^k_{2i}\\
+%J^k\bm{G}^k_{3i}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
 %\end{align}
 The idea of Kopriva~\cite{kopriva2006metric} is to use (\ref{eq:conscurl}), but to interpolate before applying the curl  %This approximates the geometric terms via
 \begin{align}
 \bm{r}_i = { \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad
 \LRs{\begin{array}{c}
-J^k\bm{G}^k_{i1}\\
-J^k\bm{G}^k_{i2}\\
-J^k\bm{G}^k_{i3}\end{array}} = -\frac{1}{2}\LRp{\pd{I_N\bm{r}_k}{\hat{x}_j}-\pd{I_N\bm{r}_j}{\hat{x}_k}}, 
+J^k\bm{G}^k_{1i}\\
+J^k\bm{G}^k_{2i}\\
+J^k\bm{G}^k_{3i}\end{array}} = -\frac{1}{2}\LRp{\pd{I_N\bm{r}_k}{\hat{x}_j}-\pd{I_N\bm{r}_j}{\hat{x}_k}}, 
 \label{eq:iconscurl}
 \end{align}
 where $I_N$ denotes the degree $N$ polynomial interpolation operator. Since the geometric terms are still computed by applying a curl, the continuous GCL condition (\ref{eq:gcl}) is still satisfied. We shall also show that this approximation also satisfies the discrete GCL condition. However, because the geometric terms are computed by applying the curl, the geometric terms are approximated as degree $(N-1)$ polynomials rather than degree $N$ polynomials, which can reduce accuracy.  
