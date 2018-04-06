@@ -1069,9 +1069,9 @@ where $N_p, (N+1)_p$ denotes the number of interpolation points for degree $N$ a
 \end{align}
 Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $N+1$ with respect to the $i$th coordinate direction.  The geometric factors are computed as follows:
 \begin{align}
-\bm{JG^k}_{11} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}} \\
-\bm{JG^k}_{12} &= \bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_3}} \nonumber\\
-\bm{JG^k}_{13} &= \bm{V}_{N+1}^N{\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_1 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}}} \nonumber\\
+\bm{JG^k}_{11} &= \phantom{-}\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}} \\
+\bm{JG^k}_{12} &= \phantom{-}\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_3}} \nonumber\\
+\bm{JG^k}_{13} &= \phantom{-}\bm{V}_{N+1}^N{\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_1 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_3}}} \nonumber\\
 %
 \bm{JG^k}_{21} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_3 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_2 \tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_2 \LRp{\LRp{ \tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3}} \nonumber \\
 \bm{JG^k}_{22} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_1} \circ\tilde{\bm{x}}_3} - \tilde{\bm{D}}^{N+1}_3 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_1 }\circ\tilde{\bm{x}}_3}} \nonumber\\
@@ -1081,6 +1081,7 @@ Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $
 \bm{JG^k}_{32} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_3 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}} \nonumber\\
 \bm{JG^k}_{33} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_1 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}}. \nonumber
 \end{align}
+\lcwnote{Should we instead use the average of the two ``conservative forms'' given earlier in the next?  I guess we would have to change the code as well.}
 \begin{remark}
 
 We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly through a local constrained minimization problem \cite{fernandez2016simultaneous, crean2018entropy}, which yields a solution in terms of a pseudo-inverse.  However, we have not found a straightforward way to simultaneously enforce both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm} using this approach.
