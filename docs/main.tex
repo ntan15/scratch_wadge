@@ -1,6 +1,7 @@
 \pdfoutput=1
 
 \documentclass[preprint,10pt]{article}
+\usepackage{stmaryrd}
 
 \usepackage{fullpage}
 \usepackage[colorlinks=true]{hyperref}
@@ -255,7 +256,7 @@ legend style={font=\small}
 \newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
 \newcommand{\Grad} {\ensuremath{\nabla}}
 \newcommand{\note}[1]{{\color{blue}{#1}}}
-\newcommand{\lcwnote}[1]{{\color{gray}{#1}}}
+\newcommand{\lcwnote}[1]{{\color{magenta}{#1}}}
 \renewcommand{\d}{\partial}
 
 
@@ -303,12 +304,12 @@ It can be shown (see, for example, \cite{mock1980systems}) that symmetrization i
 \[
 \bm{v}^T \pd{\bm{f}_j}{\bm{u}} = \pd{F_j(\bm{u})}{\bm{u}}^T, \qquad \psi_j(\bm{v}) = \bm{v}^T\bm{f}_j(\bm{u}(\bm{v})) - F_j(\bm{u}(\bm{v})), \qquad \psi_j'(\bm{v}) = \bm{f}_j(\bm{u}(\bm{v})).
 \]
-Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields \lcwnote{(What layout conventions are used for the Matrix calculus, \url{https://en.wikipedia.org/wiki/Matrix_calculus\#Layout_conventions}?  For example, should $\pd{U(\bm{u})}{\bm{u}}$ be a row vector and $\pd{\bm{u}}{x_j}$ a column vector?)}
+Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields \lcwnote{(What layout conventions are used for the Matrix calculus, \url{https://en.wikipedia.org/wiki/Matrix_calculus\#Layout_conventions}?  For example, should $\pd{U(\bm{u})}{\bm{u}}$ be a row vector and $\pd{\bm{u}}{x_j}$ a column vector?)}  \note{JC: I think $\pd{U(\bm{u})}{\bm{u}}$ should be a row vector and $\pd{\bm{u}}{x_j}$ a column vector.  I haven't specified this since most of the other entropy stable papers haven't done so either - do you think we should be explicit?}
 \begin{equation}
 \bm{v}^T\pd{\bm{f}_j(\bm{u})}{x_j} = \pd{U(\bm{u})}{\bm{u}}^T\pd{\bm{f}_j(\bm{u})}{\bm{u}}\pd{\bm{u}}{x_j} = \pd{F_j(\bm{u})}{x_j},
 \label{eq:chainrule}
 \end{equation}
-and that 
+and that
 \begin{equation*}
 \pd{U(\bm{u})}{t} + \sum_{j=1}^d \pd{F_j(\bm{u})}{x_j} = 0.
 %\label{eq:entropyeqstrong}
@@ -403,13 +404,13 @@ Ignoring terms involving filters, limiters, or artificial viscosity, a semi-disc
 \end{align}
 where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on both $D^k$ and neighboring elements.  
 
-Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due to the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux  function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  To account for the inexactness of quadrature, we rewrite (\ref{eq:weakdg}) in strong form using a discrete quadrature-based $L^2$ projection.  
+Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due to the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  
 
-For polynomial approximation spaces, $\pd{\bm{v}}{x_i}$ is polynomial \lcwnote{(Is this true when have a non-affine element mapping?)}.  Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
+While this paper focuses on curved meshes, the inexactness of quadrature leads to the loss of the chain rule and thus the loss of entropy conservation or entropy dissipation (\ref{eq:entropyineq}) even on affine meshes.  We can rewrite (\ref{eq:weakdg}) in a strong form using a discrete quadrature-based $L^2$ projection.  For polynomial approximation spaces on affine meshes, $\pd{\bm{v}}{x_i}$ is polynomial \lcwnote{(Is this true when have a non-affine element mapping?)} \note{No - good point.  I specified affine meshes in the revised text}.  Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
 \[
 \int_{D^k} \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} \diff{\bm{x}} = \int_{\hat{D}} \Pi_N \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} J^k\diff{\bm{x}}.
 \]
-\lcwnote{I don't understand the previous equation.  Should the geometry terms be included in the argument to the $L^2$ projection?  If so we might need to introduce $\bm{G}^k$ here.}
+\lcwnote{I don't understand the previous equation.  Should the geometry terms be included in the argument to the $L^2$ projection?  If so we might need to introduce $\bm{G}^k$ here.}  \note{Good point - I meant this to be for affine elements only to illustrate why the chain rule is lost.  It's more complicated for curvilinear elements.  }
 Thus, integrating by parts (\ref{eq:weakdg}) recovers a ``strong'' DG formulation involving the projection operator
 \begin{align}
 &\int_{D^k} \LRp{\pd{\bm{u}}{t} - \sum_{j=1}^d \pd{\Pi_N \bm{f}_j(\bm{u})}{x_j}} \cdot \bm{v} \diff{\bm{x}} \nonumber\\
@@ -465,7 +466,7 @@ Using the volume quadrature interpolation matrix $\bm{V}_q$, we can compute a qu
 \[
   \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \qquad \bm{M}_{ij} = \sum_{k=1}^{N_q} \hat{w}_k \phi_j(\hat{\bm{x}}_k)\phi_i(\hat{\bm{x}}_k) \approx \int_{\hat{D}}\phi_j\phi_i \diff{\hat{\bm{x}}} = \LRp{\phi_j,\phi_i}_{\hat{D}}.
 \]
-The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad} \lcwnote{(It seems to be positive definite due to the fact we have a positive weight quadrature, not Assumption~\ref{ass:quad}.)}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
+The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad} \lcwnote{(It seems to be positive definite due to the fact we have a positive weight quadrature, not Assumption~\ref{ass:quad}.)} \note{Yes, but the degree of exactness of the quadrature is also necessary or it can be only positive semi-definite.  For example, if you just use a degree $2N$ quadrature, I think you can end up with a singular mass matrix.}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
 
 The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2proj}) and lift operators (\ref{eq:lift}) using quadrature.  The result are quadrature-based $L^2$ projection and lift operators $\bm{P}_q, \bm{L}_q$, 
 \begin{equation}
@@ -524,7 +525,7 @@ The key difference between curvilinear and affine meshes is that geometric terms
 \[
 \pd{u}{x_i} = \sum_{j=1}^d \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad \bm{G}^k_{ij} = \pd{\hat{x}_j}{x_i},
 \]
-where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$ \lcwnote{(What about $\bm{J}^{\bm{G}^k_{ij}}$ instead of $\bm{JG}^k_{ij}$ to make it look more like a single object? I am debating if I should revert the changes to add the Hadamard product to the other surface terms.)}.
+where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$ \lcwnote{(What about $\bm{J}^{\bm{G}^k_{ij}}$ instead of $\bm{JG}^k_{ij}$ to make it look more like a single object? I am debating if I should revert the changes to add the Hadamard product to the other surface terms.)} \note{Hm...I'm not sure about the expanding superscripts/subscripts.  What if we changed it to a different name instead of $J\bm{G}_{ij}$, like $\tilde{\bm{G}}^k_{ij}$?}.
 
 We assume in this work that the mesh is stationary.  It can be shown at the continuous level that, for any differentiable and invertible mapping, the quantity $J^k\bm{G}^k$ satisfies a geometric conservation law (GCL) \cite{kopriva2006metric, thomas1979geometric}
 \begin{equation}
@@ -556,7 +557,7 @@ Likewise, $\LRp{\bm{JG}^k_{ij}}_f$ \lcwnote{(This could be written as $\bm{J}_f^
 \end{assumption}
 The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at the continuous level for a watertight mesh \cite{ciarlet1978finite}, and thus at all points where the geometric terms are computed exactly.  However, we will also consider cases where the geometric terms $J^k\bm{G}^k_{ij}$ are modified to enforce a discrete form of (\ref{eq:gcl}); in these situations, it will be important to ensure that (\ref{eq:normalconsistency}) holds after such modifications.  
 
-Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf} \lcwnote{(Check to see if we can find an earlier reference to this type of approximation.)}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
+Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf, gassner2016split} \lcwnote{(Check to see if we can find an earlier reference to this type of approximation.)} \note{I don't know if there is - I've noticed even Gassner and the SBP folks don't seem to cite anything on this}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
 \[
   \bm{D}^i_k = \frac12 \sum_{j=1}^d \left(\diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}\right).
 \]
@@ -686,8 +687,13 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %\]
 %\note{Finish proof}
 \end{proof}
-An entropy stable scheme can be constructed by adding an entropy-dissipating penalty term, such as a Lax-Friedrichs penalization or the matrix dissipation terms introduced in \cite{chandrashekar2013kinetic, winters2017uniquely}.  
-\note{maybe add more here?}
+An entropy stable scheme can be constructed by adding an entropy-dissipating penalty term, such as a Lax-Friedrichs penalization or the matrix dissipation terms introduced in \cite{chandrashekar2013kinetic, winters2017uniquely}.  For example, Lax-Friedrichs penalization can be incorporated by replacing $\bm{f}_S$ with
+\[
+\bm{f}_S\Longrightarrow \bm{f}_S - \frac{\lambda}{2}\jump{\tilde{\bm{u}}_f},
+\]
+where $\lambda$ is an estimate of the maximum eigenvalue of $\pd{\bm{f}(\bm{u})}{\bm{u}}$ \cite{chen2017entropy, chan2017discretely}.
+
+%\note{maybe add more here?}
 
 \section{Discretely stable and low storage DG methods on curved meshes}
 
