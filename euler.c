@@ -2901,10 +2901,10 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 					     "euler_vol_3d_curved", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "euler_surf_3d", info);
-  //  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-  //                                              "euler_update_3d", info);
-    app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-						  "euler_update_3d_curved", info);  
+  //    app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
+  //                                                "euler_update_3d", info);
+  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
+						"euler_update_3d_curved", info);  
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "test_kernel", info);
 

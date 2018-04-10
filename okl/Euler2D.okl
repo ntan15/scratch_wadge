@@ -1169,9 +1169,9 @@ kernel void euler_update_2d_curved(const int K, const dfloat *restrict Jq,
 	{
 	  for (int i = 0; i < p_Nq; ++i; inner0)
 	    {
-
+	      
 	      const int k = k1 * p_KblkU + k2;
-
+	      
 	      if (k < K)
 		{
 		  int id = i + k * p_Nq * p_Nfields;
@@ -1288,10 +1288,10 @@ kernel void euler_update_2d_curved(const int K, const dfloat *restrict Jq,
 
 		  // smem transfer, premult for WADG
 		  const dfloat Jqi = Jq[i + k * p_Nq];		  
-		  sV1[k2][i] = V1 * Jqi;
-		  sV2[k2][i] = V2 * Jqi;
-		  sV3[k2][i] = V3 * Jqi;
-		  sV4[k2][i] = V4 * Jqi;
+		  srho[k2][i] = V1 * Jqi;
+		  srhou[k2][i] = V2 * Jqi;
+		  srhov[k2][i] = V3 * Jqi;
+		  sE[k2][i] = V4 * Jqi;
 		}
 	    }
 	}
@@ -1311,15 +1311,15 @@ kernel void euler_update_2d_curved(const int K, const dfloat *restrict Jq,
 	    for (int j = 0; j < p_Nq; ++j)
 	      {
 		const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-		r1 += VqPq_ij * sV1[k2][j];
-		r2 += VqPq_ij * sV2[k2][j];
-		r3 += VqPq_ij * sV3[k2][j];
-		r4 += VqPq_ij * sV4[k2][j];
+		r1 += VqPq_ij * srho[k2][j];
+		r2 += VqPq_ij * srhou[k2][j];
+		r3 += VqPq_ij * srhov[k2][j];
+		r4 += VqPq_ij * sE[k2][j];
 	      }
-	    srho[k2][i] = r1/Jqi;
-	    srhou[k2][i] = r2/Jqi;
-	    srhov[k2][i] = r3/Jqi;
-	    sE[k2][i] = r4/Jqi;
+	    sV1[k2][i] = r1/Jqi;
+	    sV2[k2][i] = r2/Jqi;
+	    sV3[k2][i] = r3/Jqi;
+	    sV4[k2][i] = r4/Jqi;
 	  }
 	}
       }
@@ -1337,15 +1337,15 @@ kernel void euler_update_2d_curved(const int K, const dfloat *restrict Jq,
 	    for (int j = 0; j < p_Nq; ++j)
 	      {
 		const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-		r1 += VqPq_ij * srho[k2][j];
-		r2 += VqPq_ij * srhou[k2][j];
-		r3 += VqPq_ij * srhov[k2][j];
-		r4 += VqPq_ij * sE[k2][j];
+		r1 += VqPq_ij * sV1[k2][j];
+		r2 += VqPq_ij * sV2[k2][j];
+		r3 += VqPq_ij * sV3[k2][j];
+		r4 += VqPq_ij * sV4[k2][j];
 	      }
-	    sV1[k2][i] = r1;
-	    sV2[k2][i] = r2;
-	    sV3[k2][i] = r3;
-	    sV4[k2][i] = r4;
+	    srho[k2][i] = r1;
+	    srhou[k2][i] = r2;
+	    srhov[k2][i] = r3;
+	    sE[k2][i] = r4;
 	    
 	  }
 	  
@@ -1376,10 +1376,10 @@ kernel void euler_update_2d_curved(const int K, const dfloat *restrict Jq,
 		      for (int j = 0; j < p_Nq; ++j)
 			{
 			  const dfloat VfPq_ij = VfPq[ii + j * p_NfqNfaces];
-			  V1 += VfPq_ij * sV1[k2][j];
-			  V2 += VfPq_ij * sV2[k2][j];
-			  V3 += VfPq_ij * sV3[k2][j];
-			  V4 += VfPq_ij * sV4[k2][j];
+			  V1 += VfPq_ij * srho[k2][j];
+			  V2 += VfPq_ij * srhou[k2][j];
+			  V3 += VfPq_ij * srhov[k2][j];
+			  V4 += VfPq_ij * sE[k2][j];
 			}
 
 		      const int id = ii + k * p_NfqNfaces * p_Nfields;
@@ -1403,10 +1403,10 @@ kernel void euler_update_2d_curved(const int K, const dfloat *restrict Jq,
 		  for (int j = 0; j < p_Nq; ++j)
 		    {
 		      const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-		      V1 += VqPq_ij * sV1[k2][j];
-		      V2 += VqPq_ij * sV2[k2][j];
-		      V3 += VqPq_ij * sV3[k2][j];
-		      V4 += VqPq_ij * sV4[k2][j];
+		      V1 += VqPq_ij * srho[k2][j];
+		      V2 += VqPq_ij * srhou[k2][j];
+		      V3 += VqPq_ij * srhov[k2][j];
+		      V4 += VqPq_ij * sE[k2][j];
 		    }
 
 		  // evaluate U(P*V) and write out
