@@ -1,5 +1,5 @@
 
-if     ELEM_TYPE == 0 then meshname = "meshes/tri2.msh"
+if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare.msh"
 elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube2.msh"
 else
   print("Unknown element type")

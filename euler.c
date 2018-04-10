@@ -2883,24 +2883,28 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 
 #if VDIM == 2 // triangle
   printf("building 2D kernels\n");
-  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-                                             "euler_vol_2d", info);
+  //  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
+  //                                             "euler_vol_2d", info);
+    app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
+  					     "euler_vol_2d_curved", info);  
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                               "euler_surf_2d", info);
   app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
-                                                "euler_update_2d", info);
+                                                "euler_update_2d_curved", info);
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                               "test_kernel_2d", info);
 #else
   printf("building 3D kernels\n");
-  // app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-  //                                             "euler_vol_3d", info);
+  //   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
+  //					      "euler_vol_3d", info);
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
 					     "euler_vol_3d_curved", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "euler_surf_3d", info);
-  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-                                                "euler_update_3d", info);
+  //  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
+  //                                              "euler_update_3d", info);
+    app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
+						  "euler_update_3d_curved", info);  
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "test_kernel", info);
 
@@ -3211,17 +3215,18 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t E = p / gm1 + .5 * (rho) * (u * u + v * v);
 
   // const sol for testing
-  rho = 1.0;
-  rhou = 2.0;
-  rhov = 5.0;
-  E = 1.0 + .5f * (rhou * rhou + rhov * rhov) / rho;
-
+  //rho = 1.0;
+  //rhou = 2.0;
+  //rhov = 5.0;
+  //E = 1.0 + .5f * (rhou * rhou + rhov * rhov) / rho;
+  
   U->U1 = rho;
   U->U2 = rhou;
   U->U3 = rhov;
   U->U4 = E;
 
 #else
+
   // 3D vortex on [0,10] x [0,10] x [0,10]
   dfloat_t x0 = 5.0;
   dfloat_t y0 = 5.0;
@@ -3279,6 +3284,7 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
 {
 
 #if VDIM == 2
+  
   occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
                 app->Drq, app->Dsq, app->VqLq, app->VfPq, app->Q, app->Qf,
                 app->rhsQ, app->rhsQf);
@@ -3290,7 +3296,9 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
                 occaDfloat((dfloat_t)rka), occaDfloat((dfloat_t)rkb),
                 occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q,
                 app->Qf);
+  
 #else
+  
   occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
                 app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
                 app->Q, app->Qf, app->rhsQ, app->rhsQf);
@@ -3783,20 +3791,37 @@ int main(int argc, char *argv[])
       X.z = app->hops->xyzq[i + 2 * Nq + e * Nq * 3];
 #endif
 
-      dfloat_t rho = Q[i + 0 * Nq + e * Nq * NFIELDS];
-      dfloat_t rhou = Q[i + 1 * Nq + e * Nq * NFIELDS];
-      dfloat_t rhov = Q[i + 2 * Nq + e * Nq * NFIELDS];
-      dfloat_t E = Q[i + 3 * Nq + e * Nq * NFIELDS];
-
       euler_fields Uex;
       euler_vortex(app, X, FinalTime, &Uex);
 
       dfloat_t wJq = (app->hops->wq[i]) * (app->hops->Jq[i + e * Nq]);
+#if VDIM==2
+      dfloat_t rho = Q[i + 0 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhou = Q[i + 1 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhov = Q[i + 2 * Nq + e * Nq * NFIELDS];
+      dfloat_t E = Q[i + 3 * Nq + e * Nq * NFIELDS];
+      
       dfloat_t err1 = (rho - Uex.U1);
       dfloat_t err2 = (rhou - Uex.U2);
       dfloat_t err3 = (rhov - Uex.U3);
       dfloat_t err4 = (E - Uex.U4);
       err += (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4) * wJq;
+      //printf("rho, rhoex = %f, %f\n",rho,Uex.U1);
+      
+#else
+      dfloat_t rho  = Q[i + 0 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhou = Q[i + 1 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhov = Q[i + 2 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhow = Q[i + 3 * Nq + e * Nq * NFIELDS];      
+      dfloat_t E    = Q[i + 4 * Nq + e * Nq * NFIELDS];
+      
+      dfloat_t err1 = (rho - Uex.U1);
+      dfloat_t err2 = (rhou - Uex.U2);
+      dfloat_t err3 = (rhov - Uex.U3);
+      dfloat_t err4 = (rhow - Uex.U4);      
+      dfloat_t err5 = (E - Uex.U5);
+      err += (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4 + err5 * err5) * wJq;      
+#endif
     }
   }
   printf("L2 err = %f\n", sqrt(err));
