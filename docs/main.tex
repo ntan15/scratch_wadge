@@ -222,7 +222,7 @@ legend style={font=\small}
 \theoremstyle{assumption}
 \newtheorem{assumption}{Assumption}
 
-\DeclareMathOperator{\diag}{diag}
+%\DeclareMathOperator{\diag}{diag}
 \DeclareMathOperator{\diam}{diam}
 
 \renewcommand{\topfraction}{0.85}
@@ -259,6 +259,8 @@ legend style={font=\small}
 \newcommand{\note}[1]{{\color{blue}{#1}}}
 \newcommand{\lcwnote}[1]{{\color{magenta}{#1}}}
 \renewcommand{\d}{\partial}
+\newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
+
 
 
 \newcommand{\LK}{L^2\LRp{D^k}}
@@ -407,11 +409,13 @@ where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on bo
 
 Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due to the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  
 
-While this paper focuses on curved meshes, the inexactness of quadrature leads to the loss of the chain rule and thus the loss of entropy conservation or entropy dissipation (\ref{eq:entropyineq}) even on affine meshes.  We can rewrite (\ref{eq:weakdg}) in a strong form using a discrete quadrature-based $L^2$ projection.  For polynomial approximation spaces on affine meshes, $\pd{\bm{v}}{x_i}$ is polynomial \lcwnote{(Is this true when have a non-affine element mapping?)} \note{No - good point.  I specified affine meshes in the revised text}.  Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
+While this paper focuses on curved meshes, the inexactness of quadrature leads to the loss of the chain rule and thus the loss of entropy conservation or entropy dissipation (\ref{eq:entropyineq}) even on affine meshes.  We can rewrite (\ref{eq:weakdg}) in a strong form using a discrete quadrature-based $L^2$ projection.  For polynomial approximation spaces on affine meshes, $\pd{\bm{v}}{x_i}$ is polynomial 
+%\lcwnote{(Is this true when have a non-affine element mapping?)} \note{No - good point.  I specified affine meshes in the revised text}.  
+Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
 \[
 \int_{D^k} \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} \diff{\bm{x}} = \int_{\hat{D}} \Pi_N \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} J^k\diff{\bm{x}}.
 \]
-\lcwnote{I don't understand the previous equation.  Should the geometry terms be included in the argument to the $L^2$ projection?  If so we might need to introduce $\bm{G}^k$ here.}  \note{Good point - I meant this to be for affine elements only to illustrate why the chain rule is lost.  It's more complicated for curvilinear elements.  }
+%\lcwnote{I don't understand the previous equation.  Should the geometry terms be included in the argument to the $L^2$ projection?  If so we might need to introduce $\bm{G}^k$ here.}  \note{Good point - I meant this to be for affine elements only to illustrate why the chain rule is lost.  It's more complicated for curvilinear elements.  }
 Thus, integrating by parts (\ref{eq:weakdg}) recovers a ``strong'' DG formulation involving the projection operator
 \begin{align}
 &\int_{D^k} \LRp{\pd{\bm{u}}{t} - \sum_{j=1}^d \pd{\Pi_N \bm{f}_j(\bm{u})}{x_j}} \cdot \bm{v} \diff{\bm{x}} \nonumber\\
@@ -480,15 +484,15 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 \begin{equation}
 \bm{D}_N^i =\LRs{
 \begin{array}{cc}
-\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q \diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  \diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\\
-- \frac{1}{2}\diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}\diag\LRp{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}
+\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q \diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  \diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f\\
+- \frac{1}{2}\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f \bm{V}_f\bm{P}_q &  \frac{1}{2}\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f
 \end{array}
 }
 \label{eq:decoupledsbp}
 \end{equation}
 where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
-\LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag\LRp{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
+\LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
 \]
 It was shown in \cite{chan2017discretely} that the matrix $\bm{D}_N^i$ satisfies several key properties.  First, it can be observed that $\bm{D}_N^i\bm{1} = 0$, where $\bm{1}$ is the vector of all ones.  Second, $\bm{D}_N^i$ satisfies a summation-by-parts property.  Let $\bm{Q}_N^i$ be the scaling of $\bm{D}_N^i$ by the diagonal matrix of volume and surface quadrature weights 
 \[
@@ -501,7 +505,7 @@ Then, $\bm{Q}_N^i$ satisfies the following discrete analogue of integration by p
 \begin{equation}
 \bm{Q}_N^i + \LRp{\bm{Q}_N^i}^T = \bm{B}^i_N, \qquad \bm{B}_N = \LRp{\begin{array}{cc}
 \bm{0}&\\
-& \bm{W}_f \diag\LRp{\hat{\bm{n}}_i\circ\hat{\bm{J}}_f}
+& \bm{W}_f \diag{\hat{\bm{n}}_i}\circ\hat{\bm{J}}_f
 \end{array}}.
 \label{eq:sbpprop1}
 \end{equation}
@@ -560,7 +564,7 @@ The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at th
 
 Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf, gassner2016split} \lcwnote{(Check to see if we can find an earlier reference to this type of approximation.)} \note{I don't know if there is - I've noticed even Gassner and the SBP folks don't seem to cite anything on this}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
 \[
-  \bm{D}^i_k = \frac12 \sum_{j=1}^d \left(\diag\LRp{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag\LRp{\bm{JG}^k_{ij}}\right).
+  \bm{D}^i_k = \frac12 \sum_{j=1}^d \left(\diag{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag{\bm{JG}^k_{ij}}\right).
 \]
 Using properties of the Hadamard product \cite{horn2012matrix}, we can rewrite $\bm{D}^i_k$ as 
 \begin{equation}
@@ -572,7 +576,7 @@ where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the 
 \bm{Q}^i_k + \LRp{\bm{Q}^i_k}^T = \bm{B}^i_k, \qquad \bm{B}^i_k = 
 \LRp{\begin{array}{cc}
 \bm{0}&\\
-& \bm{W}_f \diag\LRp{\bm{n}_i\circ\bm{J}^k_f}
+& \bm{W}_f \diag{\bm{n}_i\circ\bm{J}^k_f}
 \end{array}}.
 \label{eq:sbpk}
 \end{equation}
@@ -591,13 +595,13 @@ For affine elements, $J^k$ is constant and can be cancelled.  Thus, the $L^2$ pr
 
 Discretizing (\ref{eq:l2curvmap}) requires a weighted mass matrix.  We define a curved mass matrix over an element $D^k$ by weighting the discrete $L^2$ norm with values of $J$ at quadrature points
 \begin{equation}
-\bm{M}^k = \bm{V}_q^T \bm{W}\diag\LRp{\bm{J}^k}\bm{V}_q,
+\bm{M}^k = \bm{V}_q^T \bm{W}\diag{\bm{J}^k}\bm{V}_q,
 \label{eq:curvedmass}
 \end{equation}
 where $\bm{J}^k$ is a vector containing evaluation of the physical Jacobian factors for $D^k$ at volume quadrature points.
 Then, curvilinear $L^2$ projection and lift matrices can be defined in a manner analogous to (\ref{eq:projlift})
 \begin{equation}
-\bm{P}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k}, \qquad \bm{L}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_f^T\bm{W}_f\diag\LRp{\bm{J}^k_f}.
+\bm{P}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_q^T\bm{W}\diag{\bm{J}^k}, \qquad \bm{L}^k_q = \LRp{\bm{M}^k}^{-1}\bm{V}_f^T\bm{W}_f\diag{\bm{J}^k_f}.
 \label{eq:projliftcurved}
 \end{equation}
 These matrices are distinct from element to element, reflecting the fact that problem (\ref{eq:l2curvmap}) is distinct from element to element.  
@@ -643,13 +647,13 @@ We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and th
 \end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
 \label{eq:evars1}
 \end{align}
-\lcwnote{I changed $\bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}$ to $\bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}$.  Is this correct?}
+\lcwnote{I changed $\bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}$ to $\bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}$.  Is this correct?} \note{Yup - thanks!}
 In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u}}$ denote the evaluation of the conservative variables in terms of the projected entropy variables at volume and face quadrature points.  We note that, under an appropriate choice of quadrature on quadrilaterals and hexahedra, this approach is equivalent to the approach taken in \cite{parsani2016entropy}, where the entropy variables are evaluated at Gauss nodes, then interpolated to a different set of nodes and used to compute the nonlinear fluxes.  
 
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\bm{P}^k_q & \bm{L}^k_q\end{array}}
-  \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{L}^k_q \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
+  \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{L}^k_q \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform1}\\
   &\LRp{\bm{F}_{j,S}}_{mn} = \bm{f}_{j,S}\LRp{\LRp{\tilde{\bm{u}}}_m,\LRp{\tilde{\bm{u}}}_n}, \qquad 1 \leq m,n \leq N_q + N^f_q,\nonumber\\
   &\bm{f}_j^* = \bm{f}_{j,S}(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces},\nonumber
 \end{align}
@@ -666,7 +670,7 @@ We have the following semi-discrete statement of entropy conservation:
 \begin{theorem}
   Let $\bm{f}_{i,S}$ be an entropy conservative flux from Definition~\ref{def:entropyflux} and assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform1}) is entropy conservative in the sense that
 \[
-  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{n}_j\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
+  \sum_k \bm{1}^T\diag{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag{\bm{n}_j\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
 \]
 \label{thm:stab1}
 \end{theorem}
@@ -676,7 +680,7 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %To prove entropy conservation, we multiply on both sides by $\bm{M}_k$ 
 %\begin{align}
 %\bm{M}_k\td{\bm{u}_h}{t} + \LRs{\begin{array}{c}\bm{V}_q \\ \bm{V}_f\end{array}}^T
-%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_j\bm{J}^k_f}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
+%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag{\bm{n}_j\bm{J}^k_f}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 %\end{align}
 %We now test on both sides by $\bm{v}_h^T$ and note that $\bm{v}_h^T\bm{M} = \bm{v}(\bm{u}_q)^T \bm{W} \bm{J}^k \bm{V}_q$.  For the time term, we assuming continuity in time and use the chain rule
 %\[
@@ -685,13 +689,13 @@ Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\r
 %\]
 %where we have used that $\bm{W}$ is diagonal, that $\bm{v}(\bm{u}) = \pd{U(\bm{u})}{\bm{u}}$, and the chain rule in time.  The right hand side terms
 %\[
-%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{n}_j\bm{J}^k_f}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
+%\sum_{j=1}^d \LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{V}_f^T \bm{W}_f\diag{\bm{n}_j\bm{J}^k_f}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 %\]
 %\note{Finish proof}
 \end{proof}
-An entropy stable scheme can be constructed by adding an entropy-dissipating penalty term, such as a Lax-Friedrichs penalization or the matrix dissipation terms introduced in \cite{chandrashekar2013kinetic, winters2017uniquely}.  For example, Lax-Friedrichs penalization can be incorporated by replacing $\bm{f}_S$ with
+An entropy stable scheme can be constructed by adding an entropy-dissipating penalty term, such as a Lax-Friedrichs penalization or the matrix dissipation terms introduced in \cite{chandrashekar2013kinetic, winters2017uniquely}.  For example, Lax-Friedrichs penalization can be incorporated by replacing the flux term with
 \[
-\bm{f}_S\Longrightarrow \bm{f}_S - \frac{\lambda}{2}\jump{\tilde{\bm{u}}_f},
+\bm{L}^k_q \diag{\bm{n}_j} \LRp{\bm{f}_j^*-\bm{f}(\bm{u})} \Longrightarrow \bm{L}^k_q\LRp{\diag{\bm{n}_j} \bm{f}_j^* - \frac{\lambda}{2}\jump{\tilde{\bm{u}}_f}- \bm{f}(\bm{u})},
 \]
 where $\lambda$ is an estimate of the maximum eigenvalue of $\pd{\bm{f}(\bm{u})}{\bm{u}}$ \cite{chen2017entropy, chan2017discretely}.
 
@@ -724,7 +728,7 @@ Roughly speaking, $T_{w} u$ approximates $u/w$.  Thus, taking $w = 1/J^k$ provid
 
 Computing $T_{1/J^k}^{-1}u$ requires solving (\ref{eq:wadgTw}).  Let $u \in P^N\LRp{\hat{D}}$, and let $\bm{u}_J$ denote coefficients for the polynomial $T_{1/J^k}^{-1}u$.  This results in the following matrix system
 \[
-\bm{M}_{1/J^k}\bm{u}_{J} = \bm{M}\bm{u}, \qquad {\bm{M}_{1/J^k}} = \bm{V}_q^T \bm{W}\diag\LRp{1/\bm{J}^k}\bm{V}_q,%\LRp{\frac{1}{J^k}\phi_i,\phi_j}_{\hat{D}},
+\bm{M}_{1/J^k}\bm{u}_{J} = \bm{M}\bm{u}, \qquad {\bm{M}_{1/J^k}} = \bm{V}_q^T \bm{W}\diag{1/\bm{J}^k}\bm{V}_q,%\LRp{\frac{1}{J^k}\phi_i,\phi_j}_{\hat{D}},
 \]
 which implies that, when restricted to polynomials, the matrix form of $T_{1/J^k}^{-1}$ is $\bm{M}_{1/J^k}^{-1}\bm{M}$.  Then, the weight-adjusted mass matrix is the Gram matrix with respect to the weight-adjusted inner product $\LRp{T_{1/J^k}^{-1} u,v}_{\hat{D}}$, such that
 \[
@@ -732,32 +736,32 @@ which implies that, when restricted to polynomials, the matrix form of $T_{1/J^k
 \]
 The inverse of the weight-adjusted mass matrix can be applied in a matrix-free fashion by using quadrature to form $\bm{M}_{1/J^k} $.  This requires storage of the inverse reference mass matrix and the values of $\bm{J}^k$ at quadrature points.  Assuming that the number of quadrature points scales as $O(N^d)$ in $d$ dimensions, this yields a storage cost of $O(N^d)$ per-element compared to an $O(N^{2d})$ per element storage cost required for the storage of inverse weighted mass matrices $\LRp{\bm{M}^k}^{-1}$.  This application of the weight-adjusted mass matrix is typically applied using the $L^2$ projection matrix $\bm{P}_q$ as follows
 \[
-\bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1} = \bm{P}_q \diag\LRp{1/\bm{J}^k} \bm{V}_q \bm{M}^{-1}.
+\bm{M}^{-1}\bm{M}_{1/J^k}\bm{M}^{-1} = \bm{P}_q \diag{1/\bm{J}^k} \bm{V}_q \bm{M}^{-1}.
 \]
 When evaluating the right hand side of a semi-discrete formulation such as (\ref{eq:dgform1}), the inverse mass matrix is typically merged into operations on the right hand side, such that the main work in applying the weight-adjusted mass matrix consists of applying the interpolation matrix $\bm{V}_q$, scaling by pointwise values of $1/\bm{J}^k$ at quadrature points, and multiplying by the $L^2$ projection matrix $\bm{P}_q$.
 
 
 \subsection{A discretely entropy stable low storage DG formulation on curved meshes}
 
-Given the weight-adjusted inverse mass matrix, we can also define a weight-adjusted version of the $L^2$ projection over a curved element $D^k$.  We refer to this operator as $P^k_N: L^2\rightarrow P^N$, which satisfies
+Given the weight-adjusted inverse mass matrix, we can also define a weight-adjusted version of the $L^2$ projection over a curved element $D^k$.  We refer to this operator as $\tilde{\Pi}^k_N: L^2\rightarrow P^N$, which satisfies
 \[
-\LRp{T^{-1}_{1/J^k}P^k_N u,v}_{\hat{D}} = \LRp{uJ^k,v}_{\hat{D}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
+\LRp{T^{-1}_{1/J^k}\tilde{\Pi}^k_N u,v}_{\hat{D}} = \LRp{uJ^k,v}_{\hat{D}}, \qquad \forall v\in P^N\LRp{\hat{D}}.
 \]
-It was shown in \cite{chan2016weight2} that $P_N^k $ is given explicitly by
+It was shown in \cite{chan2016weight2} that $\tilde{\Pi}^k_N $ is given explicitly by
 \begin{equation}
-P^k_N u = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}},
+\tilde{\Pi}^k_N u = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}},
 \label{eq:wadgproj}
 \end{equation}
-where $\Pi_N$ is the $L^2$ projection operator on the reference element $\hat{D}$.  We can discretize $P^k_N$ using quadrature to yield a weight-adjusted projection matrix $\tilde{\bm{P}}_q$ 
+where $\Pi_N$ is the $L^2$ projection operator on the reference element $\hat{D}$.  We can discretize $\tilde{\Pi}^k_N$ using quadrature to yield a weight-adjusted projection matrix $\tilde{\bm{P}}^k_q$ 
 \begin{align}
-\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{1/\bm{J}^k} \bm{V}_q\bm{P}_q\diag\LRp{\bm{J}^k} \nonumber\\
-&= \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q \diag\LRp{\bm{J}^k}.
+\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_q^T\bm{W}\diag{\bm{J}^k} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag{1/\bm{J}^k} \bm{V}_q\bm{P}_q\diag{\bm{J}^k} \nonumber\\
+&= \bm{P}_q \diag{{1}/{\bm{J}^k}} \bm{V}_q\bm{P}_q \diag{\bm{J}^k}.
 \label{eq:wadgproj}
 \end{align}
 We can similarly define a weight-adjusted lifting matrix $\tilde{\bm{L}}_q$ by replacing the weighted mass matrix in (\ref{eq:projliftcurved}) with the weight-adjusted mass matrix
 \begin{align}
-\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_f^T\bm{W}_f\diag\LRp{\bm{J}^k_f} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag\LRp{1/\bm{J}^k} \bm{V}_q\bm{L}_q\diag\LRp{\bm{J}^k_f} \nonumber\\
-&= \bm{P}_q \diag\LRp{{1}/{\bm{J}^k}} \bm{V}_q\bm{L}_q \diag\LRp{\bm{J}^k_f}.
+\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/\bm{J}^k}\bm{M}^{-1}\bm{V}_f^T\bm{W}_f\diag{\bm{J}^k_f} = \bm{M}^{-1}\bm{V}_q^T\bm{W}\diag{1/\bm{J}^k} \bm{V}_q\bm{L}_q\diag{\bm{J}^k_f} \nonumber\\
+&= \bm{P}_q \diag{{1}/{\bm{J}^k}} \bm{V}_q\bm{L}_q \diag{\bm{J}^k_f}.
 \label{eq:wadglift}
 \end{align}
 
@@ -776,7 +780,7 @@ We can now introduce the weight-adjusted projection of the entropy variables $\b
 A semi-discrete DG formulation for $\bm{u}_h$ can be constructed using the variables defined in (\ref{eq:evars2})
 \begin{align}
 &\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}\tilde{\bm{P}}^k_q & \tilde{\bm{L}}^k_q\end{array}}
-  \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
+  \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0,\label{eq:dgform2}\\
   &\LRp{\bm{F}_{j,S}}_{mn} = \bm{f}_{j,S}\LRp{\LRp{\tilde{\bm{u}}}_m,\LRp{\tilde{\bm{u}}}_n}, \qquad 1 \leq m,n \leq N_q + N^f_q,\nonumber\\
   &\bm{f}_j^* = \bm{f}_{j,S}(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces}.\nonumber
 \end{align}
@@ -784,7 +788,7 @@ Since the  weight-adjusted mass matrix inverse is low-storage, and since the mat
 \begin{theorem}
   Let $\bm{f}_{i,S}$ be an entropy conservative flux from Definition~\ref{def:entropyflux} and assume that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$ over each element $D^k$.  Then, (\ref{eq:dgform2}) is entropy conservative in the sense that
 \[
-  \sum_k \bm{1}^T\diag\LRp{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag\LRp{\bm{n}_j\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
+  \sum_k \bm{1}^T\diag{\bm{J}^k}\bm{W}\td{U(\bm{u}_q)}{t} = \sum_k \sum_{j=1}^d \bm{1}^T\diag{\bm{n}_j\circ\bm{J}^k_f}\bm{W}_{\partial \Omega} \LRp{\psi_j\LRp{\tilde{\bm{u}}_f}-\tilde{\bm{v}}_f^T\bm{f}_j^*}.
 \]
 \label{thm:stab2}
 \end{theorem}
@@ -792,39 +796,40 @@ Since the  weight-adjusted mass matrix inverse is low-storage, and since the mat
 The proof is similar to that of Theorem~\ref{thm:stab1}.  
 First, recall from the definitions of the weight-adjusted projection matrix~(\ref{eq:wadgproj}) and weight-adjusted lift matrix~(\ref{eq:wadglift}) that
 \begin{align}
-\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_q^T \bm{W}  \diag\LRp{\bm{J}^k  }\label{eq:projidentity},\\
-\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_f^T \bm{W}_f\diag\LRp{\bm{J}^k_f}\label{eq:liftidentity}.
+\tilde{\bm{P}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_q^T \bm{W}  \diag{\bm{J}^k  }\label{eq:projidentity},\\
+\tilde{\bm{L}}^k_q &= \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{V}_f^T \bm{W}_f\diag{\bm{J}^k_f}\label{eq:liftidentity}.
 \end{align}
-Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}$ on both sides of (\ref{eq:dgform2}) and using (\ref{eq:projidentity}), (\ref{eq:liftidentity}) yields 
-\[
+Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}$ on both sides of (\ref{eq:dgform2}) and using (\ref{eq:projidentity}), (\ref{eq:liftidentity}) yields the weak form of (\ref{eq:dgform2})
+\begin{equation}
 \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \LRs{\begin{array}{cc}{\bm{V}}_q^T & {\bm{V}}_f^T\end{array}}
-\sum_{j=1}^d \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
-\]
+\sum_{j=1}^d \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d {\bm{V}}_f^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
+\label{eq:dgform2weak}
+\end{equation}
 Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h = \tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}$ and using (\ref{eq:projidentity}) then yields for the time term
 \begin{align*}
-\LRp{\tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
-                                                                                               &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag\LRp{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}\diag\LRp{\bm{J}^k} \left(\bm{v}\LRp{\bm{u}_q}\circ\td{\bm{u}_q}{t}\right) \\
-                                                                                               &= \bm{1}^T\bm{W}\diag\LRp{\bm{J}^k} \td{U(\bm{u}_q)}{t}.
+\LRp{\tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
+                                                                                               &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}\diag{\bm{J}^k} \left(\bm{v}\LRp{\bm{u}_q}\circ\td{\bm{u}_q}{t}\right) \\
+                                                                                               &= \bm{1}^T\bm{W}\diag{\bm{J}^k} \td{U(\bm{u}_q)}{t}.
 \end{align*}
 The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \cite{chan2017discretely}.
 \end{proof}
 
 \subsection{Analysis of weight-adjusted projection} 
 
-The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $P^k_N$ \lcwnote{(I find it a little confusing that the matrix version, $\tilde{\bm{P}}^k_q$, has a tilde but this one doesn't.  I am not sure what to do, if anything, about it.)}.  While this preserves entropy stability, it is unclear whether $P^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping, $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is superconvergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
+The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $\tilde{\Pi}^k_N$ \lcwnote{(I find it a little confusing that the matrix version, $\tilde{\bm{P}}^k_q$, has a tilde but this one doesn't.  I am not sure what to do, if anything, about it.)} \note{How about just replacing $\tilde{\Pi}^k_N$ with $\tilde{\Pi}^k_N$?}.  While this preserves entropy stability, it is unclear whether $\tilde{\Pi}^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping and sufficiently regular $u$, $\nor{\Pi_N^k u - \tilde{\Pi}^k_N  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is superconvergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
 
-We first note that $P_N^k  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
+We first note that $\tilde{\Pi}^k_N  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
 \begin{equation}
-  \LRp{J^k P_N^k  u, v}_{\hat{D}} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k}_{\hat{D}} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}}_{\hat{D}} =  \LRp{uJ^k, P_N^k  v}_{\hat{D}}.
+  \LRp{J^k \tilde{\Pi}^k_N  u, v}_{\hat{D}} = \LRp{\Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}, vJ^k}_{\hat{D}} = \LRp{uJ^k, \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{vJ^k}}}_{\hat{D}} =  \LRp{uJ^k, \tilde{\Pi}^k_N  v}_{\hat{D}}.
 \label{eq:PNsym}
 \end{equation}
 Furthermore, using that the operator $T_{1/J^k}^{-1}$ is self-adjoint for $v \in P^N\LRp{\hat{D}}$ with respect to the $L^2$ inner product \cite{chan2016weight1}, we find that a projection-like property holds for the weight-adjusted $L^2$ inner product
 \begin{equation}
-  \LRp{T_{1/J^k}^{-1} P_N^k  u,v}_{\hat{D}} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v}_{\hat{D}} = \LRp{\Pi_N(u J^k),v}_{\hat{D}} = \LRp{u J^k,v}_{\hat{D}}, \qquad \forall v\in P^N{\hat{D}}.
+  \LRp{T_{1/J^k}^{-1} \tilde{\Pi}^k_N  u,v}_{\hat{D}} = \LRp{ \frac{1}{J^k}\Pi_N(uJ^k),T_{1/J^k}^{-1}v}_{\hat{D}} = \LRp{\Pi_N(u J^k),v}_{\hat{D}} = \LRp{u J^k,v}_{\hat{D}}, \qquad \forall v\in P^N{\hat{D}}.
 \label{eq:PNproj}
 \end{equation}
 
-To prove $\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{\hat{D}}} = O(h^{N+2})$, we use a generalized inverse inequality and results from \cite{chan2016weight1,chan2016weight2}.  We first introduce a modification of Theorem 3.1 in \cite{warburton2013low, chan2016weight1}
+To prove $\nor{\Pi_N^k u - \tilde{\Pi}^k_N  u}_{L^2\LRp{\hat{D}}} = O(h^{N+2})$, we use a generalized inverse inequality and results from \cite{chan2016weight1,chan2016weight2}.  We first introduce a modification of Theorem 3.1 in \cite{warburton2013low, chan2016weight1}
 \begin{theorem}%[Theorem 3.1 in \cite{warburton2013low, chan2016weight1}]
 Let $D^k$ be a quasi-regular element with representative size $h = \diam\LRp{D^k}$, and let $\hat{D}$ be the reference element.  For $N \geq 0$, $w\in W^{N+1,\infty}\LRp{D^k}$, and $u\in W^{r,2}\LRp{D^k}$, 
 \begin{align*}
@@ -858,11 +863,11 @@ The quantity $\nor{v}_{W^{N,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\i
 %where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product on the reference element  $W^{N+1,2}\LRp{\hat{D}}$.  The constant $C_N$ depends on the largest generalized eigenvalue of \ref{eq:eig}, which in turn depends on the order $N$ and dimension $d$.  
 \end{proof}
 
-We can now prove that $P_N^k u$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
+We can now prove that $\tilde{\Pi}^k_N u$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
 \begin{theorem}
-Let $u \in W^{r,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $P_N^k u$ is
+Let $u \in W^{r,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $\tilde{\Pi}^k_N u$ is
 \[
-\nor{\Pi_N^k u - P_N^k  u}_{L^2\LRp{D^k}} \leq C_N C_J h^{\min\LRp{r,N+1}+1}\nor{u}_{W^{N+1,2}\LRp{D^k}},
+\nor{\Pi_N^k u - \tilde{\Pi}^k_N  u}_{L^2\LRp{D^k}} \leq C_N C_J h^{\min\LRp{r,N+1}+1}\nor{u}_{W^{N+1,2}\LRp{D^k}},
 \]
 where $C_N$ is a mesh-independent constant which depends on $N, d$ and $C_J$ is
 \[
@@ -873,24 +878,24 @@ C_J = \nor{J^k}_{L^{\infty}\LRp{D^k}}^{1.5}  \nor{\frac{1}{J^k}}_{L^{\infty}\LRp
 \begin{proof}
 We can rewrite the norm of the difference between the weight-adjusted and $L^2$ projections
 \[
-\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - P_N^k  u,vJ^k}_{\hat{D}}, \qquad v = \Pi_N^k  u - P_N^k  u.
+\nor{\Pi_N^k  u - \tilde{\Pi}^k_N  u}_{L^2\LRp{D^k}}^2 = \LRp{\Pi_N^k  u - \tilde{\Pi}^k_N  u,vJ^k}_{\hat{D}}, \qquad v = \Pi_N^k  u - \tilde{\Pi}^k_N  u.
 \]
 Because $v \in P^N\LRp{\hat{D}}$, we can also evaluate the squared error as
 \begin{align*}
-\nor{\Pi_N^k  u - P_N^k  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ^k}_{\hat{D}} - \LRp{P_N^k  u,vJ^k}_{\hat{D}}} = \LRb{\LRp{u,vJ^k}_{\hat{D}} - \LRp{P_N^k  u,vJ^k}_{\hat{D}}} \\
-%&\leq \LRp{J^k,1}_{\hat{D}} \LRb{\LRp{u-P_N^ku,v}_{\hat{D}}} = \LRb{D^k}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}},
-&\leq \nor{J^k}_{L^{\infty}\LRp{D^k}} \LRb{\LRp{u-P_N^ku,v}_{\hat{D}}}.% = \LRb{D^k}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}},
+\nor{\Pi_N^k  u - \tilde{\Pi}^k_N  u}_{L^2\LRp{D^k}}^2 &= \LRb{\LRp{\Pi_N^k u,vJ^k}_{\hat{D}} - \LRp{\tilde{\Pi}^k_N  u,vJ^k}_{\hat{D}}} = \LRb{\LRp{u,vJ^k}_{\hat{D}} - \LRp{\tilde{\Pi}^k_N  u,vJ^k}_{\hat{D}}} \\
+%&\leq \LRp{J^k,1}_{\hat{D}} \LRb{\LRp{u-\tilde{\Pi}^k_Nu,v}_{\hat{D}}} = \LRb{D^k}\LRb{\LRp{u-\tilde{\Pi}^k_Nu,v}_{\hat{D}}},
+&\leq \nor{J^k}_{L^{\infty}\LRp{D^k}} \LRb{\LRp{u-\tilde{\Pi}^k_Nu,v}_{\hat{D}}}.% = \LRb{D^k}\LRb{\LRp{u-\tilde{\Pi}^k_Nu,v}_{\hat{D}}},
 \end{align*}
 %where we have applied the Cauchy-Schwarz inequality in the last steps.  
-We can then note that $P_N^ku = \Pi_N\LRp{\frac{1}{J^k} \Pi_N\LRp{uJ^k}}$ to show that
+We can then note that $\tilde{\Pi}^k_Nu = \Pi_N\LRp{\frac{1}{J^k} \Pi_N\LRp{uJ^k}}$ to show that
 \begin{align*}
-{\LRp{u-P_N^ku,v}_{\hat{D}}} &= {\LRp{uJ^k,\frac{v}{J^k}}_{\hat{D}}-\LRp{\Pi_N\LRp{\frac{1}{J^k} \Pi_N\LRp{uJ^k}},v}_{\hat{D}}} \\
+{\LRp{u-\tilde{\Pi}^k_Nu,v}_{\hat{D}}} &= {\LRp{uJ^k,\frac{v}{J^k}}_{\hat{D}}-\LRp{\Pi_N\LRp{\frac{1}{J^k} \Pi_N\LRp{uJ^k}},v}_{\hat{D}}} \\
 &= \LRp{uJ^k,\frac{v}{J^k}}_{\hat{D}}-\LRp{\Pi_N\LRp{uJ^k},\frac{v}{J^k}}_{\hat{D}}. %+ \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}} - \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}\\
 %&= \LRp{uJ^k,\frac{v}{J^k}}_{\hat{D}}-\LRp{\Pi_N\LRp{uJ^k},\frac{v}{J^k}}_{\hat{D}} + \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}} - \LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}
 \end{align*}
 Adding and subtracting $\LRp{\Pi_N\LRp{uJ^k},\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}$ and using Theorem~\ref{thm:wproj} (noting that $v\in W^{N+1,2}\LRp{D^k}$ since it is polynomial) gives
 \begin{align*}
-\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}}^2 &\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{u-P_N^ku,v}_{\hat{D}}}\\
+\nor{\Pi^k_Nu-\tilde{\Pi}^k_Nu}_{L^2\LRp{D^k}}^2 &\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{u-\tilde{\Pi}^k_Nu,v}_{\hat{D}}}\\
 &= \nor{J^k}_{L^{\infty}\LRp{D^k}}\LRb{\LRp{uJ^k - \Pi_N\LRp{uJ^k},\frac{v}{J^k}-\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}} \\
 &\leq \nor{J^k}_{L^{\infty}\LRp{D^k}}\nor{uJ^k - \Pi_N\LRp{uJ^k}}_{\hat{D}}\nor{\frac{v}{J^k}-\Pi_N\LRp{\frac{v}{J^k}}}_{\hat{D}}\\
 &\leq C h^{\min\LRp{r,N+1}+N+1} \tilde{C}_J \nor{u}_{W^{r,2}\LRp{D^k}} \nor{v}_{W^{N+1,2}\LRp{D^k}},
@@ -901,40 +906,78 @@ where
 \]
 Applying Lemma~\ref{lemma:sobolev} then yields
 \begin{align*}
-\nor{\Pi^k_Nu-P^k_Nu}_{L^2\LRp{D^k}}^2 &\leq C_N h^{\min\LRp{r,N+1}+1} C_J \nor{u}_{W^{N+1,2}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
+\nor{\Pi^k_Nu-\tilde{\Pi}^k_Nu}_{L^2\LRp{D^k}}^2 &\leq C_N h^{\min\LRp{r,N+1}+1} C_J \nor{u}_{W^{N+1,2}\LRp{D^k}} \nor{v}_{L^2\LRp{D^k}}.
 \end{align*}
-Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - P_N^k  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
+Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - \tilde{\Pi}^k_N  u}_{L^2\LRp{D^k}}$ gives the desired result.  % $C_J = \nor{J}_{L^{\infty}} \nor{\frac{1}{J}}^2_{L^\infty} \nor{J}^2_{W^{N+1,\infty}\LRp{\hat{D}}}$.
 \end{proof}
-Theorem~\ref{thm:wproj} can be used to show that the $L^2$ error between $\Pi^k_N u, P^k_N u$ and $u \in W^{r,2}\LRp{D^k}$ is $O(h^r)$.  Theorem~\ref{thm:superconverge} demonstrates that the $L^2$ difference between $\Pi^k_N u, P^k_N u$ is $O(h^{r+1})$, or at least one order higher than the approximation error.  We note that optimal convergence of the weight-adjusted projection requires that the geometric mapping $\bm{\Phi}_k$ is asymptotically affine (i.e., the Sobolev norm of $J^k, \bm{G}^k$ does not grow under mesh refinement), which is ensured under nested mesh refinement and appropriate curvilinear blending strategies \cite{lenoir1986optimal, warburton2013low, chan2016weight2}.  
+Theorem~\ref{thm:wproj} can be used to show that the $L^2$ error between $\Pi^k_N u, \tilde{\Pi}^k_N u$ and $u \in W^{r,2}\LRp{D^k}$ is $O(h^r)$.  Theorem~\ref{thm:superconverge} demonstrates that the $L^2$ difference between $\Pi^k_N u, \tilde{\Pi}^k_N u$ is $O(h^{r+1})$, or at least one order higher than the approximation error.  We note that optimal convergence of the weight-adjusted projection requires that the geometric mapping $\bm{\Phi}_k$ is asymptotically affine (i.e., the Sobolev norm of $J^k, \bm{G}^k$ does not grow under mesh refinement), which is ensured under nested mesh refinement and appropriate curvilinear blending strategies \cite{lenoir1986optimal, warburton2013low, chan2016weight2}.  
 %We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
 
-\subsubsection{A locally conservative high order accurate correction}
+\subsubsection{Local conservation}
 
-It should be noted that, while the weight-adjusted approximation of the mass matrix is high order accurate and efficient, it does not preserve the average over a physical element, which is equivalent to the $J$-weighted average over the reference element.  This is due to the fact that, in general,
+We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform2}).  We begin by noting that (\ref{eq:dgform2}) is locally conservative with respect to the weight-adjusted inner product.  Testing (\ref{eq:dgform2weak}) with $\bm{1}$ yields
+\[
+\bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
+\sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
+\]
+Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and noting that $\LRp{\bm{B}^i_k \circ \bm{F}_{j,S}}\bm{1} = \bm{W}_f\diag{\bm{n}_j \circ \bm{J}^k_f}\bm{f}_j(\bm{u})$ (using the consistency of $\bm{f}_S$ and diagonal nature of $\bm{B}^i_k$) yields
+\[
+\bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
+\sum_{j=1}^d \bm{1}^T \LRp{\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*} = 0.
+\]
+Since $\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} $ is skew-symmetric and $\bm{F}_{j,S}$ is symmetric, the Hadamard product of these two matrices is skew-symmetric.  As a result, $\bm{1}^T \LRp{\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} \circ \bm{F}_{j,S}}\bm{1} = 0$ and 
 \begin{equation}
-\int_{\hat{D}}u J \diff{\hat{\bm{x}}} - \int_{\hat{D}} T_{1/J}^{-1}u \diff{\hat{\bm{x}}} \approx \bm{1}^T\bm{M}_J\bm{u} - \bm{1}^T\bm{M}\bm{M}_{1/J}^{-1}\bm{M}\bm{u} \neq 0.  
+\bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*} = 0
+\label{eq:localcons}
+\end{equation}
+Global conservation is shown by summing (\ref{eq:localcons}) over all elements $D^k$.  Because the flux $\bm{f}_j^*$ is single-valued on each face and the outward normal $\bm{n}_j$ changes sign on adjacent elements, the contributions $\bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*}$ cancel on all interior interfaces.  On periodic meshes, this yields conservation with respect to the weight-adjusted mass matrix
+\[
+\sum_k \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} = 0.
+\]
+However, while the weight-adjusted approximation of the mass matrix is high order accurate and efficient, it does not preserve the average over a physical element, which is equivalent to the $J$-weighted average over the reference element.  This is due to the fact that, in general,
+\begin{equation}
+\int_{\hat{D}}u J^k \diff{\hat{\bm{x}}} - \int_{\hat{D}} T_{1/J^k}^{-1}u \diff{\hat{\bm{x}}} \approx \bm{1}^T\bm{M}_{J^k}\bm{u} - \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\bm{u} \neq 0.  
 \label{eq:conserr}
 \end{equation}
-Results in \cite{chan2016weight1} show that the difference between the true mean and weight-adjusted mean in (\ref{eq:conserr}) converges extremely fast at a rate of $O(h^{2N+2})$.  However, for systems of conservation laws, it is often desired that the element average is preserved exactly up to machine precision.  In \cite{chan2016weight2}, it was shown that a rank one correction of the weight-adjusted mass matrix inverse preserves the mean exactly while avoiding any loss of precision in numerical experiments.  This requires the use of the Sherman--Morrison formula for the inverse of a rank one update.  
+Results in \cite{chan2016weight1} show that the difference between the true mean and weight-adjusted mean in (\ref{eq:conserr}) converges extremely fast at a rate of $O(h^{2N+2})$.  However, for systems of conservation laws, it is often desired that the local element average is preserved exactly up to machine precision.  We present two simpler approaches to ensuring local conservation in this section.  
 
-We present an explicit formula for a conservative correction here which is simpler than this algebraic correction.  Let $u_{\rm WADG}$ be defined through 
+The simplest way to ensure local conservation is to approximate $J$ using a degree $N$ polynomial and utilize a sufficiently accurate quadrature.  Then, we have the following lemma:
+\begin{lemma}
+Let $J^k \in P^N$, and let integrals be computed using quadrature which is exact for degree $2N$ polynomials.  Then, 
+\[
+\bm{1}^T\bm{M}\bm{M}^{-1}_{1/J^k}\bm{M}\bm{u} = \int_{\hat{D}}T^{-1}_{1/J^k} u =  \int_{\hat{D}} u J^k.
+\]
+\label{eq:conscorrect1}
+\end{lemma}
+\begin{proof}
+The proof relies on (\ref{eq:wadgTw}), which states that $\LRp{\frac{1}{J^k} T^{-1}_{1/J^k}u,v}_{\hat{D}} = \LRp{u,v}_{\hat{D}}$ for all $v\in P^N$.  If $J^k$ is a polynomial of degree $N$, then taking $v = 1$ yields
+\[
+\LRp{T^{-1}_{1/J^k}u,1}_{\hat{D}} = \LRp{\frac{1}{J^k}T^{-1}_{1/J^k}u,{J^k}}_{\hat{D}}= \LRp{u,{J^k}}_{\hat{D}} = \int_{\hat{D}} uJ^k. 
+\]
+We note that the proof still holds if integrals are replaced with quadrature approximations which exactly integrate $uJ^k \in P^{2N}$.
+\end{proof}
+
+The second approach relies on a simple correction which restores exact conservation of the true mean.  In \cite{chan2016weight2}, it was shown that a rank one correction of the weight-adjusted mass matrix inverse preserves the mean exactly.  However, this requires the use of the Sherman--Morrison formula to compute the inverse of a rank one matrix update, which can be cumbersome to incorporate.  We present a simpler explicit correction formula which does not involve matrices.  Let $u_J$ and $u_{\rm WADG}$ be defined through 
 %coefficients 
 %\[
 %\bm{u} = \bm{M}^{-1}\bm{M}_{1/J}\bm{M}^{-1} \LRp{\bm{V}_q^T\bm{W}\bm{f}},
 %\]
 %where $\bm{f}$ are the values of $f$ at quadrature points on $\hat{D}$.  
-\[
-\LRp{T_{1/J}^{-1}u_{\rm WADG},v}_{\hat{D}} = \LRp{f,v}_{\hat{D}}, \qquad \forall v \in P^N\LRp{\hat{D}}.
-\]
-For example, if $f = u J$, $u_{\rm WADG} = P^k_N u$.  We define the conservative weight-adjusted $\tilde{u}_{\rm WADG}$ as
-\[
+\begin{align*}
+\LRp{u_J J,v}_{\hat{D}} &= \LRp{f,v}_{\hat{D}}, \qquad \forall v \in P^N\LRp{\hat{D}},\\
+\LRp{T_{1/J}^{-1}u_{\rm WADG},v}_{\hat{D}} &= \LRp{f,v}_{\hat{D}}, \qquad \forall v \in P^N\LRp{\hat{D}},
+\end{align*}
+where $u_J$ corresponds to the inversion of the weighted mass matrix and $u_{\rm WADG}$ corresponds to the inversion of a weight-adjusted mass matrix.  For example, if $f = u J$ for some function $u(\bm{x})$, then $u_J = \Pi^k_N u$ and $u_{\rm WADG} = \tilde{\Pi}^k_N u$.  To ensure both local and global conservation, we require that the weighted average of $u_{\rm WADG}$ is the same as the weighted average of $u_J$.  Let the conservative weight-adjusted $\tilde{u}_{\rm WADG}$ be defined as
+\begin{equation}
   \tilde{u}_{\rm WADG} = u_{\rm WADG} + \frac{\int_{\hat{D}} \left(f  - J u_{\rm WADG}\right)\diff{\hat{\bm{x}}}}{\int_{\hat{D}} J \diff{\hat{\bm{x}}}}.  
-\]
-It is straightforward to show that 
+  \label{eq:conscorrect}
+\end{equation}
+Taking the weighted integral of $\tilde{u}_{\rm WADG}$ yields
 \[
   \int_{\hat{D}}\tilde{u}_{\rm WADG}J \diff{\hat{\bm{x}}} = \int_{\hat{D}} f \diff{\hat{\bm{x}}}.
 \]
-To satisfy conservation to machine precision, the integrals above are discretized using the volume quadrature of the method.
+In other words, (\ref{eq:conscorrect}) ensures local conservation by correcting the weighted average of $u_{\rm WADG}$ to match that of $u_J$.  Applying this correction to the right hand side of (\ref{eq:dgform2}) then yields a scheme which locally and globally conserves mean values of the conservative variables.
+
 This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.  Moreover, using Theorem 6 in \cite{chan2016weight1}, it is straightforward to show that the $L^2$ norm of the difference $\tilde{u}_{\rm WADG} - u_{\rm WADG}$ is $O(h^{2N+1})$, and does not affect high order accuracy.  
 
 \section{Enforcing the discrete geometric conservation law}
@@ -943,7 +986,7 @@ An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_
 
 From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
 \begin{align*}
-\bm{Q}^j_k\bm{1} = \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\circ \avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ \diag\LRp{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N\diag\LRp{\bm{JG}_{ij}^k}\bm{1}} \\
+\bm{Q}^j_k\bm{1} = \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\circ \avg{\bm{JG}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ \diag{\bm{JG}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N\diag{\bm{JG}_{ij}^k}\bm{1}} \\
 &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{JG}_{ij}^k} = 0,
 \end{align*}
 where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that a discrete version of the GCL (\ref{eq:gcl}) holds
@@ -1308,7 +1351,7 @@ To test the scheme (\ref{eq:dgform2}), we utilize an entropy conservative flux a
 
 First, can examine the entropy RHS, which we define as the right hand side of (\ref{eq:dgform2}) tested with $\bm{v}_h$
 \begin{equation}
-  \text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag\LRp{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}.  
+  \text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}.  
 \label{eq:entropyrhs}
 \end{equation}
 For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machine precision.  We can also track the change in entropy $\Delta U = \LRb{U(\bm{u}(\bm{x},t))-U(\bm{u}(\bm{x},0))}$, which should converge to $0$ as the timestep $dt$ approaches zero.  Furthermore, the rate of convergence should match the order of the time-stepper used \cite{gassner2016well,chan2017discretely}.  
