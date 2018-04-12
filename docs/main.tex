@@ -307,7 +307,7 @@ It can be shown (see, for example, \cite{mock1980systems}) that symmetrization i
 \[
 \bm{v}^T \pd{\bm{f}_j}{\bm{u}} = \pd{F_j(\bm{u})}{\bm{u}}^T, \qquad \psi_j(\bm{v}) = \bm{v}^T\bm{f}_j(\bm{u}(\bm{v})) - F_j(\bm{u}(\bm{v})), \qquad \psi_j'(\bm{v}) = \bm{f}_j(\bm{u}(\bm{v})).
 \]
-Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields \lcwnote{(What layout conventions are used for the Matrix calculus, \url{https://en.wikipedia.org/wiki/Matrix_calculus\#Layout_conventions}?  For example, should $\pd{U(\bm{u})}{\bm{u}}$ be a row vector and $\pd{\bm{u}}{x_j}$ a column vector?)}  \note{JC: I think $\pd{U(\bm{u})}{\bm{u}}$ should be a row vector and $\pd{\bm{u}}{x_j}$ a column vector.  I haven't specified this since most of the other entropy stable papers haven't done so either - do you think we should be explicit?}
+Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields %\lcwnote{(What layout conventions are used for the Matrix calculus, \url{https://en.wikipedia.org/wiki/Matrix_calculus\#Layout_conventions}?  For example, should $\pd{U(\bm{u})}{\bm{u}}$ be a row vector and $\pd{\bm{u}}{x_j}$ a column vector?)}  \note{JC: I think $\pd{U(\bm{u})}{\bm{u}}$ should be a row vector and $\pd{\bm{u}}{x_j}$ a column vector.  I haven't specified this since most of the other entropy stable papers haven't done so either - do you think we should be explicit?} \lcwnote{I don't think we need to be explicit but follow a convention.  I think there was as couple of places I changed to follow the convention you suggested.}
 \begin{equation}
 \bm{v}^T\pd{\bm{f}_j(\bm{u})}{x_j} = \pd{U(\bm{u})}{\bm{u}}^T\pd{\bm{f}_j(\bm{u})}{\bm{u}}\pd{\bm{u}}{x_j} = \pd{F_j(\bm{u})}{x_j},
 \label{eq:chainrule}
@@ -471,7 +471,9 @@ Using the volume quadrature interpolation matrix $\bm{V}_q$, we can compute a qu
 \[
   \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \qquad \bm{M}_{ij} = \sum_{k=1}^{N_q} \hat{w}_k \phi_j(\hat{\bm{x}}_k)\phi_i(\hat{\bm{x}}_k) \approx \int_{\hat{D}}\phi_j\phi_i \diff{\hat{\bm{x}}} = \LRp{\phi_j,\phi_i}_{\hat{D}}.
 \]
-The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad} \lcwnote{(It seems to be positive definite due to the fact we have a positive weight quadrature, not Assumption~\ref{ass:quad}.)} \note{Yes, but the degree of exactness of the quadrature is also necessary or it can be only positive semi-definite.  For example, if you just use a degree $2N$ quadrature, I think you can end up with a singular mass matrix.}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
+The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
+
+%\lcwnote{(It seems to be positive definite due to the fact we have a positive weight quadrature, not Assumption~\ref{ass:quad}.)} \note{Yes, but the degree of exactness of the quadrature is also necessary or it can be only positive semi-definite.  For example, if you just use a degree $2N$ quadrature, I think you can end up with a singular mass matrix.}; \lcwnote{Cool, I see this now.}
 
 The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2proj}) and lift operators (\ref{eq:lift}) using quadrature.  The result are quadrature-based $L^2$ projection and lift operators $\bm{P}_q, \bm{L}_q$, 
 \begin{equation}
@@ -530,7 +532,8 @@ The key difference between curvilinear and affine meshes is that geometric terms
 \[
 \pd{u}{x_i} = \sum_{j=1}^d \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad \bm{G}^k_{ij} = \pd{\hat{x}_j}{x_i},
 \]
-where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$ \lcwnote{(What about $\bm{J}^{\bm{G}^k_{ij}}$ instead of $\bm{JG}^k_{ij}$ to make it look more like a single object? I am debating if I should revert the changes to add the Hadamard product to the other surface terms.)} \note{Hm...I'm not sure about the expanding superscripts/subscripts.  What if we changed it to a different name instead of $J\bm{G}_{ij}$, like $\tilde{\bm{G}}^k_{ij}$?}.
+where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$.
+%\lcwnote{(What about $\bm{J}^{\bm{G}^k_{ij}}$ instead of $\bm{JG}^k_{ij}$ to make it look more like a single object? I am debating if I should revert the changes to add the Hadamard product to the other surface terms.)} \note{Hm...I'm not sure about the expanding superscripts/subscripts.  What if we changed it to a different name instead of $J\bm{G}_{ij}$, like $\tilde{\bm{G}}^k_{ij}$?} \lcwnote{I got used to the way you have it, I don't think we need to change.}
 
 We assume in this work that the mesh is stationary.  It can be shown at the continuous level that, for any differentiable and invertible mapping, the quantity $J^k\bm{G}^k$ satisfies a geometric conservation law (GCL) \cite{kopriva2006metric, thomas1979geometric}
 \begin{equation}
@@ -557,12 +560,12 @@ We also assume that the scaled matrix of geometric terms transforms scaled refer
 \label{eq:normalconsistency}
 \end{align}
 where $\bm{n}_j$ and $\bm{J}^k_f$ are vectors containing evaluations of the physical unit normals and face Jacobian factors for $D^k$ at surface quadrature points, respectively.
-Likewise, $\LRp{\bm{JG}^k_{ij}}_f$ \lcwnote{(This could be written as $\bm{J}_f^{\bm{G}^k_{ij}}$.)} is a vector containing evaluations of $J^k\bm{G}^k_{ij}$ at the surface quadrature points.
+Likewise, $\LRp{\bm{JG}^k_{ij}}_f$ is a vector containing evaluations of $J^k\bm{G}^k_{ij}$ at the surface quadrature points.
 \label{ass:norm}
 \end{assumption}
 The properties (\ref{eq:normalsign}) and (\ref{eq:normalconsistency}) hold at the continuous level for a watertight mesh \cite{ciarlet1978finite}, and thus at all points where the geometric terms are computed exactly.  However, we will also consider cases where the geometric terms $J^k\bm{G}^k_{ij}$ are modified to enforce a discrete form of (\ref{eq:gcl}); in these situations, it will be important to ensure that (\ref{eq:normalconsistency}) holds after such modifications.  
 
-Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf, gassner2016split} \lcwnote{(Check to see if we can find an earlier reference to this type of approximation.)} \note{I don't know if there is - I've noticed even Gassner and the SBP folks don't seem to cite anything on this}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
+Similar to what is done to stabilize finite difference discretizations~\cite{nordstrom2006cfdf, gassner2016split}, we define physical differentiation matrices based on the approximation of (\ref{eq:splitderiv}).  Define $\bm{D}^i_k$ as
 \[
   \bm{D}^i_k = \frac12 \sum_{j=1}^d \left(\diag{\bm{JG}^k_{ij}}\bm{D}^j_N + \bm{D}^j_N\diag{\bm{JG}^k_{ij}}\right).
 \]
@@ -647,7 +650,7 @@ We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and th
 \end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
 \label{eq:evars1}
 \end{align}
-\lcwnote{I changed $\bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}$ to $\bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}$.  Is this correct?} \note{Yup - thanks!}
+%\lcwnote{I changed $\bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}$ to $\bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}$.  Is this correct?} \note{Yup - thanks!}
 In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u}}$ denote the evaluation of the conservative variables in terms of the projected entropy variables at volume and face quadrature points.  We note that, under an appropriate choice of quadrature on quadrilaterals and hexahedra, this approach is equivalent to the approach taken in \cite{parsani2016entropy}, where the entropy variables are evaluated at Gauss nodes, then interpolated to a different set of nodes and used to compute the nonlinear fluxes.  
 
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
@@ -817,7 +820,6 @@ The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \
 \subsection{Analysis of weight-adjusted projection} 
 
 The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $\tilde{\Pi}^k_N$.
-%\lcwnote{(I find it a little confusing that the matrix version, $\tilde{\bm{P}}^k_q$, has a tilde but this one doesn't.  I am not sure what to do, if anything, about it.)} \note{How about just replacing $\tilde{\Pi}^k_N$ with $\tilde{\Pi}^k_N$?}.  
 While this preserves entropy stability, it is unclear whether $\tilde{\Pi}^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate due to the fact that, for a fixed geometric mapping and sufficiently regular $u$, the difference between the $L^2$ and weight-adjusted projection is $\nor{\Pi_N^k u - \tilde{\Pi}^k_N  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the approximation error for the $L^2$ projection is $O(h^{N+1})$ for sufficiently regular $u$, the difference between the $L^2$ and weight-adjusted projection converges faster than the $L^2$ best approximation error.  Consequentially, solutions computed using the $L^2$ and weight-adjusted projection are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
 
 We first note that $\tilde{\Pi}^k_N  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
