@@ -816,7 +816,9 @@ The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \
 
 \subsection{Analysis of weight-adjusted projection} 
 
-The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $\tilde{\Pi}^k_N$ \lcwnote{(I find it a little confusing that the matrix version, $\tilde{\bm{P}}^k_q$, has a tilde but this one doesn't.  I am not sure what to do, if anything, about it.)} \note{How about just replacing $\tilde{\Pi}^k_N$ with $\tilde{\Pi}^k_N$?}.  While this preserves entropy stability, it is unclear whether $\tilde{\Pi}^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate in the sense that, for a fixed geometric mapping and sufficiently regular $u$, $\nor{\Pi_N^k u - \tilde{\Pi}^k_N  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the difference between the $L^2$ and weight-adjusted projection is superconvergent, the results are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
+The construction of the discretely entropy stable weight-adjusted DG formulation (\ref{eq:dgform2}) replaces the $L^2$ projection operator $\Pi_N^k$ with the weight-adjusted projection operator $\tilde{\Pi}^k_N$.
+%\lcwnote{(I find it a little confusing that the matrix version, $\tilde{\bm{P}}^k_q$, has a tilde but this one doesn't.  I am not sure what to do, if anything, about it.)} \note{How about just replacing $\tilde{\Pi}^k_N$ with $\tilde{\Pi}^k_N$?}.  
+While this preserves entropy stability, it is unclear whether $\tilde{\Pi}^k_N$ is high order accurate.  In this section, we prove that the weight-adjusted projection is high order accurate due to the fact that, for a fixed geometric mapping and sufficiently regular $u$, the difference between the $L^2$ and weight-adjusted projection is $\nor{\Pi_N^k u - \tilde{\Pi}^k_N  u}_{L^2\LRp{\Omega}} = O(h^{N+2})$.  Because the approximation error for the $L^2$ projection is $O(h^{N+1})$ for sufficiently regular $u$, the difference between the $L^2$ and weight-adjusted projection converges faster than the $L^2$ best approximation error.  Consequentially, solutions computed using the $L^2$ and weight-adjusted projection are typically indistinguishable for a fixed geometric mapping \cite{chan2018multi}.  
 
 We first note that $\tilde{\Pi}^k_N  = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}}$ is self-adjoint with respect to the $J$-weighted $L^2$ inner product
 \begin{equation}
@@ -913,9 +915,9 @@ Dividing through by $\nor{v}_{L^2\LRp{D^k}} = \nor{\Pi^k_N u - \tilde{\Pi}^k_N  
 Theorem~\ref{thm:wproj} can be used to show that the $L^2$ error between $\Pi^k_N u, \tilde{\Pi}^k_N u$ and $u \in W^{r,2}\LRp{D^k}$ is $O(h^r)$.  Theorem~\ref{thm:superconverge} demonstrates that the $L^2$ difference between $\Pi^k_N u, \tilde{\Pi}^k_N u$ is $O(h^{r+1})$, or at least one order higher than the approximation error.  We note that optimal convergence of the weight-adjusted projection requires that the geometric mapping $\bm{\Phi}_k$ is asymptotically affine (i.e., the Sobolev norm of $J^k, \bm{G}^k$ does not grow under mesh refinement), which is ensured under nested mesh refinement and appropriate curvilinear blending strategies \cite{lenoir1986optimal, warburton2013low, chan2016weight2}.  
 %We note that, while Theorem~\ref{thm:superconverge} requires sufficient smoothness of $u$, numerical experiments in Section~\ref{sec:num} demonstrate that even for discontinuous functions, the $L^2$ and weight-adjusted projections are indistinguishable from each other on a curved element.  
 
-\subsubsection{Local conservation}
-
-We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform2}).  We begin by noting that (\ref{eq:dgform2}) is locally conservative with respect to the weight-adjusted inner product.  Testing (\ref{eq:dgform2weak}) with $\bm{1}$ yields
+\subsubsection{Local and global conservation}
+\label{sec:conservation}
+We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform2}), which is also referred to as primary conservation \cite{fisher2013discretely, fisher2013high, carpenter2014entropy, friedrich2017entropy}.  We begin by noting that (\ref{eq:dgform2}) is locally conservative with respect to the weight-adjusted inner product.  Testing (\ref{eq:dgform2weak}) with $\bm{1}$ yields
 \[
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
 \sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
@@ -930,7 +932,7 @@ Since $\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} $ is skew-symmetric and $\bm{F}_{j,S}
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*} = 0
 \label{eq:localcons}
 \end{equation}
-Global conservation is shown by summing (\ref{eq:localcons}) over all elements $D^k$.  Because the flux $\bm{f}_j^*$ is single-valued on each face and the outward normal $\bm{n}_j$ changes sign on adjacent elements, the contributions $\bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*}$ cancel on all interior interfaces.  On periodic meshes, this yields conservation with respect to the weight-adjusted mass matrix
+Global conservation is shown by summing (\ref{eq:localcons}) over all elements $D^k$.  Because the flux $\bm{f}_j^*$ is single-valued on each face and the outward normal $\bm{n}_j$ changes sign on adjacent elements, the contributions $\bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*}$ cancel on all interior interfaces.\footnote{Conservation still holds when incorporating entropy dissipation through penalty terms involving jumps.  This is because the definition of the jump changes sign on adjacent elements, such that jump contributions cancel when summing over all elements.} On periodic meshes, this yields conservation with respect to the weight-adjusted mass matrix
 \[
 \sum_k \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} = 0.
 \]
@@ -954,8 +956,9 @@ The proof relies on (\ref{eq:wadgTw}), which states that $\LRp{\frac{1}{J^k} T^{
 \[
 \LRp{T^{-1}_{1/J^k}u,1}_{\hat{D}} = \LRp{\frac{1}{J^k}T^{-1}_{1/J^k}u,{J^k}}_{\hat{D}}= \LRp{u,{J^k}}_{\hat{D}} = \int_{\hat{D}} uJ^k. 
 \]
-We note that the proof still holds if integrals are replaced with quadrature approximations which exactly integrate $uJ^k \in P^{2N}$.
+Additionally, the proof still holds if integrals are approximated using a quadrature rule which exactly integrates $uJ^k \in P^{2N}$.
 \end{proof}
+We note that, for isoparametric curved elements, $J^k \not\in P^N$ in general (in 2D, $J^k \in P^{2N-2}$, while in 3D, $J^k \in P^{3N-3}$ \cite{johnen2013geometrical}).  Thus, to ensure local conservation, we will approximate $J^k$ using a degree $N$ polynomial (for example, the interpolant or $L^2$ projection onto $P^N$).  We note that this approximation is required only in the weight-adjusted mass matrix, and does not modify the scaled geometric terms $J^k\bm{G}^k_{ij}$.  
 
 The second approach relies on a simple correction which restores exact conservation of the true mean.  In \cite{chan2016weight2}, it was shown that a rank one correction of the weight-adjusted mass matrix inverse preserves the mean exactly.  However, this requires the use of the Sherman--Morrison formula to compute the inverse of a rank one matrix update, which can be cumbersome to incorporate.  We present a simpler explicit correction formula which does not involve matrices.  Let $u_J$ and $u_{\rm WADG}$ be defined through 
 %coefficients 
@@ -1010,18 +1013,22 @@ J^k\bm{G}^k_{3i}\end{array}} &= \pd{\bm{x}}{\hat{x}_j}\times \pd{\bm{x}}{\hat{x}
 Note the abuse of notation here and in the sequel, the superscript $k$ refers to the element number and the subscript $k$ to the cyclic index. 
 This formula can be used to compute the geometric terms exactly at volume and surface quadrature points.  However, because $\pd{\bm{x}}{\hat{x}_j},\pd{\bm{x}}{\hat{x}_k} \in P^{N-1}$, the geometric terms $J^k\bm{G}^k_{ij}$ are polynomials of degree $P^{2N-2}$.  The discrete GCL condition holds only if $J^k\bm{G}^k_{ij} \in P^{2N-2}$ are differentiated exactly; however, because applying $\bm{D}^j_N$ involves the $L^2$ projection, and because $J^k\bm{G}^k_{ij}$ and its $L^2$ projection onto degree $N$ polynomials can differ, the discrete GCL (\ref{eq:dgcl}) does not hold in general \cite{kopriva2006metric}.  
 
-This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{visbal2002use, kopriva2006metric}.  The geometric terms $J^k\bm{G}^k_{ij}$ can also be computed using the ``conservative curl'' or ``invariant curl'' form, where $J^k\bm{G}^k_{ij}$ are constructed by applying the curl to some quantity.  We use the invariant curl form, which is given as
-\begin{align}
-J^k\bm{G}^k_{nj} = -\frac{1}{2}\bm{e}_j\cdot \hat{\Grad} \times \LRp{x_l\hat{\Grad}x_m - x_m\hat{\Grad}x_l}, \qquad j = 1,2,3, \quad (n,m,l) = (1,2,3), \text{ cyclic},
-\label{eq:conscurl}
-\end{align}
-where $\bm{e}_j$ is the $j$th canonical vector and $\hat{\Grad} \times $ denotes the curl with respect to the reference element coordinates.  Expanding and simplifying allows (\ref{eq:conscurl}) to be rewritten as follows \cite{hindenlang2012explicit}:
+This can be remedied by using an alternative form of the geometric terms, which ensures that (\ref{eq:dgcl}) is satisfied a-priori \cite{thomas1979geometric, visbal2002use, kopriva2006metric}.  The geometric terms $J^k\bm{G}^k_{ij}$ can also be computed using a ``conservative curl'' form, where $J^k\bm{G}^k_{ij}$ are the image of the curl applied to some quantity
+%We use the invariant curl form, which is given as
+%\begin{align}
+%J^k\bm{G}^k_{nj} = -\frac{1}{2}\bm{e}_j\cdot \hat{\Grad} \times \LRp{x_l\hat{\Grad}x_m - x_m\hat{\Grad}x_l}, \qquad j = 1,2,3, \quad (n,m,l) = (1,2,3), \text{ cyclic},
+%\label{eq:conscurl}
+%\end{align}
+%where $\bm{e}_j$ is the $j$th canonical vector and $\hat{\Grad} \times $ denotes the curl with respect to the reference element coordinates. 
+% Expanding and simplifying allows (\ref{eq:conscurl}) to be rewritten 
+ as follows \cite{hindenlang2012explicit}:
 \begin{align}
 \bm{r}_i = \pd{\bm{x}}{\hat{x}_i}\times \bm{x}, \qquad
 \LRs{\begin{array}{c}
 J^k\bm{G}^k_{1i}\\
 J^k\bm{G}^k_{2i}\\
 J^k\bm{G}^k_{3i}\end{array}} = -\frac{1}{2}\LRp{\pd{\bm{r}_k}{\hat{x}_j}-\pd{\bm{r}_j}{\hat{x}_k}}.
+\label{eq:conscurl}
 \end{align}
 From (\ref{eq:conscurl}), it can be observed that, because the divergence of a curl vanishes, the continuous GCL condition (\ref{eq:gcl}) holds.  
 %\begin{align}
@@ -1130,7 +1137,7 @@ Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $
 \bm{JG^k}_{32} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_3 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}} \nonumber\\
 \bm{JG^k}_{33} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_1 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}}. \nonumber
 \end{align}
-\lcwnote{Should we instead use the average of the two ``conservative forms'' given earlier in the next?  I guess we would have to change the code as well.}
+%\lcwnote{Should we instead use the average of the two ``conservative forms'' given earlier in the next?  I guess we would have to change the code as well.}
 \begin{remark}
 
 We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly through a local constrained minimization problem \cite{fernandez2016simultaneous, crean2018entropy}, which yields a solution in terms of a pseudo-inverse.  However, we have not found a straightforward way to simultaneously enforce both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm} using this approach.
@@ -1139,6 +1146,17 @@ We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly thro
 
 \section{Numerical experiments}
 \label{sec:num}
+
+In this section, we present numerical results which verify the theoretical results in this work.  We first verify that the weight-adjusted $L^2$ projection $\tilde{\Pi}^k_N$ and the GCL-satisfying geometric factors $J^k\bm{G}^k_{ij}$ obey the error estimates in Theorem~\ref{thm:superconverge} and Theorem~\ref{thm:koprivagcl}.  
+
+Next, we verify the semi-discrete entropy conservation, primary conservation, and accuracy of the proposed high order accurate methods for the compressible Euler equations on curved meshes in two and three dimensions.  For all curved meshes, we utilize the low storage weight-adjusted formulation (\ref{eq:dgform2}).  
+
+In choosing the timestep $dt$, we follow \cite{chan2015gpu} and set 
+\begin{equation}
+dt = \min_{k} {\rm CFL} \frac{\nor{J}_{L^{\infty}\LRp{D^k}}}{C_N\nor{J^f}_{L^{\infty}\LRp{\partial D^k}}},
+\end{equation}
+where $C_N$ is the $O(N^2)$ order-dependent constant in the trace inequality for \cite{warburton2003constants} and ${\rm CFL}$ is a user-chosen constant.  All numerical experiments in this work utilize the five-stage fourth order low storage Runge Kutta (LSRK-45) time-stepper \cite{carpenter1994fourth}.  
+
 
 \subsection{Accuracy of weight-adjusted projection and geometric terms}
 
@@ -1288,15 +1306,7 @@ coordinates{(0.673351,0.00405434)(0.373777,0.000213685)(0.166655,3.7653e-06)(0.0
 \end{figure}
 
 % N = 3
-\subsection{Compressible Euler equations}
-
-Next, we verify the semi-discrete entropy conservation and accuracy of the proposed high order accurate methods for the compressible Euler equations on curved meshes in two and three dimensions.  We follow \cite{chan2015gpu} and choose the timestep $dt$ as
-\begin{equation}
-dt = \min_{k} {\rm CFL} \frac{\nor{J}_{L^{\infty}\LRp{D^k}}}{C_N\nor{J^f}_{L^{\infty}\LRp{\partial D^k}}},
-\end{equation}
-where $C_N$ is the $O(N^2)$ order-dependent constant in the trace inequality for \cite{warburton2003constants} and ${\rm CFL}$ is a user-chosen constant.  All numerical experiments in this work utilize the five-stage fourth order low storage Runge Kutta (LSRK-45) time-stepper \cite{carpenter1994fourth}.  
-
-\subsubsection{Two dimensional experiments}
+\subsection{Two-dimensional compressible Euler equations}
 
 The compressible Euler equations in two dimensions are given as follows:
 \begin{align}
@@ -1337,6 +1347,8 @@ p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\
  \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
 \end{gather}
 
+\subsubsection{Entropy conservation}
+
 We begin by testing the propagation of a shock on a two-dimensional curved mesh using a discontinuous profile on the domain $\Omega = [0,20] \times [-5,5]$.   We set the initial velocities to be zero, and initialize the density and pressure as a discontinuous square pulse as in \cite{chan2017discretely}
 \begin{equation}
 \rho(\bm{x},t) = \begin{cases}
@@ -1361,7 +1373,7 @@ For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machi
 \subfloat[Uniform mesh]{\includegraphics[width=.35\textwidth]{figs/vortexMeshUniform.png}}
 \hspace{1em}
 \subfloat[Warped mesh]{\includegraphics[width=.35\textwidth]{figs/vortexMeshCurved.png}}
-\caption{Two-dimensional curvilinear meshes used for testing entropy conservation and accuracy.}
+\caption{2D curved meshes used for testing entropy conservation, primary conservation, and accuracy.}
 \label{fig:warp2d}
 \end{figure}
 
@@ -1439,10 +1451,138 @@ coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,
 \label{fig:dSconverge}
 \end{figure}
 
-We next test the accuracy of the proposed schemes 
+\subsubsection{Accuracy and convergence}
+
+Next, we test the accuracy of the proposed schemes for smooth solutions.  
 \note{Isentropic vortex on curved and non-curved meshes}
 
-\subsubsection{Three dimensional experiments}
+
+
+\subsubsection{Local and global conservation}
+
+FInally, we check that primary conservation is maintained numerically on curved meshes.  We follow \cite{friedrich2017entropy} and examine the semi-discrete evolution of the average of $\bm{u}$ over the domain $\Omega$
+\begin{align}
+\pd{}{t}\int_{\Omega} \bm{u} = \sum_k \int_{D^k} \pd{\bm{u}}{t} = \sum_k \int_{\hat{D}} \pd{\bm{u}}{t} J^k = \sum_k \bm{1}^T \bm{W}\diag{\bm{J}^k} \bm{V}_q \td{\bm{u}_h}{t}.  
+\label{eq:conssemidiscrete}
+\end{align}
+The quantity (\ref{eq:conssemidiscrete}) is computed using quadrature by multiplying the semi-discrete system (\ref{eq:dgform2}) by $\bm{1}^T\bm{W}\diag{\bm{J}^k} \bm{V}_q$
+\begin{align}
+&\sum_k \bm{1}^T \bm{W}\diag{\bm{J}^k} \bm{V}_q \td{\bm{u}_h}{t}= \nonumber\\
+& \underbrace{\bm{1}^T\bm{W}\diag{\bm{J}^k}\bm{V}_q\LRp{
+ \LRs{\begin{array}{cc}\tilde{\bm{P}}^k_q & \tilde{\bm{L}}^k_q\end{array}} \sum_{j=1}^d \LRp{2\bm{D}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \tilde{\bm{L}}^k_q \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}}_{\text{conservation residual}}.
+ \label{eq:consres}
+\end{align}
+
+We consider three different cases:
+\begin{enumerate}
+\item \textbf{Unmodified:} the weight-adjusted DG scheme (\ref{eq:dgform2}) is used without any special modifications,
+\item \textbf{Polynomial approximation:} the weight-adjusted DG scheme (\ref{eq:dgform2}) utilizes the $L^2$ projection of $J^k$ onto $P^N$ in the weight-adjusted mass matrix (such that Lemma~\ref{eq:conscorrect1} holds), 
+\item \textbf{Conservative correction:} the conservation correction (\ref{eq:conscorrect}) is applied to the right hand side of the scheme (\ref{eq:dgform2}).  
+\end{enumerate}
+All results use a Lax-Friedrichs flux, a CFL of $1/2$, $N=4$, and the curved mesh warping shown in Figure~\ref{fig:warp2d}.  Volume quadrature rules from \cite{xiao2010quadrature} which are exact for degree $2N+1$ polynomials were used, and $(N+1)$-node Gauss-Legendre quadrature rules were used on the faces.  
+
+Figure~\ref{subfig:cons1} shows computed conservation residuals from (\ref{eq:consres}) on the curved mesh in Figure~\ref{fig:warp2d} for the discontinuous pulse initial condition (\ref{eq:discontin}).  The conservation residual oscillates around $O(10^{-6})$ for the unmodified scheme (\ref{eq:dgform2}).  Modifying the scheme using either the ``Polynomial approximation'' or ``Conservative correction'' approaches reduces the conservation error to $O(10^{-12})$.  The magnitude of the conservation error is attributed to roundoff effects.  Repeating the same experiments on a smaller mesh of $8\times 8$ curved elements reduces the conservation residual to $O(10^{-13})$, while using a larger mesh of $32\times 32$ curved elements results in a conservation residual of $O(10^{-11})$.  
+
+We have also studied the accuracy of each case in by comparing $L^2$ errors on a curved mesh for a smooth vortex solution  at time $T=5$.  We observe that in all cases, the $L^2$ errors are virtually identical.  For $N=4$ on an $8\times 8$ mesh, the $L^2$ errors for each case differ only in the 5th digit, while for the $16\times 16$ and $32\times 32$ meshes, they differ only in the 8th digit.  This confirms that both approaches outlined in Section~\ref{sec:conservation} restore primary conservation with no perceivable effect on accuracy.  
+
+%\note{finish}
+
+\begin{figure}
+\centering
+\subfloat[ Conservation residual over time (unmodified)]{
+\begin{tikzpicture}
+\begin{semilogyaxis}[
+    legend cell align=left,
+    legend style={legend pos=north east, font=\tiny},
+    width=.45\textwidth,    
+    xlabel={Time},
+    ylabel={Conservation residual}, 
+    ymin=1e-8, ymax=1e-5,    
+    grid style=dashed,
+%    ytick={1e-12,1e-10,1e-8,1e-6,1e-4,1e-2 }
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.00642674,9.9266e-07)(0.404884,4.12992e-07)(0.803342,5.14326e-07)(1.2018,1.86091e-07)(1.60026,1.48526e-07)(1.99871,2.64763e-07)(2.39717,5.64483e-07)(2.79563,2.71857e-07)(3.19409,2.62073e-07)(3.59254,2.40249e-07)(3.991,2.80807e-07)(4.38946,3.23725e-07)(4.78792,3.9606e-07)(5.18638,3.46717e-07)(5.58483,2.17698e-07)(5.98329,1.99781e-07)(6.38175,9.91165e-08)(6.78021,2.63862e-07)(7.17866,3.13545e-07)(7.57712,4.01892e-07)(7.97558,2.37462e-07)(8.37404,3.91475e-07)(8.77249,7.92905e-07)(9.17095,2.75479e-07)(9.56941,4.42523e-07)(9.96787,6.28215e-07)};
+
+%\addplot[color=red,mark=x,dashed,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.00642674,3.34034e-12)(0.404884,3.31953e-12)(0.803342,3.47682e-12)(1.2018,3.48782e-12)(1.60026,3.69874e-12)(1.99871,3.55961e-12)(2.39717,3.69915e-12)(2.79563,3.67725e-12)(3.19409,3.84246e-12)(3.59254,3.84801e-12)(3.991,3.9449e-12)(4.38946,3.95075e-12)(4.78792,4.05986e-12)(5.18638,4.07415e-12)(5.58483,4.18282e-12)(5.98329,4.34447e-12)(6.38175,4.3659e-12)(6.78021,4.34614e-12)(7.17866,4.46538e-12)(7.57712,4.37571e-12)(7.97558,4.35258e-12)(8.37404,4.16896e-12)(8.77249,4.22267e-12)(9.17095,4.14187e-12)(9.56941,4.10735e-12)(9.96787,3.90628e-12)};
+%
+%\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.00642674,3.28579e-12)(0.404884,3.32419e-12)(0.803342,3.37232e-12)(1.2018,3.50534e-12)(1.60026,3.64225e-12)(1.99871,3.47872e-12)(2.39717,3.62415e-12)(2.79563,3.68648e-12)(3.19409,3.79388e-12)(3.59254,3.84432e-12)(3.991,3.97812e-12)(4.38946,3.96804e-12)(4.78792,4.0684e-12)(5.18638,4.04986e-12)(5.58483,4.22413e-12)(5.98329,4.25356e-12)(6.38175,4.39801e-12)(6.78021,4.37474e-12)(7.17866,4.39737e-12)(7.57712,4.38242e-12)(7.97558,4.31792e-12)(8.37404,4.28398e-12)(8.77249,4.21688e-12)(9.17095,4.10925e-12)(9.56941,4.17163e-12)(9.96787,3.96996e-12)};
+\legend{Unmodified}
+%\legend{Unmodified, Polynomial approx., Conservative correction }
+%\legend{Uniform, Optimal, Smoothed}
+\end{semilogyaxis}
+\end{tikzpicture}
+\label{subfig:cons1}}
+\subfloat[Conservation residual over time (modified)]{
+\begin{tikzpicture}
+\begin{semilogyaxis}[
+    legend cell align=left,
+    legend style={legend pos=north east, font=\tiny},
+    width=.45\textwidth,    
+    xlabel={Time},
+    ylabel={Conservation residual}, 
+    ymin=.5e-12, ymax=2e-11,    
+    grid style=dashed,
+    ytick={1e-12, 1e-11},
+    yticklabels={{$ 10^{-12}$},{$ 10^{-11}$}}
+] 
+
+%\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.00642674,9.9266e-07)(0.404884,4.12992e-07)(0.803342,5.14326e-07)(1.2018,1.86091e-07)(1.60026,1.48526e-07)(1.99871,2.64763e-07)(2.39717,5.64483e-07)(2.79563,2.71857e-07)(3.19409,2.62073e-07)(3.59254,2.40249e-07)(3.991,2.80807e-07)(4.38946,3.23725e-07)(4.78792,3.9606e-07)(5.18638,3.46717e-07)(5.58483,2.17698e-07)(5.98329,1.99781e-07)(6.38175,9.91165e-08)(6.78021,2.63862e-07)(7.17866,3.13545e-07)(7.57712,4.01892e-07)(7.97558,2.37462e-07)(8.37404,3.91475e-07)(8.77249,7.92905e-07)(9.17095,2.75479e-07)(9.56941,4.42523e-07)(9.96787,6.28215e-07)};
+
+\addplot[color=red,mark=x,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.00642674,3.34034e-12)(0.404884,3.31953e-12)(0.803342,3.47682e-12)(1.2018,3.48782e-12)(1.60026,3.69874e-12)(1.99871,3.55961e-12)(2.39717,3.69915e-12)(2.79563,3.67725e-12)(3.19409,3.84246e-12)(3.59254,3.84801e-12)(3.991,3.9449e-12)(4.38946,3.95075e-12)(4.78792,4.05986e-12)(5.18638,4.07415e-12)(5.58483,4.18282e-12)(5.98329,4.34447e-12)(6.38175,4.3659e-12)(6.78021,4.34614e-12)(7.17866,4.46538e-12)(7.57712,4.37571e-12)(7.97558,4.35258e-12)(8.37404,4.16896e-12)(8.77249,4.22267e-12)(9.17095,4.14187e-12)(9.56941,4.10735e-12)(9.96787,3.90628e-12)};
+
+\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.00642674,3.28579e-12)(0.404884,3.32419e-12)(0.803342,3.37232e-12)(1.2018,3.50534e-12)(1.60026,3.64225e-12)(1.99871,3.47872e-12)(2.39717,3.62415e-12)(2.79563,3.68648e-12)(3.19409,3.79388e-12)(3.59254,3.84432e-12)(3.991,3.97812e-12)(4.38946,3.96804e-12)(4.78792,4.0684e-12)(5.18638,4.04986e-12)(5.58483,4.22413e-12)(5.98329,4.25356e-12)(6.38175,4.39801e-12)(6.78021,4.37474e-12)(7.17866,4.39737e-12)(7.57712,4.38242e-12)(7.97558,4.31792e-12)(8.37404,4.28398e-12)(8.77249,4.21688e-12)(9.17095,4.10925e-12)(9.56941,4.17163e-12)(9.96787,3.96996e-12)};
+\legend{Polynomial approx., Conservative correction }
+%\legend{Unmodified, Polynomial approx., Conservative correction }
+%\legend{Uniform, Optimal, Smoothed}
+\end{semilogyaxis}
+\end{tikzpicture}
+\label{subfig:cons2}}
+%\subfloat[$L^2$ errors at time $T=5$]{
+%\begin{tikzpicture}
+%\begin{loglogaxis}[
+%    legend cell align=left,
+%    legend style={legend pos=south east, font=\tiny},
+%    width=.4\textwidth,    
+%    xlabel={Time},
+%    ylabel={Conservation residual}, 
+%    ymin=1e-2, ymax=2,    
+%    grid style=dashed,
+%    ytick={1e-13,1e-11,1e-9,1e-7,1e-5,1e-3,1e-1 }
+%] 
+%
+%\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+%% 1.315466363259058   0.263564848187665   0.018309692309614
+%coordinates{(1.25,1.315466)(0.625,0.263565)(0.3125,0.0183097)};
+%
+%\addplot[color=red,mark=x,dashed,semithick, mark options={solid,fill=markercolor}]
+%%1.315440699275237   0.263564850056684   0.018309677771005
+%coordinates{(1.25,1.31544)(0.625,0.263565)(0.3125,0.0183097)};
+%
+%\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+%% 1.315467094406914
+%coordinates{(1.25,1.315467)(0.625,0.263565)(0.3125,0.0183097)};
+%
+%\legend{Unmodified, Polynomial approx., Conservative correction }
+%
+%\end{loglogaxis}
+%\end{tikzpicture}
+%\label{subfig:cons2}}
+%\caption{Conservation residuals for a discontinuous solution and $L^2$ errors for a vortex solution using the unmodified WADG formulation (\ref{eq:dgform2}) and two different techniques for restoring local conservation.  Both experiments use a Lax-Friedrichs flux, a CFL of $1/2$, $N=4$, and the curved mesh warping shown in Figure~\ref{fig:warp2d}.  }
+\caption{Conservation residuals for a discontinuous initial condition using the unmodified WADG formulation (\ref{eq:dgform2}) and two different techniques for restoring local conservation.  Both experiments use a Lax-Friedrichs flux, a CFL of $1/2$, $N=4$, and the curved mesh warping shown in Figure~\ref{fig:warp2d}.  }
+\label{fig:cons}
+\end{figure}
+
+
+
+
+\subsection{Three dimensional compressible Euler equations}
 
 In three dimensions, the compressible Euler equations are given by
 \begin{align}
