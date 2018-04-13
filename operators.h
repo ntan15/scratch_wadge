@@ -1,4 +1,12 @@
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wint-in-bool-context"
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
 #include <Eigen/Dense>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 #include <cstdint>
 using namespace Eigen;
 
