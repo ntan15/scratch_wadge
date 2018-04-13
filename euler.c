@@ -3016,13 +3016,13 @@ static void modify_mapP(app_t *app, int usePeriodic)
         {
 #if VDIM == 2
           // if match on x faces
-          if ((fabs(xi - vxmin) < tol | fabs(xi - vxmax) < tol) &
+          if ((fabs(xi - vxmin) < tol || fabs(xi - vxmax) < tol) &&
               (fabs(yi - yj) < tol))
           {
             app->hops->mapPq[idB[i]] = idB[j];
           }
           // if match on y faces
-          if ((fabs(yi - vymin) < tol | fabs(yi - vymax) < tol) &
+          if ((fabs(yi - vymin) < tol || fabs(yi - vymax) < tol) &&
               (fabs(xi - xj) < tol))
           {
             app->hops->mapPq[idB[i]] = idB[j];
@@ -3037,21 +3037,21 @@ static void modify_mapP(app_t *app, int usePeriodic)
           int on_zmax = fabs(zi - vzmax) < tol;
 
           // match on x face
-          if ((on_xmin | on_xmax) & (fabs(yi - yj) < tol) &
+          if ((on_xmin || on_xmax) && (fabs(yi - yj) < tol) &&
               (fabs(zi - zj) < tol))
           {
             app->hops->mapPq[idB[i]] = idB[j];
             xcnt++;
           }
           // match on y face
-          if ((on_ymin | on_ymax) & (fabs(xi - xj) < tol) &
+          if ((on_ymin || on_ymax) && (fabs(xi - xj) < tol) &&
               (fabs(zi - zj) < tol))
           {
             app->hops->mapPq[idB[i]] = idB[j];
             ycnt++;
           }
           // match on z face
-          if ((on_zmin | on_zmax) & (fabs(xi - xj) < tol) &
+          if ((on_zmin || on_zmax) && (fabs(xi - xj) < tol) &&
               (fabs(yi - yj) < tol))
           {
             app->hops->mapPq[idB[i]] = idB[j];
