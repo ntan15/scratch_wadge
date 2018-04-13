@@ -1916,7 +1916,7 @@ static void hilbert_axes_to_trans(uintglo_t *X)
 // TODO: replace with LUT if the code it too slow
 static void hilbert_trans_to_code(const uintglo_t *X, uintglo_t *H)
 {
-  int i, j;
+  unsigned int i, j;
   for (i = 0; i < VDIM; ++i)
     H[i] = 0;
 
@@ -1924,8 +1924,8 @@ static void hilbert_trans_to_code(const uintglo_t *X, uintglo_t *H)
   {
     for (j = 0; j < UINTGLO_BITS; ++j)
     {
-      const int k = i * UINTGLO_BITS + j;
-      const uint64_t bit = (X[VDIM - 1 - (k % VDIM)] >> (k / VDIM)) & 1;
+      const unsigned int k = i * UINTGLO_BITS + j;
+      const uint64_t bit = (X[VDIM - 1 - (k % VDIM)] >> (k / VDIM)) & 1U;
       H[VDIM - 1 - i] |= (bit << j);
     }
   }

@@ -23,7 +23,7 @@ typedef uint64_t uintglo_t;
 #define occaUIntglo(x) occaULong((uintglo_t)(x))
 #define occa_uintglo_name "unsigned long"
 #define UINTGLO(x) ASD_APPEND(x, ull)
-#define UINTGLO_BITS 64
+#define UINTGLO_BITS 64U
 #define UINTGLO_MAX UINT64_MAX
 #define UINTGLO_MAX_DIGITS INT64_MAX_DIGITS
 #define UINTGLO_MPI MPI_UNSIGNED_LONG_LONG
