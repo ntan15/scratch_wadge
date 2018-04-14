@@ -4,8 +4,8 @@ CXX = mpicxx
 F77 = mpif77
 FC = mpif90
 
-CFLAGS = --std=c11 -g
-CXXFLAGS = -std=c++11 -g
+CFLAGS = --std=gnu11 -g
+CXXFLAGS = -std=gnu++11 -g
 
 # below are flags that work with clang and gcc
 CFLAGS += -Wconversion -Wno-sign-conversion \
@@ -22,11 +22,11 @@ DEBUG = 0
 ifeq (${DEBUG},1)
   CFLAGS += -O1
   CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
-  CFLAGS += -fsanitize=address,undefined
+  # CFLAGS += -fsanitize=address,undefined
 
   CXXFLAGS += -O1
   CXXFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
-  CXXFLAGS += -fsanitize=address,undefined
+  # CXXFLAGS += -fsanitize=address,undefined
 
   CPPFLAGS +=-DASD_DEBUG
   OCCA_MAKE_FLAGS = OCCA_DEVELOPER=1 DEBUG=1
