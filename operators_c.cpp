@@ -57,12 +57,9 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
   VectorXd nsJ = ref_data->nsJ;
   MatrixXd Vfqf = ref_data->Vfqf;
   MatrixXd Vfq = ref_data->Vfq;
+  MatrixXd Pq = ref_data->Pq;
 
-  // quadrature
   MatrixXd MM = Vq.transpose() * wq.asDiagonal() * Vq;
-  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
-  MatrixXd Pq = mldivide(MM, VqW);
-
   MatrixXd MMfq = Vfq.transpose() * wfq.asDiagonal();
   MatrixXd Lq = mldivide(MM, MMfq);
   MatrixXd VqLq = Vq * Lq;
@@ -220,19 +217,16 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   MatrixXd Ds = ref_data->Ds;
   MatrixXd Dt = ref_data->Dt;
   MatrixXd Vq = ref_data->Vq;
+  MatrixXd Pq = ref_data->Pq;
+  MatrixXd Vfqf = ref_data->Vfqf;
+  MatrixXd Vfq = ref_data->Vfq;
 
   VectorXd wfq = ref_data->wfq;
   VectorXd nrJ = ref_data->nrJ;
   VectorXd nsJ = ref_data->nsJ;
   VectorXd ntJ = ref_data->ntJ;
-  MatrixXd Vfqf = ref_data->Vfqf;
-  MatrixXd Vfq = ref_data->Vfq;
 
-  // quadrature
   MatrixXd MM = Vq.transpose() * wq.asDiagonal() * Vq;
-  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
-  MatrixXd Pq = mldivide(MM, VqW);
-
   MatrixXd MMfq = Vfq.transpose() * wfq.asDiagonal();
   MatrixXd Lq = mldivide(MM, MMfq);
   MatrixXd VqLq = Vq * Lq;
@@ -244,7 +238,7 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
 
   MatrixXd Drstq(Drq.rows(),3*Drq.cols());
   Drstq << Drq,Dsq,Dtq;
-  
+
   ops->dim = 3;
 
   ops->N = N;
@@ -269,7 +263,7 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   ops->Dsq = to_c(Dsq);
   ops->Dtq = to_c(Dtq);
 
-  ops->Drstq = to_c(Drstq);  
+  ops->Drstq = to_c(Drstq);
 
   ops->Vq = to_c(Vq);
   ops->Pq = to_c(Pq);
