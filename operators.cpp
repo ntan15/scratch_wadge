@@ -194,6 +194,7 @@ ref_elem_data *build_ref_ops_2D(int N, int Nq, int Nfq)
   ref_data->sq = sq;
   ref_data->wq = wq;
   ref_data->Vq = Vq;
+  ref_data->Pq = Pq;
 
   ref_data->rfq = rfq;
   ref_data->sfq = sfq;
@@ -232,6 +233,10 @@ ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq)
   // quadrature
   MatrixXd Vqtmp = Vandermonde3D(N, rq, sq, tq);
   MatrixXd Vq = mrdivide(Vqtmp, V);
+
+  MatrixXd MM = Vq.transpose() * wq.asDiagonal() * Vq;
+  MatrixXd VqW = Vq.transpose() * wq.asDiagonal();
+  MatrixXd Pq = mldivide(MM, VqW);
 
   // face quadrature
   int Nfp = (N + 1) * (N + 2) / 2;
@@ -315,6 +320,7 @@ ref_elem_data *build_ref_ops_3D(int N, int Nq, int Nfq)
   ref_data->tq = tq;
   ref_data->wq = wq;
   ref_data->Vq = Vq; // interp to quad pts
+  ref_data->Pq = Pq; // project from quad pts
 
   ref_data->rfq = rfq;
   ref_data->sfq = sfq;
@@ -362,6 +368,18 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
   VectorXd one = VectorXd::Ones(r.size());
   MatrixXd x = 0.5 * (-(r + s) * vxa + (one + r) * vxb + (one + s) * vxc);
   MatrixXd y = 0.5 * (-(r + s) * vya + (one + r) * vyb + (one + s) * vyc);
+#endif
+
+
+#if 1
+  // add curvilinear perturbation to [0,20] x [-5,5]
+  MatrixXd xx = x.array()/20.0;
+  MatrixXd yy = (y.array()+5.0)/10.0;
+
+  double a = .5;
+  x.array() += 2.0*a*(M_PI*xx.array()).sin()*(2.0*M_PI*yy.array()).sin();
+  y.array() += -a*(2.0*M_PI*xx.array()).sin()*(M_PI*yy.array()).sin();
+
 #endif
 
   // vol geofacs
@@ -428,7 +446,11 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
 
   geo->nxJ = nxJ;
   geo->nyJ = nyJ;
-  geo->J = J;
+
+  MatrixXd VqPq = (ref_data->Vq)*(ref_data->Pq);
+  geo->J = VqPq*J; // to ensure conservation
+  //geo->J = J;
+
   geo->sJ = sJ;
   return geo;
 }
@@ -564,7 +586,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   nz = nz.array() / sJ.array();
   sJ = sJ.array() * Jf.array();
 
-#if 1 // interpolated conservative curl form
+#if 1 // interpolated conservative curl form from Kopriva
 
   ref_elem_data *ref_data_N2 = build_ref_ops_3D(
       N + 1, 2 * N + 2, 2 * N + 2); // build VDM and Dmats for deg N+1
@@ -705,7 +727,9 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   geo->nyJ = nyJ;
   geo->nzJ = nzJ;
 
-  geo->J = J;
+  MatrixXd VqPq = (ref_data->Vq)*(ref_data->Pq);
+  geo->J = VqPq*J; // to ensure conservation
+  //  geo->J = J;
   geo->sJ = sJ;
   return geo;
 }

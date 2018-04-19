@@ -1,6 +1,6 @@
 
-if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare.msh"
-elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube2.msh"
+if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare2.msh"
+elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube3.msh"
 else
   print("Unknown element type")
 end
@@ -8,14 +8,14 @@ end
 app = {
   occa = {
     -- OpenMP
-    info = "mode = Serial",
-    flags = " -O2 -g -fno-common -fomit-frame-pointer \z
-              -Wno-sign-conversion \z
-              -Wcast-align -Wchar-subscripts -Wall -W \z
-              -Wpointer-arith -Wwrite-strings -Wformat-security -pedantic \z
-              -Wextra -Wno-unused-parameter -Wno-unknown-pragmas \z
-              -Wno-unused-variable -Wno-int-in-bool-context"
-              -- -Wconversion -fsanitize=address
+    -- info = "mode = Serial",
+    -- flags = " -O2 -g -fno-common -fomit-frame-pointer \z
+     --          -Wno-sign-conversion \z
+     --          -Wcast-align -Wchar-subscripts -Wall -W \z
+    --           -Wpointer-arith -Wwrite-strings -Wformat-security -pedantic \z
+    --           -Wextra -Wno-unused-parameter -Wno-unknown-pragmas \z
+     --          -Wno-unused-variable -Wno-int-in-bool-context"
+     --          -- -Wconversion -fsanitize=address
     -- OpenCL
     -- info = string.format("mode = OpenCL , platformID = 0, deviceID = %d",
     --                      HOST_RANK),
@@ -24,7 +24,7 @@ app = {
     --           -cl-fast-relaxed-math"
 
     -- CUDA
-    -- info = string.format("mode = CUDA , deviceID = %d", HOST_RANK),
+       info = string.format("mode = CUDA , deviceID = %d", HOST_RANK),
     -- flags = "--compiler-options -O3 --ftz=true --prec-div=false \z
     --                            --prec-sqrt=false --use_fast_math \z
     --                            --fmad=true"
@@ -33,8 +33,8 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 2,
-    M = 4,
+    N = 4,
+    M = 8,
     sfc_partition = true
   },
   output = {

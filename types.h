@@ -31,7 +31,7 @@ typedef uint64_t uintglo_t;
 #define UINTGLO_SCN SCNu64
 
 #define USE_DFLOAT_DOUBLE 1
-#ifdef USE_DFLOAT_DOUBLE
+#if USE_DFLOAT_DOUBLE
 typedef double dfloat_t;
 #define occaDfloat occaDouble
 #define DFLOAT(x) (x)
