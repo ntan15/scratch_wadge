@@ -1,6 +1,6 @@
 /* Rectangle Geometry File */
 
-h = .25; // prescribed mesh element size
+h = 2; // prescribed mesh element size
 Mesh.CharacteristicLengthMin = h;
 Mesh.CharacteristicLengthMax = 2*h;
     

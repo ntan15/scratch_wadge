@@ -1,6 +1,7 @@
 \pdfoutput=1
 
 \documentclass[preprint,10pt]{article}
+%\documentclass[10pt]{amsart}
 \usepackage{stmaryrd}
 
 \usepackage{fullpage}
@@ -282,7 +283,7 @@ legend style={font=\small}
 \maketitle
 
 \begin{abstract}
-We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guarantee that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order accurate curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
+We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guarantee that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of an approach introduced in \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order accurate curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
 \end{abstract}
 
 \tableofcontents
@@ -409,7 +410,7 @@ where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on bo
 
 Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due to the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  
 
-While this paper focuses on curved meshes, the inexactness of quadrature leads to the loss of the chain rule and thus the loss of entropy conservation or entropy dissipation (\ref{eq:entropyineq}) even on affine meshes.  We can rewrite (\ref{eq:weakdg}) in a strong form using a discrete quadrature-based $L^2$ projection.  For polynomial approximation spaces on affine meshes, $\pd{\bm{v}}{x_i}$ is polynomial 
+While this paper focuses on curved meshes, the inexactness of quadrature leads to the loss of the chain rule and thus the loss of entropy conservation or entropy dissipation (\ref{eq:entropyineq}) even on affine meshes.  We can rewrite (\ref{eq:weakdg}) in a strong form using a discrete quadrature-based $L^2$ projection.  For polynomial approximation spaces on affine meshes, $\pd{\bm{v}}{x_i}$ is polynomial.  
 %\lcwnote{(Is this true when have a non-affine element mapping?)} \note{No - good point.  I specified affine meshes in the revised text}.  
 Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
 \[
@@ -574,7 +575,7 @@ Using properties of the Hadamard product \cite{horn2012matrix}, we can rewrite $
 \bm{D}^i_k = \sum_{j=1}^d \LRp{\bm{D}^j_N \circ \avg{\bm{JG}^k_{ij}}}, \qquad \avg{\bm{JG}^k_{ij}}_{mn} = \frac{1}{2}\LRp{\LRp{\bm{JG}^k_{ij}}_m + \LRp{\bm{JG}^k_{ij}}_n},
 \label{eq:dik}
 \end{equation}
-where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the entries of $\bm{JG}^k_{ij}$.  From (\ref{eq:dik}), it is straightforward to show that (because $\avg{\bm{JG}^k_{ij}}$ is symmetric) $\bm{Q}^i_k = \bm{W}_N\bm{D}^i_k$ also satisfies a summation-by-parts property
+where $\avg{\bm{JG}^k_{ij}}$ denotes the matrix of averages between each of the entries of $\bm{JG}^k_{ij}$.  From Assumption~\ref{ass:norm} and (\ref{eq:dik}), it is straightforward to show that (because $\avg{\bm{JG}^k_{ij}}$ is symmetric) $\bm{Q}^i_k = \bm{W}_N\bm{D}^i_k$ also satisfies a summation-by-parts property
 \begin{equation}
 \bm{Q}^i_k + \LRp{\bm{Q}^i_k}^T = \bm{B}^i_k, \qquad \bm{B}^i_k = 
 \LRp{\begin{array}{cc}
@@ -678,7 +679,7 @@ We have the following semi-discrete statement of entropy conservation:
 \label{thm:stab1}
 \end{theorem}
 \begin{proof}
-Using that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\ref{eq:sbpk}), the proof of entropy conservation is identical to that of \cite{chan2017discretely}.  
+Under the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each element and (\ref{eq:sbpk}), the proof of entropy conservation is identical to that of \cite{chan2017discretely}.  
 %\note{Expand out!  Do spatial term only, punt for time term.  }
 %To prove entropy conservation, we multiply on both sides by $\bm{M}_k$ 
 %\begin{align}
@@ -983,7 +984,7 @@ Taking the weighted integral of $\tilde{u}_{\rm WADG}$ yields
 \]
 In other words, (\ref{eq:conscorrect}) ensures local conservation by correcting the weighted average of $u_{\rm WADG}$ to match that of $u_J$.  Applying this correction to the right hand side of (\ref{eq:dgform2}) then yields a scheme which locally and globally conserves mean values of the conservative variables.
 
-This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.  Moreover, using Theorem 6 in \cite{chan2016weight1}, it is straightforward to show that the $L^2$ norm of the difference $\tilde{u}_{\rm WADG} - u_{\rm WADG}$ is $O(h^{2N+1})$, and does not affect high order accuracy.  
+This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.  Moreover, using Theorem 6 in \cite{chan2016weight1}, one can show that the $L^2$ norm of the difference $\tilde{u}_{\rm WADG} - u_{\rm WADG}$ is $O(h^{2N+1})$, and does not affect high order accuracy.  
 
 \section{Enforcing the discrete geometric conservation law}
 
@@ -1375,7 +1376,7 @@ For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machi
 \subfloat[Uniform mesh]{\includegraphics[width=.35\textwidth]{figs/vortexMeshUniform.png}}
 \hspace{1em}
 \subfloat[Warped mesh]{\includegraphics[width=.35\textwidth]{figs/vortexMeshCurved.png}}
-\caption{2D curved meshes used for testing entropy conservation, primary conservation, and accuracy.}
+\caption{2D curved meshes used for testing entropy conservation and primary conservation.}
 \label{fig:warp2d}
 \end{figure}
 
@@ -1453,16 +1454,10 @@ coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,
 \label{fig:dSconverge}
 \end{figure}
 
-\subsubsection{Accuracy and convergence}
-
-Next, we test the accuracy of the proposed schemes for smooth solutions.  
-\note{Isentropic vortex on curved and non-curved meshes}
-
-
 
 \subsubsection{Local and global conservation}
-
-FInally, we check that primary conservation is maintained numerically on curved meshes.  We follow \cite{friedrich2017entropy} and examine the semi-discrete evolution of the average of $\bm{u}$ over the domain $\Omega$
+\label{sec:conservation}
+Next, we check that primary conservation is maintained numerically on curved meshes.  We follow \cite{friedrich2017entropy} and examine the semi-discrete evolution of the average of $\bm{u}$ over the domain $\Omega$
 \begin{align}
 \pd{}{t}\int_{\Omega} \bm{u} = \sum_k \int_{D^k} \pd{\bm{u}}{t} = \sum_k \int_{\hat{D}} \pd{\bm{u}}{t} J^k = \sum_k \bm{1}^T \bm{W}\diag{\bm{J}^k} \bm{V}_q \td{\bm{u}_h}{t}.  
 \label{eq:conssemidiscrete}
@@ -1478,13 +1473,12 @@ The quantity (\ref{eq:conssemidiscrete}) is computed using quadrature by multipl
 We consider three different cases:
 \begin{enumerate}
 \item \textbf{Unmodified:} the weight-adjusted DG scheme (\ref{eq:dgform2}) is used without any special modifications,
-\item \textbf{Polynomial approximation:} the weight-adjusted DG scheme (\ref{eq:dgform2}) utilizes the $L^2$ projection of $J^k$ onto $P^N$ in the weight-adjusted mass matrix (such that Lemma~\ref{eq:conscorrect1} holds), 
+\item \textbf{Polynomial approximation:} the weight-adjusted DG scheme (\ref{eq:dgform2}) utilizes the $L^2$ projection of $J^k$ onto $P^N(\hat{D})$ in the weight-adjusted mass matrix (such that Lemma~\ref{eq:conscorrect1} holds), 
 \item \textbf{Conservative correction:} the conservation correction (\ref{eq:conscorrect}) is applied to the right hand side of the scheme (\ref{eq:dgform2}).  
 \end{enumerate}
-All results use a Lax-Friedrichs flux, a CFL of $1/2$, $N=4$, and the curved mesh warping shown in Figure~\ref{fig:warp2d}.  Volume quadrature rules from \cite{xiao2010quadrature} which are exact for degree $2N+1$ polynomials were used, and $(N+1)$-node Gauss-Legendre quadrature rules were used on the faces.  
+All results use a Lax-Friedrichs flux, a CFL of $1/2$, $N=4$, and the curved mesh warping shown in Figure~\ref{fig:warp2d}.  We use volume quadrature rules from \cite{xiao2010quadrature} which are exact for degree $2N+1$ polynomials, and use $(N+1)$-node 1D Gauss-Legendre quadrature rules on the faces.  
 
-Figure~\ref{subfig:cons1} shows computed conservation residuals from (\ref{eq:consres}) on the curved mesh in Figure~\ref{fig:warp2d} for the discontinuous pulse initial condition (\ref{eq:discontin}).  The conservation residual oscillates around $O(10^{-6})$ for the unmodified scheme (\ref{eq:dgform2}).  Modifying the scheme using either the ``Polynomial approximation'' or ``Conservative correction'' approaches reduces the conservation error to $O(10^{-12})$.  The magnitude of the conservation error is attributed to roundoff effects.  Repeating the same experiments on a smaller mesh of $8\times 8$ curved elements reduces the conservation residual to $O(10^{-13})$, while using a larger mesh of $32\times 32$ curved elements results in a conservation residual of $O(10^{-11})$.  
-
+Figure~\ref{subfig:cons1} shows computed conservation residuals from (\ref{eq:consres}) on the curved mesh in Figure~\ref{fig:warp2d} for the discontinuous pulse initial condition (\ref{eq:discontin}).  The conservation residual oscillates around $O(10^{-6})$ for the unmodified scheme (\ref{eq:dgform2}).  Modifying the scheme using either the ``Polynomial approximation'' or ``Conservative correction'' approaches reduces the conservation error to $O(10^{-12})$.  %The magnitude of the conservation residual is due to roundoff effects.  Repeating the same experiments on a smaller mesh of $8\times 8$ curved elements reduces the conservation residual to $O(10^{-13})$, while using a larger mesh of $32\times 32$ curved elements results in a conservation residual of $O(10^{-11})$.  
 We have also studied the accuracy of each case in by comparing $L^2$ errors on a curved mesh for a smooth vortex solution  at time $T=5$.  We observe that in all cases, the $L^2$ errors are virtually identical.  For $N=4$ on an $8\times 8$ mesh, the $L^2$ errors for each case differ only in the 5th digit, while for the $16\times 16$ and $32\times 32$ meshes, they differ only in the 8th digit.  This confirms that both approaches outlined in Section~\ref{sec:conservation} restore primary conservation with no perceivable effect on accuracy.  
 
 %\note{finish}
@@ -1582,6 +1576,78 @@ coordinates{(0.00642674,3.28579e-12)(0.404884,3.32419e-12)(0.803342,3.37232e-12)
 \end{figure}
 
 
+\subsubsection{Accuracy and convergence}
+
+\begin{figure}
+\centering
+\subfloat[Affine mesh]{\includegraphics[width=.4\textwidth]{figs/mesh2d_affine_converge2.png}}
+\hspace{2em}
+\subfloat[Curved mesh]{\includegraphics[width=.4\textwidth]{figs/mesh2d_curved_converge2.png}}
+\caption{Example of affine and warped meshes used for convergence studies.}
+\label{fig:warp2dconverge}
+\end{figure}
+
+Finally, we test the accuracy of the proposed schemes for smooth solutions on curved meshes in two dimensions.  
+We use the isentropic vortex problem \cite{shu1998essentially}, which has an analytical solution 
+\begin{align}
+\rho(\bm{x},t) &= \LRp{1 - \frac{\frac{1}{2}(\gamma-1)(\beta e^{1-r(\bm{x},t)^2})^2}{8\gamma \pi^2}}^{\frac{1}{\gamma-1}}, \qquad p = \rho^{\gamma},\\
+u(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0), \qquad v(\bm{x},t) = \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0),\nonumber
+\end{align}
+where $u, v$ are the $x$ and $y$ velocity and $r(\bm{x},t) = \sqrt{(x-x_0-t)^2 + (y-y_0)^2}$.  Here, we take $x_0 = 5, y_0 = 0$ and $\beta = 5$.  
+The solution is computed on a periodic rectangular domain $[0, 20] \times [-5,5]$ at final time $T=5$.  Quasi-uniform triangular meshes are generated using \textsc{GMSH} \cite{geuzaine2009gmsh}, and a curvilinear warping is applied to the mesh to test the effect of non-affine mappings.  This warping is shown in Figure~\ref{fig:warp2dconverge} and is defined by mapping nodal positions on a triangle to warped nodal positions $(\tilde{x},\tilde{y})$ via
+\begin{align*}
+\tilde{x} &= x + \sin\LRp{\pi x / 20}\sin\LRp{2\pi (y+5)/10}\\
+\tilde{y} &= y - \frac{1}{2}\sin\LRp{2 \pi x / 20}\sin\LRp{\pi (y+5)/10}.
+\end{align*}  
+To ensure primary conservation, we use the ``Polynomial Approximation'' strategy described in Section~\ref{sec:conservation} and compute the inverse of the weight-adjusted mass matrix using the degree $N$ $L^2$ projection $\hat{\Pi}_N J^k$ instead of $J^k$.  The computed $L^2$ errors are shown in Figure~\ref{fig:converge2d}.  We observe optimal $O(h^{N+1})$ rates of convergence for $N=2, N= 4$.  For degree $N=3$, the rate of convergence is slightly higher than $O(h^{4})$ and may indicate that the mesh is not yet sufficiently fine for the $L^2$ error to show the asymptotic convergence rate.  
+
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.45\textwidth,    
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ error}, 
+     ymin=1e-6, ymax=2,    
+     xmin=1e-1, xmax=2.5,         
+    grid style=dashed,
+    legend entries={Affine,Curved}
+] 
+\addlegendimage{no markers,black}
+\addlegendimage{no markers,dashed,black}
+
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,1.06717)(1,0.149639)(0.5,0.025693)(0.25,0.00342827)} [yshift=4pt] node[left, pos=1.05, color=blue] {$N = 2$};
+\addplot[color=blue,mark=*,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,1.37709)(1,0.219501)(0.5,0.0385896)(0.25,0.0039906)};
+\logLogSlopeTriangleFlip{0.45}{0.15}{0.625}{3}{blue}
+
+
+\addplot[color=red,mark=x,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.50782)(1,0.0516053)(0.5,0.00249425)(0.25,0.000110618)}[yshift=8pt] node[left, pos=1.05, color=red] {$N = 3$};
+\addplot[color=red,mark=x,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.535036)(1,0.0657418)(0.5,0.00501536)(0.25,0.000243005)};
+\logLogSlopeTriangleFlip{0.45}{0.15}{0.415}{4}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.235374)(1,0.0125714)(0.5,0.000321559)(0.25,1.06097e-05)} [yshift=8pt] node[left, pos=1.05, color=black] {$N = 4$};
+\addplot[color=black,mark=triangle*,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.297758)(1,0.0207604)(0.5,0.000816006)(0.25,2.36102e-05)};
+\logLogSlopeTriangle{0.45}{0.15}{0.15}{5}{black}
+
+%\legend{$L^2$ projection,Weight-adjusted,Difference}
+%\legend{Uniform, Optimal, Smoothed}
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Convergence of $L^2$ errors for the 2D isentropic vortex problem on affine and curved meshes.}
+\label{fig:converge2d}
+\end{figure}
+
+
+%The mesh is constructed by first building a mesh of uniform quadrilateral elements and subdividing each quadrilateral into two uniform triangles.  We estimate the $L^2$ errors and their rates of convergence, which are shown in Figure~\ref{fig:converge2d}.  We observe $L^2$ optimal $O(h^{N+1})$ rates of convergence for $N = 1,\ldots, 3$, while for $N = 4$ we observe a rate of convergence between $O(h^{N+1})$ and $O(h^{N+1/2})$.  We note that the rate of $O(h^{N+1/2})$ is the theoretically proven rate of convergence for upwind DG methods on general meshes applied to linear hyperbolic problems  \cite{johnson1986analysis,cockburn2008optimal}.  We note that this observed rate does not change significantly if the time-step is halved (improving from $4.785$ to $4.8$), suggesting that this slight degradation in convergence rate is not due to temporal errors.  
 
 
 \subsection{Three dimensional compressible Euler equations}
@@ -1682,7 +1748,7 @@ p_{\rm avg} &= \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{
 
 \section{Acknowledgements}
 
-The authors thank Mark H.\ Carpenter and David C.\ Del Rey Fernandez for informative discussions.
+The authors thank Mark H.\ Carpenter and David C.\ Del Rey Fernandez for informative discussions.  
 
 \bibliographystyle{unsrt}
 \bibliography{dg}
