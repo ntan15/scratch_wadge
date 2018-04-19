@@ -1,4 +1,12 @@
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wint-in-bool-context"
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
 #include <Eigen/Dense>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 #include <cstdint>
 using namespace Eigen;
 
@@ -23,7 +31,7 @@ struct ref_elem_data
 struct geo_elem_data
 {
   MatrixXd rxJ, sxJ, txJ, ryJ, syJ, tyJ, rzJ, szJ, tzJ;
-  MatrixXd rxJf, sxJf, txJf, ryJf, syJf, tyJf, rzJf, szJf, tzJf;  
+  MatrixXd rxJf, sxJf, txJf, ryJf, syJf, tyJf, rzJf, szJf, tzJf;
   MatrixXd nxJ, nyJ, nzJ, J, sJ;
   MatrixXd xq, yq, zq;
   MatrixXd xf, yf, zf;

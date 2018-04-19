@@ -1825,7 +1825,7 @@ void tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq)
   tq(i) = p_tq_N##M[i];                                                        \
   wq(i) = p_wq_N##M[i];
 
-  int Nq;
+  int Nq = 0;
   switch (N)
   {
   case 1:
@@ -1977,7 +1977,7 @@ void tri_cubature(int N, VectorXd &rfq, VectorXd &sfq, VectorXd &wfq)
   sfq(i) = p_sfq_N##M[i];                                                      \
   wfq(i) = p_wfq_N##M[i];
 
-  int Nfq;
+  int Nfq = 0;
   switch (N)
   {
   case 1:
