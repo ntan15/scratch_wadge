@@ -277,6 +277,8 @@ typedef struct prefs
   int kernel_T;
 
   dfloat_t physical_gamma;
+  dfloat_t FinalTime;
+  dfloat_t CFL;
 
   char *mesh_filename;
   int mesh_sfc_partition;
@@ -330,13 +332,17 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
   prefs->mesh_N = (int)asd_lua_expr_integer(L, "app.mesh.N", 3);
   prefs->mesh_M = (int)asd_lua_expr_integer(L, "app.mesh.M", 2 * prefs->mesh_N);
 
-  prefs->kernel_KblkV = (int)asd_lua_expr_integer(L, "app.kernel.KblkV", 2);
-  prefs->kernel_KblkU = (int)asd_lua_expr_integer(L, "app.kernel.KblkU", 2);
-  prefs->kernel_KblkS = (int)asd_lua_expr_integer(L, "app.kernel.KblkS", 2);
+  prefs->kernel_KblkV = (int)asd_lua_expr_integer(L, "app.kernel.KblkV", 1);
+  prefs->kernel_KblkU = (int)asd_lua_expr_integer(L, "app.kernel.KblkU", 1);
+  prefs->kernel_KblkS = (int)asd_lua_expr_integer(L, "app.kernel.KblkS", 1);
   prefs->kernel_KblkF = (int)asd_lua_expr_integer(L, "app.kernel.KblkF", 1);
 
   prefs->physical_gamma =
       (dfloat_t)asd_lua_expr_number(L, "app.physical.gamma", 1.4);
+  prefs->FinalTime =
+      (dfloat_t)asd_lua_expr_number(L, "app.physical.FinalTime", .1);
+  prefs->CFL =
+      (dfloat_t)asd_lua_expr_number(L, "app.physical.CFL", .25);
 
   prefs->mesh_sfc_partition =
       asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
@@ -2936,6 +2942,7 @@ static void modify_mapP(app_t *app, int usePeriodic)
     double vzmax = -1e9;
 #endif
 
+    // find min/max x,y,z values
     for (uintloc_t e = 0; e < E; ++e)
     {
       for (int i = 0; i < NVERTS; ++i)
@@ -3227,7 +3234,7 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
 
 #else
 
-  // 3D vortex on [0,10] x [0,10] x [0,10]
+  // 3D vortex on [0,10] x [0,20] x [0,10]
   dfloat_t x0 = 5.0;
   dfloat_t y0 = 5.0;
   // dfloat_t z0 = 5.0;
@@ -3746,7 +3753,9 @@ int main(int argc, char *argv[])
 
   // estimate time-step
   double hmin = get_hmin(app);
-  double CFL = .25;
+  double CFL = app->prefs->CFL;
+  double FinalTime = app->prefs->FinalTime; // 1.0;//5.0; // 20*dt;
+
   double N = (double)app->prefs->mesh_N;
   double CN; // trace constant
 #if VDIM == 2
@@ -3755,7 +3764,6 @@ int main(int argc, char *argv[])
   CN = (N + 1) * (N + 3) / 3;
 #endif
   double dt = CFL * hmin / CN;
-  double FinalTime = 5.0; // 20*dt;
   printf("hmin = %f, CFL = %f, dt = %f, Final Time = %f\n", hmin, CFL, dt, FinalTime);
 
 #if 0

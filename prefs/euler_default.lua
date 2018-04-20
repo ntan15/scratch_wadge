@@ -24,11 +24,16 @@ app = {
     --           -cl-fast-relaxed-math"
 
     -- CUDA
-       info = string.format("mode = CUDA , deviceID = %d", HOST_RANK),
+       info = string.format("mode = CUDA , deviceID = 0"),
     -- flags = "--compiler-options -O3 --ftz=true --prec-div=false \z
     --                            --prec-sqrt=false --use_fast_math \z
     --                            --fmad=true"
     -- flags = "-g",
+  },
+  kernel = {
+    KblkV = 1,
+    KblkS = 1,
+    KblkU = 1,
   },
   mesh = {
     filename = meshname,
@@ -36,6 +41,10 @@ app = {
     N = 4,
     M = 8,
     sfc_partition = true
+  },
+  physical={
+    FinalTime = 5.0,
+    CFL = .5,
   },
   output = {
     datadir = "data",

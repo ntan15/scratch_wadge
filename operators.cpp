@@ -603,21 +603,22 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 
 #if 1 // interpolated conservative curl form from Kopriva
 
+  int Ngeo = N + 1;
   ref_elem_data *ref_data_N2 = build_ref_ops_3D(
-      N + 1, 2 * N + 2, 2 * N + 2); // build VDM and Dmats for deg N+1
+      Ngeo, 2 * N + 2, 2 * N + 2); // build VDM and Dmats for deg N+1
   MatrixXd Dr = ref_data_N2->Dr;
   MatrixXd Ds = ref_data_N2->Ds;
   MatrixXd Dt = ref_data_N2->Dt;
 
   // interpolation matrices
   VectorXd r2, s2, t2;
-  Nodes3D(N + 1, r2, s2, t2);
+  Nodes3D(Ngeo, r2, s2, t2);
   MatrixXd V1 = Vandermonde3D(N, r, s, t);
   MatrixXd V12tmp = Vandermonde3D(N, r2, s2, t2);
   MatrixXd V12 = mrdivide(V12tmp, V1);
 
-  MatrixXd V2 = Vandermonde3D(N + 1, r2, s2, t2);
-  MatrixXd V21tmp = Vandermonde3D(N + 1, r, s, t);
+  MatrixXd V2 = Vandermonde3D(Ngeo, r2, s2, t2);
+  MatrixXd V21tmp = Vandermonde3D(Ngeo, r, s, t);
   MatrixXd V21 = mrdivide(V21tmp, V2);
 
   MatrixXd x2 = V12 * x;
