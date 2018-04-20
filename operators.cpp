@@ -507,7 +507,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   MatrixXd yy = y.array()/20.0;
   MatrixXd zz = z.array()/10.0;  
 
-  double a = .5;
+  double a = 0.0;
   x.array() +=      a*(M_PI*xx.array()).sin()*(2.0*M_PI*yy.array()).sin()*(M_PI*zz.array()).sin();
   y.array() += -2.0*a*(2.0*M_PI*xx.array()).sin()*(M_PI*yy.array()).sin()*(2.0*M_PI*zz.array()).sin();;
   z.array() +=      a*(M_PI*xx.array()).sin()*(2.0*M_PI*yy.array()).sin()*(M_PI*zz.array()).sin();
