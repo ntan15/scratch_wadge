@@ -29,18 +29,18 @@ err = [ 0.3393179 0.03143425 0.001976993]; % N = 3
 errc  = [0.4646133 0.05133686 0.00334595]; % N = 3
 errck = [0.4646378 0.05133794 0.003346182]; % N = 3, kopriva geofacs
 
-% err = [ 0.1222291  0.004884339 0.0001924525]; % N = 4
-% errc = [0.1845467  0.01043607  0.0003960681]; % N = 4
+err = [ 0.1222291  0.004884339 0.0001924525]; % N = 4
+errc = [0.1845467  0.01043607  0.0003960681]; % N = 4
 % errck = [0.1845734 0.01043634]; % N = 4, kopriva geofacs
 
 h = 2*.5.^(0:length(err)-1);
 loglog(h,err,'o--')
 hold on;
 loglog(h,errc,'o--')
-loglog(h,errck,'x--')
+% loglog(h,errck,'x--')
 loglog(h,.005*h.^5,'k--')
 
-
-
+c = [ones(3,1) log(h(:))]\log(err(:))
+c = [ones(2,1) log(h(2:3)')]\log(errc(2:3)')
 print_pgf_coordinates(h,err)
 print_pgf_coordinates(h(1:2),errc)

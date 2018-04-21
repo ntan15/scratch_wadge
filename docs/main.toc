@@ -23,5 +23,5 @@
 \contentsline {subsection}{\numberline {6.3}Three dimensional compressible Euler equations}{26}{subsection.6.3}
 \contentsline {subsubsection}{\numberline {6.3.1}Accuracy and convergence}{27}{subsubsection.6.3.1}
 \contentsline {subsubsection}{\numberline {6.3.2}Inviscid Taylor-Green vortex}{28}{subsubsection.6.3.2}
-\contentsline {section}{\numberline {7}Conclusions}{28}{section.7}
-\contentsline {section}{\numberline {8}Acknowledgements}{28}{section.8}
+\contentsline {section}{\numberline {7}Conclusions}{29}{section.7}
+\contentsline {section}{\numberline {8}Acknowledgements}{29}{section.8}

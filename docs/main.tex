@@ -1239,10 +1239,8 @@ We then compute the $L^2$ error in approximating geometric terms for each elemen
 %\[
 %\sqrt{\sum_{k}\sum_{ij=1}^d \nor{J^k\bm{G}^k_{ij} - \tilde{J^k\bm{G}^k_{ij}}}^2_{L^2\LRp{\hat{D}}}}.  
 %\]
-We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Geo-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Geo-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Geo-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Geo-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  
-
-We note that the error in both the Geo-$N$ and Geo-$(N+1)$ approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge at a rate of at least $O(h^{N+1})$, matching the rate of convergence of the best approximation error.  
-\note{Optimal rates are observed for $N=5$, geometry order 3 by Hindenlang, but this is be because $J^k\bm{G}^k_{ij} \in Q^{2N_{\rm geo}-2} = Q^4$, so it should not be necessary to enforce the GCL in that situation. Note sensitivity of nonlinear solvers to geometry error \cite{toulorge2016optimizing}}.
+We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Geo-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Geo-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Geo-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Geo-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  We note that the error in both the Geo-$N$ and Geo-$(N+1)$ approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge at a rate of at least $O(h^{N+1})$, matching the rate of convergence of the best approximation error.  
+%\note{Optimal rates are observed for $N=5$, geometry order 3 by Hindenlang, but this is be because $J^k\bm{G}^k_{ij} \in Q^{2N_{\rm geo}-2} = Q^4$, so it should not be necessary to enforce the GCL in that situation. Note sensitivity of nonlinear solvers to geometry error \cite{toulorge2016optimizing}}.
 
 \begin{figure}
 \centering
@@ -1763,7 +1761,8 @@ We use \textsc{GMSH} to construct three unstructured meshes consisting of 1354, 
 \tilde{y} &= y - \sin\LRp{2 \pi \frac{x}{10}}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{z}{10}},\\
 \tilde{z} &= z + \frac{1}{2}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{y}{10}}\sin\LRp{\pi \frac{z}{10}}.
 \end{align*} 
-Figure~\ref{fig:converge3d} shows $L^2$ errors for $N = 2,3,4$ on both affine and curved meshes.  
+Additionally, we approximate the geometric terms using (\ref{eq:iconscurl2}) to ensure that the geometric terms obey the discrete GCL.  
+
 \begin{figure}
 \centering
 \begin{tikzpicture}
@@ -1803,9 +1802,13 @@ coordinates{(2,0.184547)(1,0.0104361)(.5,0.0003960681)};
 %\legend{Uniform, Optimal, Smoothed}
 \end{loglogaxis}
 \end{tikzpicture}
-\caption{Convergence of $L^2$ errors for the 3D isentropic vortex problem on affine and curved meshes.}
+\caption{Convergence of $L^2$ errors for the 3D isentropic vortex problem on affine and curved meshes, with optimal $O(h^{N+1})$ rates of convergence shown for reference.}
 \label{fig:converge3d}
 \end{figure}
+
+Figure~\ref{fig:converge3d} shows $L^2$ errors for $N = 2,3,4$ on both affine and curved meshes.  In both cases, we observe optimal  $O(h^{N+1})$ asymptotic rates of convergence for $N = 2,3$, while for $N = 4$ we observe a rate which is slightly higher than $O(h^{N+1/2})$.  This may be due to the fact that the time-stepper is $4$th order while the spatial discretization is $5$th order.  
+
+We also compared approximations of geometric factors using degree $N$ polynomials via (\ref{eq:iconscurl2}) and degree $N-1$ polynomials via (\ref{eq:iconscurl}).  For the isentropic vortex problem on warped meshes, the approximation of the geometric factors does not impact accuracy significantly.  Utilizing (\ref{eq:iconscurl}) and approximating geometric factors with degree $N-1$ polynomials only changed the error in the $5$th significant digit, and resulted in the same asymptotic rates of convergence on curved 3D meshes.  Future work will explore the effect of a more accurate geometric approximation on curved boundaries where a solid wall boundary condition is applied, where the approximation of geometry has been shown to have a more significant effect  \cite{toulorge2016optimizing}.  
 
 %\note{Isentropic vortex on curved and non-curved meshes}
 
@@ -1813,7 +1816,7 @@ coordinates{(2,0.184547)(1,0.0104361)(.5,0.0003960681)};
 
 Our last numerical experiment investigates the behavior of ESDG schemes for the inviscid Taylor-Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  
 
-\note{Taylor-Green vortex}
+\note{Add Taylor-Green vortex}
 
 %\section{Computational results}
 
