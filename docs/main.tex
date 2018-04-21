@@ -1,6 +1,6 @@
 \pdfoutput=1
 
-\documentclass[preprint,10pt]{article}
+\documentclass[preprint]{article}
 %\documentclass[10pt]{amsart}
 \usepackage{stmaryrd}
 
@@ -628,10 +628,10 @@ The numerical flux $\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R}$ is entropy conservative
 \[
   \LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} = \psi_i\LRp{\bm{u}_L}-\psi_i\LRp{\bm{u}_R}.
 \]
-\item $\bm{f}_{i,S}$ is referred to as entropy stable if it satisfies conditions 1, 2, and  
-\[
-\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} \leq \psi_i\LRp{\bm{u}_L}-\psi_i\LRp{\bm{u}_R}.
-\]
+%\item $\bm{f}_{i,S}$ is referred to as entropy stable if it satisfies conditions 1, 2, and  
+%\[
+%\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} \leq \psi_i\LRp{\bm{u}_L}-\psi_i\LRp{\bm{u}_R}.
+%\]
 \end{enumerate}
 \label{def:entropyflux}
 \end{definition}
@@ -1583,7 +1583,7 @@ coordinates{(0.00642674,3.28579e-12)(0.404884,3.32419e-12)(0.803342,3.37232e-12)
 \subfloat[Affine mesh]{\includegraphics[width=.4\textwidth]{figs/mesh2d_affine_converge2.png}}
 \hspace{2em}
 \subfloat[Curved mesh]{\includegraphics[width=.4\textwidth]{figs/mesh2d_curved_converge2.png}}
-\caption{Example of affine and warped meshes used for convergence studies.}
+\caption{Example of affine and warped meshes (corresponding to $h = 1$) used in convergence studies.}
 \label{fig:warp2dconverge}
 \end{figure}
 
@@ -1594,13 +1594,12 @@ We use the isentropic vortex problem \cite{shu1998essentially}, which has an ana
 u(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0), \qquad v(\bm{x},t) = \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0),\nonumber
 \end{align}
 where $u, v$ are the $x$ and $y$ velocity and $r(\bm{x},t) = \sqrt{(x-x_0-t)^2 + (y-y_0)^2}$.  Here, we take $x_0 = 5, y_0 = 0$ and $\beta = 5$.  
-The solution is computed on a periodic rectangular domain $[0, 20] \times [-5,5]$ at final time $T=5$.  Quasi-uniform triangular meshes are generated using \textsc{GMSH} \cite{geuzaine2009gmsh}, and a curvilinear warping is applied to the mesh to test the effect of non-affine mappings.  This warping is shown in Figure~\ref{fig:warp2dconverge} and is defined by mapping nodal positions on a triangle to warped nodal positions $(\tilde{x},\tilde{y})$ via
+The solution is computed on a periodic rectangular domain $[0, 20] \times [-5,5]$ at final time $T=5$.  Quasi-uniform triangular meshes are generated using \textsc{GMSH} \cite{geuzaine2009gmsh}, and a curvilinear warping is applied to the mesh to test the effect of non-affine mappings.  This warping is shown in Figure~\ref{fig:warp2dconverge} and is defined by mapping nodal positions on each triangle to warped nodal positions $(\tilde{x},\tilde{y})$ via
 \begin{align*}
 \tilde{x} &= x + \sin\LRp{\pi x / 20}\sin\LRp{2\pi (y+5)/10}\\
 \tilde{y} &= y - \frac{1}{2}\sin\LRp{2 \pi x / 20}\sin\LRp{\pi (y+5)/10}.
 \end{align*}  
 To ensure primary conservation, we use the ``Polynomial Approximation'' strategy described in Section~\ref{sec:conservation} and compute the inverse of the weight-adjusted mass matrix using the degree $N$ $L^2$ projection $\hat{\Pi}_N J^k$ instead of $J^k$.  The computed $L^2$ errors are shown in Figure~\ref{fig:converge2d}.  We observe optimal $O(h^{N+1})$ rates of convergence for $N=2, N= 4$.  For degree $N=3$, the rate of convergence is slightly higher than $O(h^{4})$ and may indicate that the mesh is not yet sufficiently fine for the $L^2$ error to show the asymptotic convergence rate.  
-
 
 \begin{figure}
 \centering
@@ -1611,7 +1610,7 @@ To ensure primary conservation, we use the ``Polynomial Approximation'' strategy
     width=.45\textwidth,    
     xlabel={Mesh size $h$},
     ylabel={$L^2$ error}, 
-     ymin=1e-6, ymax=2,    
+     ymin=5e-6, ymax=2,    
      xmin=1e-1, xmax=2.5,         
     grid style=dashed,
     legend entries={Affine,Curved}
@@ -1623,20 +1622,20 @@ To ensure primary conservation, we use the ``Polynomial Approximation'' strategy
 coordinates{(2,1.06717)(1,0.149639)(0.5,0.025693)(0.25,0.00342827)} [yshift=4pt] node[left, pos=1.05, color=blue] {$N = 2$};
 \addplot[color=blue,mark=*,dashed,semithick, mark options={solid,fill=markercolor}]
 coordinates{(2,1.37709)(1,0.219501)(0.5,0.0385896)(0.25,0.0039906)};
-\logLogSlopeTriangleFlip{0.45}{0.15}{0.625}{3}{blue}
+\logLogSlopeTriangleFlip{0.45}{0.15}{0.575}{3}{blue}
 
 
-\addplot[color=red,mark=x,semithick, mark options={solid,fill=markercolor}]
+\addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(2,0.50782)(1,0.0516053)(0.5,0.00249425)(0.25,0.000110618)}[yshift=8pt] node[left, pos=1.05, color=red] {$N = 3$};
-\addplot[color=red,mark=x,dashed,semithick, mark options={solid,fill=markercolor}]
+\addplot[color=red,mark=square*,dashed,semithick, mark options={solid,fill=markercolor}]
 coordinates{(2,0.535036)(1,0.0657418)(0.5,0.00501536)(0.25,0.000243005)};
-\logLogSlopeTriangleFlip{0.45}{0.15}{0.415}{4}{red}
+\logLogSlopeTriangleFlip{0.45}{0.15}{0.34}{4}{red}
 
 \addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
 coordinates{(2,0.235374)(1,0.0125714)(0.5,0.000321559)(0.25,1.06097e-05)} [yshift=8pt] node[left, pos=1.05, color=black] {$N = 4$};
 \addplot[color=black,mark=triangle*,dashed,semithick, mark options={solid,fill=markercolor}]
 coordinates{(2,0.297758)(1,0.0207604)(0.5,0.000816006)(0.25,2.36102e-05)};
-\logLogSlopeTriangle{0.45}{0.15}{0.15}{5}{black}
+\logLogSlopeTriangle{0.45}{0.15}{0.05}{5}{black}
 
 %\legend{$L^2$ projection,Weight-adjusted,Difference}
 %\legend{Uniform, Optimal, Smoothed}
@@ -1646,9 +1645,7 @@ coordinates{(2,0.297758)(1,0.0207604)(0.5,0.000816006)(0.25,2.36102e-05)};
 \label{fig:converge2d}
 \end{figure}
 
-
 %The mesh is constructed by first building a mesh of uniform quadrilateral elements and subdividing each quadrilateral into two uniform triangles.  We estimate the $L^2$ errors and their rates of convergence, which are shown in Figure~\ref{fig:converge2d}.  We observe $L^2$ optimal $O(h^{N+1})$ rates of convergence for $N = 1,\ldots, 3$, while for $N = 4$ we observe a rate of convergence between $O(h^{N+1})$ and $O(h^{N+1/2})$.  We note that the rate of $O(h^{N+1/2})$ is the theoretically proven rate of convergence for upwind DG methods on general meshes applied to linear hyperbolic problems  \cite{johnson1986analysis,cockburn2008optimal}.  We note that this observed rate does not change significantly if the time-step is halved (improving from $4.785$ to $4.8$), suggesting that this slight degradation in convergence rate is not due to temporal errors.  
-
 
 \subsection{Three dimensional compressible Euler equations}
 
@@ -1735,8 +1732,86 @@ p_{\rm avg} &= \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{
 \nor{\bm{u}}^2_{\rm avg} &= 2(\avg{u}^2 + \avg{v}^2 + \avg{w}^2) - \LRp{\avg{u^2} +\avg{v^2} + \avg{w^2}}.\nonumber
 \end{align}
 
+\subsubsection{Accuracy and convergence}
 
-\note{Isentropic vortex on curved and non-curved meshes}
+As before, we test the accuracy of the proposed scheme using an isentropic vortex solution adapted to three dimensions.  We take the solution to be the extruded 2D vortex propagating in the $y$ direction, whose analytic expression is derived from \cite{williams2013nodal}
+\begin{align*}
+\rho(\bm{x},t) &= \LRp{1-\frac{(\gamma-1)}{2}\Pi^2}^{\frac{1}{\gamma-1}}\\
+\bm{u}(\bm{x},t) &= \Pi \bm{r}, \\
+E(\bm{x},t) &= \frac{p_0}{\gamma-1}\LRp{1-\frac{\gamma-1}{2}\Pi^2}^{\frac{\gamma}{\gamma-1}} + \frac{\rho}{2}\LRb{\bm{u}}.
+\end{align*}
+where $\bm{u} = (u,v,w)^T$ is the velocity vector, and $c_0, \bm{r} = (r_x, r_y, r_z)^T$, and $\Pi$ are defined as
+\[
+\Pi = \Pi_{\max}e^{\frac{1-\LRp{\LRb{\bm{r}}/r_0}^2}{2}}, \qquad \bm{r} = \begin{pmatrix}
+-(y-y_0-t)\\
+x-x_0\\
+0
+\end{pmatrix}
+\]
+In this problem, we take $x_0 = y_0 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = .4$.  We solve the problem on the domain $[0,10]\times [0,20]\times [0,10]$.  
+\begin{figure}
+\centering
+\subfloat[$h = 1$]{\includegraphics[width=.4\textwidth]{figs/periodicCube2.png}}
+\hspace{2em}
+\subfloat[$h = 1/2$]{\includegraphics[width=.4\textwidth]{figs/periodicCube3.png}}
+\caption{Unstructured affine tetrahedral meshes used for convergence tests.}
+\label{fig:mesh3d}
+\end{figure}
+We use \textsc{GMSH} to construct three unstructured meshes consisting of 1354, 9543, and 72923 tetrahedra.  The latter two meshes are shown in Figure~\ref{fig:mesh3d}.  We apply a curvilinear warping by again mapping nodal positions each tetrahedron to warped nodal positions $(\tilde{x},\tilde{y},\tilde{z})$ via
+\begin{align*}
+\tilde{x} &= x + \frac{1}{2}\sin\LRp{\pi \frac{x}{10}}\sin\LRp{2\pi \frac{y}{20}}\sin\LRp{\pi \frac{z}{10}},\\
+\tilde{y} &= y - \sin\LRp{2 \pi \frac{x}{10}}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{z}{10}},\\
+\tilde{z} &= z + \frac{1}{2}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{y}{10}}\sin\LRp{\pi \frac{z}{10}}.
+\end{align*} 
+Figure~\ref{fig:converge3d} shows $L^2$ errors for $N = 2,3,4$ on both affine and curved meshes.  
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.45\textwidth,    
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ error}, 
+     ymin=1e-4, ymax=2,    
+     xmin=2.5e-1, xmax=2.5,         
+    grid style=dashed,
+    legend entries={Affine,Curved}
+] 
+\addlegendimage{no markers,black}
+\addlegendimage{no markers,dashed,black}
+
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,1.05519)(1,0.143515)(0.5,0.0212682)}[yshift=4pt] node[left, pos=1.05, color=blue] {$N = 2$};
+\addplot[color=blue,mark=*,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,1.20915)(1,0.2069)(0.5,0.0284505)};
+\logLogSlopeTriangleFlip{0.45}{0.15}{0.6}{3}{blue}
+
+\addplot[color=red,mark=square*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.339318)(1,0.0314342)(0.5,0.00197699)}[yshift=8pt] node[left, pos=1.05, color=red] {$N = 3$};
+\addplot[color=red,mark=square*,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.464613)(1,0.0513369)(0.5,0.00334595)};
+\logLogSlopeTriangleFlip{0.45}{0.15}{0.375}{4}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.122229)(1,0.00488434)(0.5,0.000192453)}[yshift=8pt] node[left, pos=1.05, color=black] {$N = 4$};
+\addplot[color=black,mark=triangle*,dashed,semithick, mark options={solid,fill=markercolor}]
+coordinates{(2,0.184547)(1,0.0104361)(.5,0.0003960681)};
+\logLogSlopeTriangle{0.45}{0.15}{0.04}{5}{black}
+
+%\legend{$L^2$ projection,Weight-adjusted,Difference}
+%\legend{Uniform, Optimal, Smoothed}
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Convergence of $L^2$ errors for the 3D isentropic vortex problem on affine and curved meshes.}
+\label{fig:converge3d}
+\end{figure}
+
+%\note{Isentropic vortex on curved and non-curved meshes}
+
+\subsubsection{Inviscid Taylor-Green vortex}
+
+Our last numerical experiment investigates the behavior of ESDG schemes for the inviscid Taylor-Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  
 
 \note{Taylor-Green vortex}
 
