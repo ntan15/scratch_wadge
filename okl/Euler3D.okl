@@ -1,5 +1,7 @@
 //#define USE_DOUBLE 0 // JC: FIX and add this to kernel initialization
 
+#define TAU 1.f // for penalty term
+
 #if USE_DOUBLE
 #define dfloat double
 #define dfloat4 double4
@@ -521,7 +523,7 @@ kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
           const dfloat lamP = sqrt(uP * uP + vP * vP + wP * wP) +
                               sqrt(p_gamma * pfun(rhoP, uP, vP, wP, EP) / rhoP);
           const dfloat Lfc_sJ =
-              .25f * max(lamM, lamP) *
+              TAU * .25f * max(lamM, lamP) *
               sJ; // local max wavespeed estimate - assumes tau = 1
 
           dfloat dU[5];
@@ -818,7 +820,7 @@ kernel void euler_vol_3d_curved(
     const dfloat *restrict ntJ, //
     const dfloat *restrict Drq, const dfloat *restrict Dsq,
     const dfloat *restrict Dtq,
-    const dfloat *restrict Drstq,    
+    const dfloat *restrict Drstq,
     const dfloat *restrict VqLq,
     const dfloat *restrict VfPq, const dfloat *restrict Q,
     const dfloat *restrict Qf, dfloat *restrict rhsQ, dfloat *restrict rhsQf)
@@ -901,8 +903,8 @@ kernel void euler_vol_3d_curved(
         const int k = k1 * p_KblkV + k2;
 
         if (k < K)
-        {	  
-	  
+        {
+
           if (i < p_Nq)
           {
             dfloat divF[p_Nfields];
@@ -910,7 +912,7 @@ kernel void euler_vol_3d_curved(
             {
               divF[j] = 0.f;
             }
- 
+
             // apply Drq, Dsq
             const dfloat rho_i = srho[k2][i];
             const dfloat u_i = srhou[k2][i] / rho_i;
@@ -933,7 +935,7 @@ kernel void euler_vol_3d_curved(
 	    //	    if (k==0){
 	    //	      printf("rho,u,v,w,E,beta = %f,%f,%f,%f,%f,%f\n",rho_i,u_i,v_i,w_i,E_i,beta_i);
 	    //	    }
-	    
+
             for (int j = 0; j < p_Nq; ++j)
             {
               const int jid = i + j * p_Nq;
@@ -1058,7 +1060,7 @@ kernel void euler_vol_3d_curved(
 	    const dfloat szJi = vfgeo[gidi + 5*p_NfqNfaces];
 	    const dfloat txJi = vfgeo[gidi + 6*p_NfqNfaces];
 	    const dfloat tyJi = vfgeo[gidi + 7*p_NfqNfaces];
-	    const dfloat tzJi = vfgeo[gidi + 8*p_NfqNfaces];	    
+	    const dfloat tzJi = vfgeo[gidi + 8*p_NfqNfaces];
 
             dfloat divF[p_Nfields];
             for (int jj = 0; jj < p_Nfields; ++jj)
@@ -1103,7 +1105,7 @@ kernel void euler_vol_3d_curved(
 	      const dfloat szJj = vgeo[gidj + 5*p_Nq];
 	      const dfloat txJj = vgeo[gidj + 6*p_Nq];
 	      const dfloat tyJj = vgeo[gidj + 7*p_Nq];
-	      const dfloat tzJj = vgeo[gidj + 8*p_Nq];      
+	      const dfloat tzJj = vgeo[gidj + 8*p_Nq];
 
 	      const dfloat rxJa = .5f*(rxJi+rxJj);
 	      const dfloat ryJa = .5f*(ryJi+ryJj);
@@ -1113,7 +1115,7 @@ kernel void euler_vol_3d_curved(
 	      const dfloat szJa = .5f*(szJi+szJj);
 	      const dfloat txJa = .5f*(txJi+txJj);
 	      const dfloat tyJa = .5f*(tyJi+tyJj);
-	      const dfloat tzJa = .5f*(tzJi+tzJj);      
+	      const dfloat tzJa = .5f*(tzJi+tzJj);
 
               const dfloat nxJ = rxJa * nrJf + sxJa * nsJf + txJa * ntJf;
               const dfloat nyJ = ryJa * nrJf + syJa * nsJf + tyJa * ntJf;
@@ -1234,7 +1236,7 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
           sV3[k2][i] = r3 / Jqi;
           sV4[k2][i] = r4 / Jqi;
           sV5[k2][i] = r5 / Jqi;
-	  
+
 	  r1 = 0.f; r2 = 0.f; r3 = 0.f;
 	  r4 = 0.f; r5 = 0.f;
           for (int j = 0; j < p_Nq; ++j)
@@ -1245,7 +1247,7 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
             r3 += VqPq_ij * sV3[k2][j];
             r4 += VqPq_ij * sV4[k2][j];
             r5 += VqPq_ij * sV5[k2][j];
-          }	  
+          }
 
           // update res arrays
           id = i + k * p_Nq * p_Nfields;
@@ -1296,7 +1298,7 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
           sV2[k2][i] = V2;
           sV3[k2][i] = V3;
           sV4[k2][i] = V4;
-          sV5[k2][i] = V5; 
+          sV5[k2][i] = V5;
 
 #if 1
           // smem transfer, premult for WADG
@@ -1316,14 +1318,14 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
 	      r2 += VqPq_ij * sV2[k2][j];
 	      r3 += VqPq_ij * sV3[k2][j];
 	      r4 += VqPq_ij * sV4[k2][j];
-	      r5 += VqPq_ij * sV5[k2][j];	      
+	      r5 += VqPq_ij * sV5[k2][j];
 	    }
 	  srho[k2][i] = r1/Jqi;
 	  srhou[k2][i] = r2/Jqi;
 	  srhov[k2][i] = r3/Jqi;
-	  srhow[k2][i] = r4/Jqi;	  
+	  srhow[k2][i] = r4/Jqi;
 	  sE[k2][i] = r5/Jqi;
-	  
+
 	  r1 = 0.f;  r2 = 0.f;
 	  r3 = 0.f;  r4 = 0.f; r5 = 0.f;
 	  for (int j = 0; j < p_Nq; ++j)
@@ -1333,14 +1335,14 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
 	      r2 += VqPq_ij * srhou[k2][j];
 	      r3 += VqPq_ij * srhov[k2][j];
 	      r4 += VqPq_ij * srhow[k2][j];
-	      r5 += VqPq_ij * sE[k2][j];	      
+	      r5 += VqPq_ij * sE[k2][j];
 	    }
 	  sV1[k2][i] = r1;
 	  sV2[k2][i] = r2;
 	  sV3[k2][i] = r3;
 	  sV4[k2][i] = r4;
 	  sV5[k2][i] = r5;
-#endif	  	  
+#endif
         }
 
       } // inner 0
@@ -1490,7 +1492,7 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
             r4 += VqPq_ij * sU[k2][3][j];
             r5 += VqPq_ij * sU[k2][4][j];
           }
-	  
+
 	  // WADG step: divide by J and project
 	  sV[k2][0][i] = r1/Jqi;
 	  sV[k2][1][i] = r2/Jqi;
@@ -1501,7 +1503,7 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
       }
     }
     barrier(localMemFence);
-    
+
     for (int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for (int i = 0; i < p_Nq; ++i; inner0){
         const int k = k1 * p_KblkU + k2;
@@ -1529,7 +1531,7 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
           res3 = resQ[id + 2 * p_Nq];
           res4 = resQ[id + 3 * p_Nq];
           res5 = resQ[id + 4 * p_Nq];
-	  
+
           // update res arrays
           id = i + k * p_Nq * p_Nfields;
           res1 = fa * res1 + fdt * r1;
@@ -1643,7 +1645,7 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
 	    V2 += VqPq_ij * sU[k2][1][j];
 	    V3 += VqPq_ij * sU[k2][2][j];
 	    V4 += VqPq_ij * sU[k2][3][j];
-	    V5 += VqPq_ij * sU[k2][4][j];	    
+	    V5 += VqPq_ij * sU[k2][4][j];
           }
 
           // evaluate U(P*V) and write out
@@ -1663,4 +1665,53 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
     }   // inner1
 
   } // outer 0
+}
+
+// compute auxiliary quantities
+kernel void euler_3d_compute_aux(const int K,
+                                 const dfloat *restrict Jq,
+                                 const dfloat *restrict wq,
+                                 const dfloat *restrict Q,
+                                 dfloat *aux)
+{
+  for (int k = 0; k < K; ++k; outer0)
+    {
+
+      shared dfloat sKE[p_ceilNq2];
+
+      for (int i = 0; i < p_ceilNq2; ++i; inner0)
+        {
+          sKE[i] = 0.f;
+
+          if (i < p_Nq){
+            const int id = i + k * p_Nq * p_Nfields;
+            const dfloat rho = Q[id + 0 * p_Nq];
+            const dfloat rhou = Q[id + 1 * p_Nq];
+            const dfloat rhov = Q[id + 2 * p_Nq];
+            const dfloat rhow = Q[id + 3 * p_Nq];
+            const dfloat E = Q[id + 4 * p_Nq];
+            const dfloat Jqi = Jq[i + k*p_Nq];
+            const dfloat wqi = wq[i];
+            sKE[i] = .5f*(rhou*rhou + rhov*rhov + rhow*rhow)/rho * Jqi*wqi;
+          }
+        }
+      barrier(localMemFence);
+
+      // slowish parallel reduction
+      for (int sk = p_ceilNq2/2; sk > 0; sk/=2){
+        for (int i = 0; i < p_ceilNq2; ++i; inner0)
+          {
+            if (i < sk){
+              sKE[i] +=  sKE[i + sk];
+            }
+          }
+        barrier(localMemFence);
+      }
+
+      for (int i = 0; i < p_ceilNq2; ++i; inner0){
+        if (i==0){
+          aux[k] = sKE[0];
+        }
+      }
+    }
 }

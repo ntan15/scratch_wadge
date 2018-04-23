@@ -2609,6 +2609,7 @@ typedef struct app
   occaMemory vfgeo;
   occaMemory fgeo;
   occaMemory Jq;
+  occaMemory wq;
 
   occaMemory mapPq;
   occaMemory Fmask;
@@ -2632,8 +2633,8 @@ typedef struct app
   occaKernel vol;
   occaKernel surf;
   occaKernel update;
-  occaKernel face;
   occaKernel test;
+  occaKernel aux;
 } app_t;
 
 // containers for U,V and coordinates
@@ -2777,6 +2778,9 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->Jq =
       device_malloc(app->device, sizeof(dfloat_t) * Nq * E, app->hops->Jq);
 
+  app->wq =
+      device_malloc(app->device, sizeof(dfloat_t) * Nq, app->hops->wq);
+
   app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
                              app->hops->mapPq);
 
@@ -2861,6 +2865,11 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   occaKernelInfoAddDefine(info, "p_Np", occaUInt(Np));
 
   occaKernelInfoAddDefine(info, "p_Nq", occaUInt(Nq));
+  int log2Nq = ceil(log2(Nq));
+  int ceilNq2 = (int) pow(2,log2Nq);
+  //  printf("Nq = %d, ceilNq2 = %d\n",Nq,ceilNq2);
+  occaKernelInfoAddDefine(info, "p_log2Nq", occaUInt(log2Nq));
+  occaKernelInfoAddDefine(info, "p_ceilNq2", occaUInt(ceilNq2));  // closest power of 2
   occaKernelInfoAddDefine(info, "p_NfqNfaces", occaUInt(Nfq * Nfaces));
   occaKernelInfoAddDefine(info, "p_NfpNfaces", occaUInt(Nfp * Nfaces));
   occaKernelInfoAddDefine(info, "p_Nvgeo", occaUInt(Nvgeo));
@@ -2913,6 +2922,8 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
 						"euler_update_3d_curved", info);
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "test_kernel", info);
+  app->aux = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
+                                              "euler_3d_compute_aux", info);
 
 #endif
   printf("built kernels!\n");
@@ -3278,6 +3289,36 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
 #endif
 }
 
+// posed on [-pi,pi]^3 in 3D
+static void euler_Taylor_Green(app_t *app, coord X, euler_fields *U)
+{
+
+  dfloat_t x = X.x;
+  dfloat_t y = X.y;
+  dfloat_t z = X.z;
+  dfloat_t gamma = app->prefs->physical_gamma;
+  dfloat_t gm1 = (gamma - 1.0);
+
+  dfloat_t rho = 1.0;
+  dfloat_t u = SINDF(x)*COSDF(y)*COSDF(z);
+  dfloat_t v = -COSDF(x)*SINDF(y)*COSDF(z);
+  dfloat_t w = 0.0;
+  //dfloat_t p = 100.0/gamma + (1.0/16.0)*(COSDF(2.0*x)*COSDF(2.0*z) + 2.0*COSDF(2.0*y) + 2.0*COSDF(2.0*y)*COSDF(2.0*z));
+  dfloat_t p = 100.0/gamma + (1.0/16.0)*(COSDF(2.0*x) + COSDF(2.0*y))*(2.0 + COSDF(2.0*z));
+
+  //  u = 1.0;
+  //  v = 1.0;
+  //  p = 1.0;
+
+  U->U1 = rho;
+  U->U2 = rho*u;
+  U->U3 = rho*v;
+  U->U4 = rho*w;
+  // p = (gamma-1)*internal energy = (gm1)*(E-.5*rho*(u^2+v^2+w^2));
+  // E = p/(gamma-1) + .5*rho*||u||^2
+  U->U5 = p/gm1 + .5*rho*(u*u+v*v+w*w);
+}
+
 static void app_test(app_t *app)
 {
 
@@ -3333,6 +3374,13 @@ static void rk_run(app_t *app, double dt, double FinalTime)
   }
   dt = (double)FinalTime / Nsteps;
 
+  // alloc for kinetic energy computation
+  int K = app->hm->E;
+  dfloat_t *KE_time = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nsteps);
+  dfloat_t *KE = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * K);
+  occaMemory o_KE = device_malloc(app->device, sizeof(dfloat_t) * K, NULL);
+
+
   for (int tstep = 0; tstep < Nsteps; ++tstep)
   {
     for (int INTRK = 0; INTRK < 5; ++INTRK)
@@ -3342,12 +3390,41 @@ static void rk_run(app_t *app, double dt, double FinalTime)
       rk_step(app, rka, rkb, dt);
       // app_test(app);
     }
+
+#if 1
+    occaKernelRun(app->aux, occaInt(app->hm->E), app->Jq, app->wq, app->Q, o_KE);
+    occaCopyMemToPtr(KE, o_KE, K * sizeof(dfloat_t), occaNoOffset);
+    double ke = 0.0;
+    for (int e = 0; e < K; ++e){
+      ke += KE[e];
+    }
+    KE_time[tstep] = ke;
+    //printf("kinetic energy at step %d = %f\n",tstep,ke);
+#endif
     if (tstep % interval == 0)
     {
       occaDeviceFinish(app->device);
-      printf("on timestep %d out of %d\n", tstep, Nsteps);
+      //printf("on timestep %d out of %d\n", tstep, Nsteps);
+      printf("on timestep %d out of %d: ke = %f\n", tstep, Nsteps,KE_time[tstep]);
+
     }
   }
+
+  int sk = 1;
+  if (Nsteps > 2500){
+    sk = Nsteps/2500; // int division
+    printf("sk = %d\n",sk);
+  }
+  printf("KE_time = [");
+  for (int tstep = 0; tstep < Nsteps; tstep+=sk){
+    printf("%f ",KE_time[tstep]);
+  }
+  printf("];\n");
+  printf("t = [");
+  for (int tstep = 0; tstep < Nsteps; tstep+=sk){
+    printf("%f ",((double)tstep)*dt);
+  }
+  printf("];\n");
 
 }
 
@@ -3555,7 +3632,8 @@ int main(int argc, char *argv[])
 
       // vortex solution, start at time t = 0
       euler_fields U;
-      euler_vortex(app, X, 0.0, &U);
+      //euler_vortex(app, X, 0.0, &U);
+      euler_Taylor_Green(app,X,&U);
 
       Q[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
       Q[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
@@ -3691,52 +3769,6 @@ int main(int argc, char *argv[])
     }
   }
 
-#if 0
-  // check initial condition error
-  dfloat_t err0 = 0.0;
-  for (uintloc_t e = 0; e < K; ++e)
-  {
-    for (int i = 0; i < Nq; ++i)
-    {
-      coord X;
-      X.x = app->hops->xyzq[i + 0 * Nq + e * Nq * 3];
-      X.y = app->hops->xyzq[i + 1 * Nq + e * Nq * 3];
-#if VDIM == 3
-      X.z = app->hops->xyzq[i + 2 * Nq + e * Nq * 3];
-#endif
-
-      dfloat_t rho = Q[i + 0 * Nq + e * Nq * NFIELDS];
-      dfloat_t rhou = Q[i + 1 * Nq + e * Nq * NFIELDS];
-      dfloat_t rhov = Q[i + 2 * Nq + e * Nq * NFIELDS];
-#if VDIM == 2
-      dfloat_t E = Q[i + 3 * Nq + e * Nq * NFIELDS];
-#else
-      dfloat_t rhow = Q[i + 3 * Nq + e * Nq * NFIELDS];
-      dfloat_t E = Q[i + 4 * Nq + e * Nq * NFIELDS];
-#endif
-
-      euler_fields Uex;
-      euler_vortex(app, X, 0.0, &Uex);
-
-      dfloat_t wJq = (app->hops->wq[i]) * (app->hops->Jq[i + e * Nq]);
-      dfloat_t err1 = rho - Uex.U1;
-      dfloat_t err2 = rhou - Uex.U2;
-      dfloat_t err3 = rhov - Uex.U3;
-#if VDIM == 2
-      dfloat_t err4 = E - Uex.U4;
-      err0 += wJq * (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4);
-#else
-      dfloat_t err4 = rhow - Uex.U4;
-      dfloat_t err5 = E - Uex.U5;
-      err0 += wJq * (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4 + err5*err5);
-#endif
-
-    }
-  }
-  printf("L2 initial err = %f\n", sqrt(err0));
-  //  return 0;
-#endif
-
   // copy mem to device
   printf("Copying to device\n");
   occaCopyPtrToMem(app->Q, Q, Nq * NFIELDS * K * sizeof(dfloat_t),
@@ -3783,6 +3815,9 @@ int main(int argc, char *argv[])
   printf("Copying from mem\n");
   occaCopyMemToPtr(Q, app->Q, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
+#endif
+
+#if 0
   printf("Computing L2 error\n");
   dfloat_t err = 0.0;
   for (uintloc_t e = 0; e < K; ++e)
@@ -3812,8 +3847,6 @@ int main(int argc, char *argv[])
       dfloat_t err3 = (rhov - Uex.U3);
       dfloat_t err4 = (E - Uex.U4);
       err += (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4) * wJq;
-      //printf("rho, rhoex = %f, %f\n",rho,Uex.U1);
-
 #else
       dfloat_t rho  = Q[i + 0 * Nq + e * Nq * NFIELDS];
       dfloat_t rhou = Q[i + 1 * Nq + e * Nq * NFIELDS];
@@ -3832,6 +3865,38 @@ int main(int argc, char *argv[])
   }
   printf("L2 err = %7.7g\n", sqrt(err));
 #endif
+
+#if 1
+  printf("Computing norm of solution \n");
+  dfloat_t Unorm = 0.0;
+  for (uintloc_t e = 0; e < K; ++e)
+  {
+    for (int i = 0; i < Nq; ++i)
+    {
+
+      coord X;
+      X.x = app->hops->xyzq[i + 0 * Nq + e * Nq * 3];
+      X.y = app->hops->xyzq[i + 1 * Nq + e * Nq * 3];
+      X.z = app->hops->xyzq[i + 2 * Nq + e * Nq * 3];
+
+      dfloat_t wJq = (app->hops->wq[i]) * (app->hops->Jq[i + e * Nq]);
+      dfloat_t rho  = Q[i + 0 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhou = Q[i + 1 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhov = Q[i + 2 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhow = Q[i + 3 * Nq + e * Nq * NFIELDS];
+      dfloat_t E    = Q[i + 4 * Nq + e * Nq * NFIELDS];
+
+      dfloat_t err1 = (rho );
+      dfloat_t err2 = (rhou);
+      dfloat_t err3 = (rhov);
+      dfloat_t err4 = (rhow);
+      dfloat_t err5 = (E );
+      Unorm += (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4 + err5 * err5) * wJq;
+    }
+  }
+  printf("L2 norm of sol = %7.7g\n", sqrt(Unorm));
+#endif
+
 
 // ============== print solution in matlab ===================
 #if 0

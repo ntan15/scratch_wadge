@@ -501,19 +501,31 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 #endif
 
 
-#if 1
+#if 0
+  printf("Adding curvilinear perturbation for isentropic vortex\n");
   // add curvilinear perturbation to [0,10] x [0,20] x [0,10]
   MatrixXd xx = x.array()/10.0;
   MatrixXd yy = y.array()/20.0;
-  MatrixXd zz = z.array()/10.0;  
-
-  double a = 0.0;
+  MatrixXd zz = z.array()/10.0;
+  double a = 0.5;
   x.array() +=      a*(M_PI*xx.array()).sin()*(2.0*M_PI*yy.array()).sin()*(M_PI*zz.array()).sin();
   y.array() += -2.0*a*(2.0*M_PI*xx.array()).sin()*(M_PI*yy.array()).sin()*(2.0*M_PI*zz.array()).sin();;
   z.array() +=      a*(M_PI*xx.array()).sin()*(2.0*M_PI*yy.array()).sin()*(M_PI*zz.array()).sin();
 
 #endif
-  
+
+#if 1
+  printf("Adding curvilinear perturbation for TG vortex\n");
+  // add curvilinear perturbation to [-pi,pi]^3
+  MatrixXd xx = x.array();
+  MatrixXd yy = y.array();
+  MatrixXd zz = z.array();
+  double a = 0.5;
+  x.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
+  y.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
+  z.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
+
+#endif
 
   // vol geofacs
   MatrixXd Drq = ref_data->Vq * ref_data->Dr;
@@ -603,7 +615,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 
 #if 1 // interpolated conservative curl form from Kopriva
 
-  int Ngeo = N + 1;
+  int Ngeo = N+1;
   ref_elem_data *ref_data_N2 = build_ref_ops_3D(
       Ngeo, 2 * N + 2, 2 * N + 2); // build VDM and Dmats for deg N+1
   MatrixXd Dr = ref_data_N2->Dr;
