@@ -308,7 +308,7 @@ It can be shown (see, for example, \cite{mock1980systems}) that symmetrization i
 \[
 \bm{v}^T \pd{\bm{f}_j}{\bm{u}} = \pd{F_j(\bm{u})}{\bm{u}}^T, \qquad \psi_j(\bm{v}) = \bm{v}^T\bm{f}_j(\bm{u}(\bm{v})) - F_j(\bm{u}(\bm{v})), \qquad \psi_j'(\bm{v}) = \bm{f}_j(\bm{u}(\bm{v})).
 \]
-Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields %\lcwnote{(What layout conventions are used for the Matrix calculus, \url{https://en.wikipedia.org/wiki/Matrix_calculus\#Layout_conventions}?  For example, should $\pd{U(\bm{u})}{\bm{u}}$ be a row vector and $\pd{\bm{u}}{x_j}$ a column vector?)}  \note{JC: I think $\pd{U(\bm{u})}{\bm{u}}$ should be a row vector and $\pd{\bm{u}}{x_j}$ a column vector.  I haven't specified this since most of the other entropy stable papers haven't done so either - do you think we should be explicit?} \lcwnote{I don't think we need to be explicit but follow a convention.  I think there was as couple of places I changed to follow the convention you suggested.}
+Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields
 \begin{equation}
 \bm{v}^T\pd{\bm{f}_j(\bm{u})}{x_j} = \pd{U(\bm{u})}{\bm{u}}^T\pd{\bm{f}_j(\bm{u})}{\bm{u}}\pd{\bm{u}}{x_j} = \pd{F_j(\bm{u})}{x_j},
 \label{eq:chainrule}
@@ -411,12 +411,10 @@ where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on bo
 Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due to the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  
 
 While this paper focuses on curved meshes, the inexactness of quadrature leads to the loss of the chain rule and thus the loss of entropy conservation or entropy dissipation (\ref{eq:entropyineq}) even on affine meshes.  We can rewrite (\ref{eq:weakdg}) in a strong form using a discrete quadrature-based $L^2$ projection.  For polynomial approximation spaces on affine meshes, $\pd{\bm{v}}{x_i}$ is polynomial.  
-%\lcwnote{(Is this true when have a non-affine element mapping?)} \note{No - good point.  I specified affine meshes in the revised text}.  
 Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
 \[
 \int_{D^k} \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} \diff{\bm{x}} = \int_{\hat{D}} \Pi_N \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} J^k\diff{\bm{x}}.
 \]
-%\lcwnote{I don't understand the previous equation.  Should the geometry terms be included in the argument to the $L^2$ projection?  If so we might need to introduce $\bm{G}^k$ here.}  \note{Good point - I meant this to be for affine elements only to illustrate why the chain rule is lost.  It's more complicated for curvilinear elements.  }
 Thus, integrating by parts (\ref{eq:weakdg}) recovers a ``strong'' DG formulation involving the projection operator
 \begin{align}
 &\int_{D^k} \LRp{\pd{\bm{u}}{t} - \sum_{j=1}^d \pd{\Pi_N \bm{f}_j(\bm{u})}{x_j}} \cdot \bm{v} \diff{\bm{x}} \nonumber\\
@@ -474,7 +472,6 @@ Using the volume quadrature interpolation matrix $\bm{V}_q$, we can compute a qu
 \]
 The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
 
-%\lcwnote{(It seems to be positive definite due to the fact we have a positive weight quadrature, not Assumption~\ref{ass:quad}.)} \note{Yes, but the degree of exactness of the quadrature is also necessary or it can be only positive semi-definite.  For example, if you just use a degree $2N$ quadrature, I think you can end up with a singular mass matrix.}; \lcwnote{Cool, I see this now.}
 
 The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2proj}) and lift operators (\ref{eq:lift}) using quadrature.  The result are quadrature-based $L^2$ projection and lift operators $\bm{P}_q, \bm{L}_q$, 
 \begin{equation}
@@ -493,6 +490,7 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 }
 \label{eq:decoupledsbp}
 \end{equation}
+\lcwnote{(I am not sure why $\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}}$ changed to $\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}$.  I am guessing it was a typo but want to double check I am not missing something before I change it back everywhere.)}
 where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
@@ -534,7 +532,6 @@ The key difference between curvilinear and affine meshes is that geometric terms
 \pd{u}{x_i} = \sum_{j=1}^d \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad \bm{G}^k_{ij} = \pd{\hat{x}_j}{x_i},
 \]
 where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$.
-%\lcwnote{(What about $\bm{J}^{\bm{G}^k_{ij}}$ instead of $\bm{JG}^k_{ij}$ to make it look more like a single object? I am debating if I should revert the changes to add the Hadamard product to the other surface terms.)} \note{Hm...I'm not sure about the expanding superscripts/subscripts.  What if we changed it to a different name instead of $J\bm{G}_{ij}$, like $\tilde{\bm{G}}^k_{ij}$?} \lcwnote{I got used to the way you have it, I don't think we need to change.}
 
 We assume in this work that the mesh is stationary.  It can be shown at the continuous level that, for any differentiable and invertible mapping, the quantity $J^k\bm{G}^k$ satisfies a geometric conservation law (GCL) \cite{kopriva2006metric, thomas1979geometric}
 \begin{equation}
@@ -651,7 +648,6 @@ We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and th
 \end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
 \label{eq:evars1}
 \end{align}
-%\lcwnote{I changed $\bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}$ to $\bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}$.  Is this correct?} \note{Yup - thanks!}
 In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u}}$ denote the evaluation of the conservative variables in terms of the projected entropy variables at volume and face quadrature points.  We note that, under an appropriate choice of quadrature on quadrilaterals and hexahedra, this approach is equivalent to the approach taken in \cite{parsani2016entropy}, where the entropy variables are evaluated at Gauss nodes, then interpolated to a different set of nodes and used to compute the nonlinear fluxes.  
 
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
@@ -925,6 +921,7 @@ We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
 \sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
+\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
 Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and noting that $\LRp{\bm{B}^i_k \circ \bm{F}_{j,S}}\bm{1} = \bm{W}_f\diag{\bm{n}_j \circ \bm{J}^k_f}\bm{f}_j(\bm{u})$ (using the consistency of $\bm{f}_S$ and diagonal nature of $\bm{B}^i_k$) yields
 \[
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
@@ -1140,7 +1137,6 @@ Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $
 \bm{JG^k}_{32} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_3 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}} \nonumber\\
 \bm{JG^k}_{33} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_1 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}}. \nonumber
 \end{align}
-%\lcwnote{Should we instead use the average of the two ``conservative forms'' given earlier in the next?  I guess we would have to change the code as well.}
 \begin{remark}
 
 We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly through a local constrained minimization problem \cite{fernandez2016simultaneous, crean2018entropy}, which yields a solution in terms of a pseudo-inverse.  However, we have not found a straightforward way to simultaneously enforce both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm} using this approach.
