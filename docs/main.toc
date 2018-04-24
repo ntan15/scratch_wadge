@@ -13,7 +13,7 @@
 \contentsline {subsection}{\numberline {4.2}A discretely entropy stable low storage DG formulation on curved meshes}{11}{subsection.4.2}
 \contentsline {subsection}{\numberline {4.3}Analysis of weight-adjusted projection}{12}{subsection.4.3}
 \contentsline {subsubsection}{\numberline {4.3.1}Local and global conservation}{15}{subsubsection.4.3.1}
-\contentsline {section}{\numberline {5}Enforcing the discrete geometric conservation law}{16}{section.5}
+\contentsline {section}{\numberline {5}Enforcing the discrete geometric conservation law}{17}{section.5}
 \contentsline {section}{\numberline {6}Numerical experiments}{20}{section.6}
 \contentsline {subsection}{\numberline {6.1}Accuracy of weight-adjusted projection and geometric terms}{20}{subsection.6.1}
 \contentsline {subsection}{\numberline {6.2}Two-dimensional compressible Euler equations}{22}{subsection.6.2}

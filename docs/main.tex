@@ -947,14 +947,14 @@ The simplest way to ensure local conservation is to approximate $J$ using a degr
 \begin{lemma}
 Let $J^k \in P^N$, and let integrals be computed using quadrature which is exact for degree $2N$ polynomials.  Then, 
 \[
-\bm{1}^T\bm{M}\bm{M}^{-1}_{1/J^k}\bm{M}\bm{u} = \int_{\hat{D}}T^{-1}_{1/J^k} u =  \int_{\hat{D}} u J^k.
+\bm{1}^T\bm{M}\bm{M}^{-1}_{1/J^k}\bm{M}\bm{u} = \int_{\hat{D}}T^{-1}_{1/J^k} u \diff{\hat{\bm{x}}}=  \int_{\hat{D}} u J^k\diff{\hat{\bm{x}}}.
 \]
 \label{eq:conscorrect1}
 \end{lemma}
 \begin{proof}
 The proof relies on (\ref{eq:wadgTw}), which states that $\LRp{\frac{1}{J^k} T^{-1}_{1/J^k}u,v}_{\hat{D}} = \LRp{u,v}_{\hat{D}}$ for all $v\in P^N$.  If $J^k$ is a polynomial of degree $N$, then taking $v = 1$ yields
 \[
-\LRp{T^{-1}_{1/J^k}u,1}_{\hat{D}} = \LRp{\frac{1}{J^k}T^{-1}_{1/J^k}u,{J^k}}_{\hat{D}}= \LRp{u,{J^k}}_{\hat{D}} = \int_{\hat{D}} uJ^k. 
+\LRp{T^{-1}_{1/J^k}u,1}_{\hat{D}} = \LRp{\frac{1}{J^k}T^{-1}_{1/J^k}u,{J^k}}_{\hat{D}}= \LRp{u,{J^k}}_{\hat{D}} = \int_{\hat{D}} uJ^k\diff{\hat{\bm{x}}}. 
 \]
 Additionally, the proof still holds if integrals are approximated using a quadrature rule which exactly integrates $uJ^k \in P^{2N}$.
 \end{proof}
