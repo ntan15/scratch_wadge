@@ -929,7 +929,7 @@ Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and
 \]
 Since $\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} $ is skew-symmetric and $\bm{F}_{j,S}$ is symmetric, the Hadamard product of these two matrices is skew-symmetric.  As a result, $\bm{1}^T \LRp{\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} \circ \bm{F}_{j,S}}\bm{1} = 0$ and 
 \begin{equation}
-\bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*} = 0
+\bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*} = 0.
 \label{eq:localcons}
 \end{equation}
 Global conservation is shown by summing (\ref{eq:localcons}) over all elements $D^k$.  Because the flux $\bm{f}_j^*$ is single-valued on each face and the outward normal $\bm{n}_j$ changes sign on adjacent elements, the contributions $\bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*}$ cancel on all interior interfaces.\footnote{Conservation still holds when incorporating entropy dissipation through penalty terms involving jumps.  This is because the definition of the jump changes sign on adjacent elements, such that jump contributions cancel when summing over all elements.} On periodic meshes, this yields conservation with respect to the weight-adjusted mass matrix
