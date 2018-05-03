@@ -3876,10 +3876,12 @@ int main(int argc, char *argv[])
     for (int i = 0; i < Nq; ++i)
     {
 
+#if 0
       coord X;
       X.x = app->hops->xyzq[i + 0 * Nq + e * Nq * 3];
       X.y = app->hops->xyzq[i + 1 * Nq + e * Nq * 3];
       X.z = app->hops->xyzq[i + 2 * Nq + e * Nq * 3];
+#endif
 
       dfloat_t wJq = (app->hops->wq[i]) * (app->hops->Jq[i + e * Nq]);
       dfloat_t rho  = Q[i + 0 * Nq + e * Nq * NFIELDS];
