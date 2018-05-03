@@ -2865,7 +2865,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   occaKernelInfoAddDefine(info, "p_Np", occaUInt(Np));
 
   occaKernelInfoAddDefine(info, "p_Nq", occaUInt(Nq));
-  int log2Nq = ceil(log2(Nq));
+  int log2Nq = (int)ceil(log2(Nq));
   int ceilNq2 = (int) pow(2,log2Nq);
   //  printf("Nq = %d, ceilNq2 = %d\n",Nq,ceilNq2);
   occaKernelInfoAddDefine(info, "p_log2Nq", occaUInt(log2Nq));
@@ -3205,7 +3205,7 @@ static void UV(app_t *app, euler_fields V, euler_fields *U)
 #endif
 }
 
-static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
+void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
 {
 
   dfloat_t x = X.x;
@@ -3290,7 +3290,7 @@ static void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
 }
 
 // posed on [-pi,pi]^3 in 3D
-static void euler_Taylor_Green(app_t *app, coord X, euler_fields *U)
+void euler_Taylor_Green(app_t *app, coord X, euler_fields *U)
 {
 
   dfloat_t x = X.x;
@@ -3319,6 +3319,7 @@ static void euler_Taylor_Green(app_t *app, coord X, euler_fields *U)
   U->U5 = p/gm1 + .5*rho*(u*u+v*v+w*w);
 }
 
+#if 0
 static void app_test(app_t *app)
 {
 
@@ -3327,6 +3328,7 @@ static void app_test(app_t *app)
   occaKernelRun(app->test, occaInt(app->hm->E), app->Q, app->Qf, app->rhsQ,
                 app->rhsQf);
 }
+#endif
 
 static void rk_step(app_t *app, double rka, double rkb, double dt)
 {
