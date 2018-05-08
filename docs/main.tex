@@ -931,7 +931,6 @@ We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
 \sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
-\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
 Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and noting that $\LRp{\bm{B}^i_k \circ \bm{F}_{j,S}}\bm{1} = \bm{W}_f\diag{\bm{n}_j \circ \bm{J}^k_f}\bm{f}_j(\bm{u})$ (using the consistency of $\bm{f}_S$ and diagonal nature of $\bm{B}^i_k$) yields
 \[
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
