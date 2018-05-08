@@ -494,11 +494,18 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 \begin{array}{cc}
 \bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q \diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  \diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\\
 - \frac{1}{2}\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}
+%=======
+%  \bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q \diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  \diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\\
+%  - \frac{1}{2}\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}
+%>>>>>>> cd72d858ec79933e123c7bf1361e488006d5956d
 \end{array}
 }
 \label{eq:decoupledsbp}
 \end{equation}
-%\lcwnote{(I am not sure why $\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}}$ changed to $\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}$.  I am guessing it was a typo but want to double check I am not missing something before I change it back everywhere.)}
+%<<<<<<< HEAD
+%%\lcwnote{(I am not sure why $\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}}$ changed to $\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}$.  I am guessing it was a typo but want to double check I am not missing something before I change it back everywhere.)}
+%=======
+%>>>>>>> cd72d858ec79933e123c7bf1361e488006d5956d
 where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
@@ -514,7 +521,7 @@ Then, $\bm{Q}_N^i$ satisfies the following discrete analogue of integration by p
 \begin{equation}
 \bm{Q}_N^i + \LRp{\bm{Q}_N^i}^T = \bm{B}^i_N, \qquad \bm{B}_N = \LRp{\begin{array}{cc}
 \bm{0}&\\
-& \bm{W}_f \diag{\hat{\bm{n}}_i}\circ\hat{\bm{J}}_f
+      & \bm{W}_f \diag{\hat{\bm{n}}_i\circ\hat{\bm{J}}_f}
 \end{array}}.
 \label{eq:sbpprop1}
 \end{equation}
@@ -758,7 +765,7 @@ Given the weight-adjusted inverse mass matrix, we can also define a weight-adjus
 It was shown in \cite{chan2016weight2} that $\tilde{\Pi}^k_N $ is given explicitly by
 \begin{equation}
 \tilde{\Pi}^k_N u = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}},
-\label{eq:wadgproj}
+\label{eq:wadgprojop}
 \end{equation}
 where $\Pi_N$ is the $L^2$ projection operator on the reference element $\hat{D}$.  We can discretize $\tilde{\Pi}^k_N$ using quadrature to yield a weight-adjusted projection matrix $\tilde{\bm{P}}^k_q$ 
 \begin{align}
@@ -929,8 +936,11 @@ We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
 \sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
-%\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
-%\note{The $\bm{J}^k_f$ is wrapped up in the definition of $\bm{L}^k_q$}
+%<<<<<<< HEAD
+%%\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
+%%\note{The $\bm{J}^k_f$ is wrapped up in the definition of $\bm{L}^k_q$}
+%=======
+%>>>>>>> cd72d858ec79933e123c7bf1361e488006d5956d
 Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and noting that $\LRp{\bm{B}^i_k \circ \bm{F}_{j,S}}\bm{1} = \bm{W}_f\diag{\bm{n}_j \circ \bm{J}^k_f}\bm{f}_j(\bm{u})$ (using the consistency of $\bm{f}_S$ and diagonal nature of $\bm{B}^i_k$) yields
 \[
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
@@ -1457,7 +1467,7 @@ These results suggest that the weight-adjusted projection is necessary to produc
 
 
 \subsubsection{Local and global conservation}
-\label{sec:conservation}
+\label{sec:conservationcheck}
 Next, we check that primary conservation is maintained numerically on curved meshes.  We follow \cite{friedrich2017entropy} and examine the semi-discrete evolution of the average of $\bm{u}$ over the domain $\Omega$
 \begin{align}
 \pd{}{t}\int_{\Omega} \bm{u} = \sum_k \int_{D^k} \pd{\bm{u}}{t} = \sum_k \int_{\hat{D}} \pd{\bm{u}}{t} J^k = \sum_k \bm{1}^T \bm{W}\diag{\bm{J}^k} \bm{V}_q \td{\bm{u}_h}{t}.  
