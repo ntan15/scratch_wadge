@@ -760,7 +760,7 @@ Given the weight-adjusted inverse mass matrix, we can also define a weight-adjus
 It was shown in \cite{chan2016weight2} that $\tilde{\Pi}^k_N $ is given explicitly by
 \begin{equation}
 \tilde{\Pi}^k_N u = \Pi_N\LRp{\frac{1}{J^k}\Pi_N\LRp{uJ^k}},
-\label{eq:wadgproj}
+\label{eq:wadgprojop}
 \end{equation}
 where $\Pi_N$ is the $L^2$ projection operator on the reference element $\hat{D}$.  We can discretize $\tilde{\Pi}^k_N$ using quadrature to yield a weight-adjusted projection matrix $\tilde{\bm{P}}^k_q$ 
 \begin{align}
@@ -1455,7 +1455,7 @@ coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,
 
 
 \subsubsection{Local and global conservation}
-\label{sec:conservation}
+\label{sec:conservationcheck}
 Next, we check that primary conservation is maintained numerically on curved meshes.  We follow \cite{friedrich2017entropy} and examine the semi-discrete evolution of the average of $\bm{u}$ over the domain $\Omega$
 \begin{align}
 \pd{}{t}\int_{\Omega} \bm{u} = \sum_k \int_{D^k} \pd{\bm{u}}{t} = \sum_k \int_{\hat{D}} \pd{\bm{u}}{t} J^k = \sum_k \bm{1}^T \bm{W}\diag{\bm{J}^k} \bm{V}_q \td{\bm{u}_h}{t}.  
