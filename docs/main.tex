@@ -286,27 +286,24 @@ legend style={font=\small}
 We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete quadrature approximation of a continuous global entropy inequality.  The proof requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of an approach introduced in \cite{kopriva2006metric}.  We extend the construction of entropy conservative and entropy stable DG schemes to the case when high order accurate curvilinear mass matrices are approximated using low-storage weight-adjusted approximations \cite{chan2016weight1, chan2016weight2}.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
 \end{abstract}
 
-%\tableofcontents
+\tableofcontents
 
 \section{Introduction}
 
-High order discontinuous Galerkin (DG) methods are attractive for the simulation of time-dependent wave propagation due to their low numerical dispersion and dissipation \cite{hu1999analysis, ainsworth2004dispersive} and ability to handle unstructured meshes and complex geometries.  These same properties make them attractive for the resolution of transient waves and vortices in compressible flow \cite{wang2013high}.  However, whereas the construction of stable DG methods for wave propagation is relatively well-established, it is not possible to extend the same formulations directly from linear wave propagation problems to the nonlinear conservation laws which govern compressible fluid behavior.  
+High order discontinuous Galerkin (DG) methods are attractive for the simulation of time-dependent wave propagation due to their low numerical dispersion and dissipation \cite{hu1999analysis, ainsworth2004dispersive} and ability to handle unstructured meshes and complex geometries.  These same properties make them attractive for the resolution of transient waves and vortices in compressible flow \cite{wang2013high}.  However, whereas the construction of stable DG methods for wave propagation is relatively well-established, it is not possible to extend the same formulations directly from linear wave problems to the nonlinear conservation laws which govern compressible fluid flow.  
 
 The low numerical dissipation of high order DG methods combined with the lack of inherently stable formulations for nonlinear conservation laws has given high order discretizations the reputation of being non-robust and highly sensitive to instabilities and under-resolved features \cite{wang2013high}.  This instability is addressed in practice by adding additional stabilization through limiting, filtering, or artificial viscosity \cite{persson2006sub, krivodonova2007limiters, barter2010shock, guermond2011entropy}.  However, these approaches are typically ad-hoc, and do not guarantee the stability of the resulting scheme.  Moreover, high order accuracy can be lost if the stabilization is too strong.  
 
 The lack of inherently stable formulations was addressed for high order nodal DG methods on quadrilateral and hexahedral meshes in \cite{fisher2013high, carpenter2014entropy}.  The resulting schemes ensure that that the numerical solution satisfies a semi-discrete version of an entropy inequality, independently of discrete effects such as under-integration.  This results in significantly more robust high order simulations, where the numerical solution does not blow up even in the presence of under-resolved features such as shock discontinuities or turbulence.  High order entropy stable schemes have since been extended to staggered grid and non-conforming \cite{parsani2016entropy, friedrich2017entropy} tensor product elements, as well as to simplicial meshes \cite{chen2017entropy, chan2017discretely, crean2018entropy}.  
 
-Entropy stable methods have largely relied on a finite difference summation-by-parts framework.  The summation-by-parts property holds for spectral element DG methods (DG-SEM), which assume a polynomial basis which collocates the solution at Gauss-Legendre-Lobatto (GLL) quadrature nodes on tensor product elements.  This approach is difficult to replicate on simplicial elements, as analogous quadrature rules on the triangle and tetrahedron contain more nodes than the dimension of the underlying polynomial space \cite{hicken2016multidimensional}.  As a result, the entropy stable schemes introduced in \cite{chen2017entropy, crean2018entropy} are not ``modal'', or associated with an underlying basis or approximation space.  
+Entropy stable methods have largely relied on a finite difference summation-by-parts (SBP) framework.  The summation-by-parts property holds for spectral element DG methods (DG-SEM), which assume a polynomial basis which collocates the solution at Gauss-Legendre-Lobatto (GLL) quadrature nodes on tensor product elements.  The collocation approach requires the number of quadrature nodes to be identical to the number of basis functions.  Because analogous quadrature rules on the triangle and tetrahedron must contain more nodes than the dimension of the underlying polynomial space \cite{helenbrook2009existence, hicken2016multidimensional}, GLL-like collocation cannot be replicated on simplicial elements.  It is still possible to construct entropy stable schemes on simplicial elements within the SBP framework \cite{chen2017entropy, crean2018entropy}.   However, the resulting SBP operators are not ``modal'', in the sense that the matrices are not associated with an underlying basis or approximation space.  
 
-Entropy stable schemes were extended to modal discretizations  in \cite{chan2017discretely}, allowing for the use of arbitrary basis functions and over-integrated quadrature rules.  In this work, we show how to extend the construction of high order entropy stable schemes to curvilinear meshes.  \note{finish}
+Entropy stable schemes were extended to modal discretizations on affine meshes in \cite{chan2017discretely}, allowing for the use of arbitrary basis functions and over-integrated quadrature rules.  In this work, we show how to extend the construction of modal high order entropy stable schemes to curved meshes.  As noted in \cite{crean2018entropy}, this requires the use of a split formulation for the geometric terms involved in differentiation, as well as the satisfaction of a discrete geometric conservation law (GCL) \cite{thomas1979geometric, kopriva2006metric}.  We also show how to extend entropy stable schemes to accomodate weight-adjusted mass matrices, which provide low storage approximations of inverse weighted mass matrices appearing for curved meshes \cite{chan2016weight2}.  These weight-adjusted approximations can be applied more efficiently than inverse weighted mass matrices on many-core architectures such as Graphics Processing Units (GPUs) \cite{chan2017weight}.   However, additional steps are required to ensure entropy stability and the conservation of mass, momentum, and energy under weight-adjusted mass matrices.
 
-
-Introducing WADG \cite{chan2016weight1,chan2016weight2}.  
-
-Matrix WADG: GPU efficiency of WADG vs storing weighted inverses \cite{chan2017weight}.  
+The paper is organized as follows: Section~\ref{sec:1} reviews the derivation of entropy inequalities for systems of nonlinear conservation laws, and describes why this does not hold under a high order DG discretization.  Section~\ref{sec:2} describes the construction of entropy stable DG methods for curved meshes using weighted mass matrices, and Section~\ref{sec:3} describes how to extend this to the case of weight-adjusted mass matrices.  Section~\ref{sec:4} describes how to enforce the geometric conservation law using a modification of the approach described in \cite{kopriva2006metric}, and Section~\ref{sec:num} concludes by presenting two and three-dimensional numerical experiments which verify the accuracy and stability of the presented schemes.  
 
 \section{Systems of nonlinear conservation laws}
-
+\label{sec:1}
 This work addresses high order accurate schemes for the following system of $n$ nonlinear conservation laws in $d$ dimensions 
 \begin{equation}
   \pd{\bm{u}}{t} + \sum_{j=1}^d\pd{\bm{f}_j(\bm{u})}{x_j}  = 0, \qquad \bm{u} : \mathbb{R}^d \times [0,\infty) \rightarrow  \mathbb{R}^n, \qquad \bm{f}_j : \mathbb{R}^n\rightarrow \mathbb{R}^n,
@@ -437,7 +434,7 @@ From this, we see that our discrete scheme does not differentiate the nonlinear 
 %We note that it is not strictly necessary to introduce the projection operator; however, constructing a ``strong'' DG formulation without a projection operator requires an analytical expression for derivatives of the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$, which can be complex or expensive to compute.  Moreover, because polynomial quadrature rules are typically used in practice to evaluate integrals, it is not possible to use integration by parts when the nonlinear flux function is rational due to errors in approximating integrals.  Introducing the $L^2$ projection operator resolves both issues, as the integrands involved in integration by parts are polynomials of degree $2N-1$, for which efficient quadratures exist. 
 
 \section{Discretely entropy stable DG methods on curved meshes}
-
+\label{sec:2}
 We will first show how to construct discretely entropy stable high order accurate DG methods on curvilinear meshes, but will present this using a matrix formulation as opposed to a continuous formulation.  This is to ensure that the effects of discretization, nonlinear, and quadrature are accounted for in the proof of semi-discrete entropy stability.  We first introduce quadrature-based matrices, which we will then use to construct discretely entropy stable DG formulations.
 
 
@@ -495,13 +492,13 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 \begin{equation}
 \bm{D}_N^i =\LRs{
 \begin{array}{cc}
-\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q \diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  \diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f\\
-- \frac{1}{2}\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f \bm{V}_f\bm{P}_q &  \frac{1}{2}\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}_f
+\bm{V}_q\bm{D}_i \bm{P}_q - \frac{1}{2}\bm{V}_q\bm{L}_q \diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{V}_q\bm{L}_q  \diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}\\
+- \frac{1}{2}\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f} \bm{V}_f\bm{P}_q &  \frac{1}{2}\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}_f}
 \end{array}
 }
 \label{eq:decoupledsbp}
 \end{equation}
-\lcwnote{(I am not sure why $\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}}$ changed to $\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}$.  I am guessing it was a typo but want to double check I am not missing something before I change it back everywhere.)}
+%\lcwnote{(I am not sure why $\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}}$ changed to $\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}$.  I am guessing it was a typo but want to double check I am not missing something before I change it back everywhere.)}
 where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
@@ -668,7 +665,7 @@ We now introduce a semi-discrete DG formulation for $\bm{u}_h$
   &\LRp{\bm{F}_{j,S}}_{mn} = \bm{f}_{j,S}\LRp{\LRp{\tilde{\bm{u}}}_m,\LRp{\tilde{\bm{u}}}_n}, \qquad 1 \leq m,n \leq N_q + N^f_q,\nonumber\\
   &\bm{f}_j^* = \bm{f}_{j,S}(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) \text{ on interior faces},\nonumber
 \end{align}
-where $\tilde{\bm{u}}^+$ denotes the values of the entropy-projected conservative variables on the neighboring element across each face of $D^k$, and $\bm{f}_j^*$ on the boundary denotes the $j$th component of some numerical flux through which boundary conditions are imposed.
+where $\tilde{\bm{u}}^+$ denotes the values of the entropy-projected conservative variables on the neighboring element across each face of $D^k$, and $\bm{f}_j^*$ on the boundary denotes the $j$th component of some numerical flux through which boundary conditions are imposed.  Note that the face/surface Jacobian factors $\bm{J}^k_f$ are incorporated into the definition of $\bm{L}^k_q$.  
 
 Define the diagonal boundary quadrature matrix $\bm{W}_{\partial \Omega}$ such that
 \[
@@ -713,7 +710,7 @@ where $\lambda$ is an estimate of the maximum eigenvalue of $\pd{\bm{f}(\bm{u})}
 %\note{maybe add more here?}
 
 \section{Discretely stable and low storage DG methods on curved meshes}
-
+\label{sec:3}
 A disadvantage of the formulation (\ref{eq:dgform1}) is high storage costs, especially at high orders of approximation.  While the matrices $\bm{Q}^i_k$ can be applied to a vector without needing to explicitly store the matrix, the projection and lifting matrices (\ref{eq:projliftcurved}) differ from element to element, necessitating either explicit pre-computation and storage or the assembly and inversion of a weighted mass matrix for each right hand side evaluation.  The latter option is computationally expensive, while the former option increases storage costs.  This increase in storage can result in suboptimal performance on modern computational architectures \cite{chan2017weight}, due to the increasing cost of memory operations and data movement compared to arithmetic operations.  
 
 In this section, we present a discretely entropy stable scheme which avoids this high storage cost through the use of a low-storage weight-adjusted approximation to the inverse of a weighted mass matrix.  To ensure a discrete entropy conservation or a discrete entropy inequality, we also modify the formulation (\ref{eq:dgform1}) to take into account the use of a weight-adjusted mass matrix.
@@ -875,7 +872,7 @@ The quantity $\nor{v}_{W^{N,2}\LRp{\hat{D}}}$ can be bounded by noting that $v\i
 %where $\bm{M}$ is the $L^2$ mass matrix over $D^k$ and $\bm{K}_N$ is the Gram matrix corresponding to the Sobolev inner product on the reference element  $W^{N+1,2}\LRp{\hat{D}}$.  The constant $C_N$ depends on the largest generalized eigenvalue of \ref{eq:eig}, which in turn depends on the order $N$ and dimension $d$.  
 \end{proof}
 
-We can now prove that $\tilde{\Pi}^k_N u$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$ for sufficiently smooth $u$:
+We can now prove that $\tilde{\Pi}^k_N u$ is superconvergent to the curvilinear $L^2$ projection $\Pi_N^k u$: 
 \begin{theorem}
 Let $u \in W^{r,2}\LRp{D^k}$.  The difference between the $L^2$ projection $\Pi^k_Nu$ and the weight-adjusted projection $\tilde{\Pi}^k_N u$ is
 \[
@@ -932,7 +929,8 @@ We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
 \sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
-\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
+%\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
+%\note{The $\bm{J}^k_f$ is wrapped up in the definition of $\bm{L}^k_q$}
 Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and noting that $\LRp{\bm{B}^i_k \circ \bm{F}_{j,S}}\bm{1} = \bm{W}_f\diag{\bm{n}_j \circ \bm{J}^k_f}\bm{f}_j(\bm{u})$ (using the consistency of $\bm{f}_S$ and diagonal nature of $\bm{B}^i_k$) yields
 \[
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
@@ -995,7 +993,7 @@ In other words, (\ref{eq:conscorrect}) ensures local conservation by correcting 
 This approach is applicable to an arbitrary weight, and can be generalized to matrix-valued weights as well \cite{chan2017weight}.  Moreover, using Theorem 6 in \cite{chan2016weight1}, one can show that the $L^2$ norm of the difference $\tilde{u}_{\rm WADG} - u_{\rm WADG}$ is $O(h^{2N+1})$, and does not affect high order accuracy.  
 
 \section{Enforcing the discrete geometric conservation law}
-
+\label{sec:4}
 An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $j = 1,\ldots,d$.  However, this is not always guaranteed to hold for $\bm{Q}^j_k$ as defined through (\ref{eq:dik}).  In this section, we discuss methods of constructing the geometric terms $J^k\bm{G}^k_{ij}$ for curvilinear meshes in a way that ensures $\bm{Q}^j_k\bm{1} = 0$.  
 
 From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
@@ -1365,7 +1363,7 @@ p(\bm{x},t) = \rho^\gamma.
 \end{equation}
 To test the scheme (\ref{eq:dgform2}), we utilize an entropy conservative flux and run it on a uniform triangular mesh with a curvilinear warping shown in Figure~\ref{fig:warp2d}.   Theorem~\ref{thm:stab2} ensures that, under an entropy conservative flux, (\ref{eq:dgform2}) is semi-discretely entropy conservative.  This does not hold at the fully discrete level; however, it is possible to verify that (\ref{eq:dgform2}) is entropy stable using other approaches.  
 
-First, can examine the entropy RHS, which we define as the right hand side of (\ref{eq:dgform2}) tested with $\bm{v}_h$
+First, can examine the entropy RHS, which we define as the right hand side of (\ref{eq:dgform2}) tested with $\bm{v}_h$ 
 \begin{equation}
   \text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}.  
 \label{eq:entropyrhs}
@@ -1454,6 +1452,8 @@ coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,
 \caption{Change in entropy under an entropy conservative formulation with $N=4$.  In both cases, the magnitude of the entropy RHS (\ref{eq:entropyrhs}) is $O\LRp{10^{-14}}$. }
 \label{fig:dSconverge}
 \end{figure}
+
+These results suggest that the weight-adjusted projection is necessary to produce an entropy conservative scheme on curvilinear meshes.  However, entropy conservative schemes result in spurious oscillations and lower convergence rates \cite{chan2017discretely}.  In practice, dissipative interface terms are added to produce entropy stable schemes.  In the presence of interface dissipation, the evolution of entropy over time, $L^2$ errors for smooth solutions, and the qualitative behavior of the solution are very similar with or without the weight-adjusted projection.  This may reflect the fact that aliasing-driven instabilities arise from the spatial discretization, and the entropy RHS (\ref{eq:entropyrhs}) is machine precision zero with or without the weight-adjusted projection.  In contrast,  the presence of the weight-adjusted projection affects only the time-derivative on the left-hand side, and may not play as large a role in suppressing aliasing instabilities.  
 
 
 \subsubsection{Local and global conservation}
