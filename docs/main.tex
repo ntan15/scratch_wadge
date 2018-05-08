@@ -1389,7 +1389,7 @@ For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machi
 \label{fig:warp2d}
 \end{figure}
 
-Figure~\ref{fig:dSconverge} shows the evolution of entropy $U(\bm{u})$ over time $[0,T]$, where the final time $T = 2$.  We observe that, when the entropy-projected conservative variables $\tilde{\bm{u}}$ are computed using the standard $L^2$ projection, the change in entropy does not decrease as $dt$ decreases (for a fixed mesh and order $N$).  When $\tilde{\bm{u}}$ is defined using the weight-adjusted projection, the entropy decreases as $dt$ decreases.  Moreover, the rate of convergence is approximately $O(dt^{4.675})$, which is slightly higher than the expected rate of $O(dt^4)$ when using LSRK-45.  Additionally, regardless of whether the standard and weight-adjusted projection was used, the entropy RHS (\ref{eq:entropyrhs}) is $O(10^{-14})$, indicating that the proposed scheme is implemented correctly.  
+Figure~\ref{fig:dSconverge} shows the evolution of entropy $U(\bm{u})$ over time $[0,T]$, where the final time $T = 2$.  We compare when the entropy-projected conservative variables $\tilde{\bm{u}}$ are computed using the standard $L^2$ projection on the reference element, and when $\tilde{\bm{u}}$ are computed using the weight-adjusted projection.  For the standard $L^2$ projection, the change in entropy does not decrease as $dt$ decreases (for a fixed mesh and order $N$).  When $\tilde{\bm{u}}$ is defined using the weight-adjusted projection, the entropy decreases as $dt$ decreases.  Moreover, the rate of convergence is approximately $O(dt^{4.675})$, which is slightly higher than the expected rate of $O(dt^4)$ when using LSRK-45.  Regardless of whether the standard and weight-adjusted projection was used, the entropy RHS (\ref{eq:entropyrhs}) is $O(10^{-14})$, indicating that the proposed scheme is implemented correctly.  
 
 \begin{figure}
 \centering
@@ -1774,7 +1774,7 @@ We use \textsc{GMSH} to construct three unstructured meshes consisting of 1354, 
 \tilde{y} &= y - \sin\LRp{2 \pi \frac{x}{10}}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{z}{10}},\\
 \tilde{z} &= z + \frac{1}{2}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{y}{10}}\sin\LRp{\pi \frac{z}{10}}.
 \end{align*} 
-Additionally, we approximate the geometric terms using (\ref{eq:iconscurl2}) to ensure that the geometric terms obey the discrete GCL.  
+The geometric terms are approximated using (\ref{eq:iconscurl2}) to ensure the satisfaction of the discrete GCL.  
 
 \begin{figure}
 \centering
@@ -1820,7 +1820,7 @@ coordinates{(2,0.184547)(1,0.0104361)(.5,0.0003960681)};
 \label{fig:converge3d}
 \end{figure}
 
-Figure~\ref{fig:converge3d} shows $L^2$ errors for $N = 2,3,4$ on both affine and curved meshes.  In both cases, we observe optimal  $O(h^{N+1})$ asymptotic rates of convergence for $N = 2,3$, while for $N = 4$ we observe a rate which is slightly higher than $O(h^{N+1/2})$.  This may be due to the fact that the time-stepper is $4$th order while the spatial discretization is $5$th order.  
+Figure~\ref{fig:converge3d} shows $L^2$ errors for $N = 2,3,4$ on both affine and curved meshes.  In both cases, we observe optimal  $O(h^{N+1})$ asymptotic rates of convergence for $N = 2,3$, while for $N = 4$ we observe a rate which is slightly higher than $O(h^{N+1/2})$ but not quite $O(h^{N+1})$.  This may be due to the fact that the time-stepper is $4$th order while the spatial discretization is $5$th order.  
 
 We also compared approximations of geometric factors using degree $N$ polynomials via (\ref{eq:iconscurl2}) and degree $N-1$ polynomials via (\ref{eq:iconscurl}).  For the isentropic vortex problem on warped meshes, the approximation of the geometric factors does not impact accuracy significantly.  Utilizing (\ref{eq:iconscurl}) and approximating geometric factors with degree $N-1$ polynomials only changed the error in the $5$th significant digit, and resulted in the same asymptotic rates of convergence on curved 3D meshes.  Future work will explore the effect of a more accurate geometric approximation on curved boundaries where a solid wall boundary condition is applied, where the approximation of geometry has been shown to have a more significant effect  \cite{toulorge2016optimizing}.  
 
@@ -1840,7 +1840,7 @@ The Taylor-Green vortex is used to study the transition and decay of turbulence 
 \[
 \kappa(t) =\frac{1}{\LRb{\Omega}} \int_{\Omega} \rho \bm{u}\cdot\bm{u} \diff{\bm{x}},
 \]
-as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$.  
+as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$ and $N = 3, 4$.  The kinetic energy is plotted at 2500 equally spaced times between $[0,20]$.  In both cases, the simulation is stable and does not blow up despite the lack of filtering, limiting, or artificial viscosity.  The results are qualitatively similar to those reported in the literature, with the kinetic energy dissipation rate increasing around $t = 4$ and peaking with a value of roughly $.014$ before $t = 9$ \cite{debonis2013solutions, gassner2016split}.  
 
 \begin{figure}
 \centering
@@ -1872,19 +1872,18 @@ coordinates{(0,5.36239e-07)(0.18796,-9.65229e-06)(0.37592,-1.01885e-05)(0.563879
 \legend{Affine, Curved}
 \end{axis}\end{tikzpicture}
 }
-\subfloat[$N=5$, $h = \pi/4$]{}
+\subfloat[$N=4$, $h = \pi/8$]{}
 \caption{Evolution of the kinetic energy dissipation rate over time on affine and curvilinear meshes.  }
 \label{fig:tg}
 \end{figure}
 
-\note{Add Taylor-Green vortex}
-
-%\section{Computational results}
+%\note{Add Taylor-Green vortex}
 
 \section{Conclusions}
 
+This work describes how to extend entropy conservative and entropy stable DG ``modal'' discretizations to curvilinear meshes using both weighted and weight-adjusted mass matrices.   Assuming that the geometric terms satisfy a discrete geometric conservation law, the presented schemes allow for the use of over-integration while satisfying a semi-discrete entropy equality or inequality on curved meshes.  Numerical results show the presented schemes achieve optimal rates of convergence for smooth solutions on both two and three dimensional affine and curvilinear meshes while remaining robust in the presence of under-resolved solutions and shocks.  
 
-
+Several outstanding computational questions remain to be answered.  First, the use of weight-adjusted mass matrices is motivated by the low storage requirements and their efficient application on GPUs.  However, to guarantee discrete entropy stability, the computation of a weight-adjusted projection is necessary, which adds additional computational cost compared to the affine case.  Furthermore, numerical results suggest that, while computing the entropy-projected conservative variables $\tilde{\bm{u}}$ using the weight-adjusted projection is necessary to ensure a semi-discrete conservation of entropy, the difference between using a weight-adjusted projection and regular projection may be negligible in practice.  The necessity of the weight-adjusted projection in computing $\tilde{\bm{u}}$ should be examined further.  Secondly, on triangular and tetrahedral meshes, the proposed schemes involve more computational work than under-integrated collocation-style SBP schemes \cite{hicken2016multidimensional, chen2017entropy, crean2018entropy}.  A careful computational comparison of the presented schemes with existing methods should be done to weigh the benefits of improved accuracy with additional computational costs.  
 
 \section{Acknowledgements}
 
