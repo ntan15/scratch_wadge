@@ -1,6 +1,6 @@
 
 if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare2.msh"
-elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube3.msh"
+elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTG3.msh"
 else
   print("Unknown element type")
 end
@@ -24,7 +24,7 @@ app = {
     --           -cl-fast-relaxed-math"
 
     -- CUDA
-       info = string.format("mode = CUDA , deviceID = 0"),
+       info = string.format("mode = CUDA , deviceID = 1"),
     -- flags = "--compiler-options -O3 --ftz=true --prec-div=false \z
     --                            --prec-sqrt=false --use_fast_math \z
     --                            --fmad=true"
@@ -38,13 +38,13 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 4,
-    M = 8,
+    N = 3,
+    M = 6,
     sfc_partition = true
   },
   physical={
-    FinalTime = 5.0,
-    CFL = .5,
+    FinalTime = 20.0,
+    CFL = .25,
   },
   output = {
     datadir = "data",

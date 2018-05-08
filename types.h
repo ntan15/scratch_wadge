@@ -43,6 +43,8 @@ typedef double dfloat_t;
 #define POWDF pow
 #define LOGDF log
 #define EXPDF exp
+#define SINDF sin
+#define COSDF cos
 #else
 typedef float dfloat_t;
 #define occaDfloat occaFloat
@@ -55,6 +57,8 @@ typedef float dfloat_t;
 #define POWDF powf
 #define LOGDF logf
 #define EXPDF expf
+#define SINDF sinf
+#define COSDF cosf
 #endif
 
 #endif
