@@ -1,7 +1,7 @@
 \pdfoutput=1
 
-\documentclass[preprint]{article}
-%\documentclass[10pt]{amsart}
+%\documentclass[preprint]{article}
+\documentclass[10pt]{amsart}
 \usepackage{stmaryrd}
 
 \usepackage{fullpage}
@@ -283,12 +283,23 @@ legend style={font=\small}
 \maketitle
 
 \begin{abstract}
-We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete form of the continuous entropy inequality and guarantee that the semi-discrete solution is stable in time.  The proof of stability requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of an approach introduced in \cite{kopriva2006metric}.  We also describe how to construct entropy conservative and entropy stable DG schemes using low-storage weight-adjusted approximations to high order accurate curvilinear mass matrices \cite{chan2016weight1, chan2016weight2} based on a high order accurate weight-adjusted projection operator.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
+We construct entropy conservative and entropy stable high order accurate discontinuous Galerkin (DG) discretizations for time-dependent nonlinear hyperbolic conservation laws on curvilinear meshes by extending the methodology of \cite{chan2017discretely}.  The resulting schemes preserve a semi-discrete quadrature approximation of a continuous global entropy inequality.  The proof requires the satisfaction of a discrete geometric conservation law, which we enforce through a modification of an approach introduced in \cite{kopriva2006metric}.  We extend the construction of entropy conservative and entropy stable DG schemes to the case when high order accurate curvilinear mass matrices are approximated using low-storage weight-adjusted approximations \cite{chan2016weight1, chan2016weight2}.  We present numerical experiments which verify theoretical results for the compressible Euler equations in two and three dimensions.
 \end{abstract}
 
-\tableofcontents
+%\tableofcontents
 
 \section{Introduction}
+
+High order discontinuous Galerkin (DG) methods are attractive for the simulation of time-dependent wave propagation due to their low numerical dispersion and dissipation \cite{hu1999analysis, ainsworth2004dispersive} and ability to handle unstructured meshes and complex geometries.  These same properties make them attractive for the resolution of transient waves and vortices in compressible flow \cite{wang2013high}.  However, whereas the construction of stable DG methods for wave propagation is relatively well-established, it is not possible to extend the same formulations directly from linear wave propagation problems to the nonlinear conservation laws which govern compressible fluid behavior.  
+
+The low numerical dissipation of high order DG methods combined with the lack of inherently stable formulations for nonlinear conservation laws has given high order discretizations the reputation of being non-robust and highly sensitive to instabilities and under-resolved features \cite{wang2013high}.  This instability is addressed in practice by adding additional stabilization through limiting, filtering, or artificial viscosity \cite{persson2006sub, krivodonova2007limiters, barter2010shock, guermond2011entropy}.  However, these approaches are typically ad-hoc, and do not guarantee the stability of the resulting scheme.  Moreover, high order accuracy can be lost if the stabilization is too strong.  
+
+The lack of inherently stable formulations was addressed for high order nodal DG methods on quadrilateral and hexahedral meshes in \cite{fisher2013high, carpenter2014entropy}.  The resulting schemes ensure that that the numerical solution satisfies a semi-discrete version of an entropy inequality, independently of discrete effects such as under-integration.  This results in significantly more robust high order simulations, where the numerical solution does not blow up even in the presence of under-resolved features such as shock discontinuities or turbulence.  High order entropy stable schemes have since been extended to staggered grid and non-conforming \cite{parsani2016entropy, friedrich2017entropy} tensor product elements, as well as to simplicial meshes \cite{chen2017entropy, chan2017discretely, crean2018entropy}.  
+
+Entropy stable methods have largely relied on a finite difference summation-by-parts framework.  The summation-by-parts property holds for spectral element DG methods (DG-SEM), which assume a polynomial basis which collocates the solution at Gauss-Legendre-Lobatto (GLL) quadrature nodes on tensor product elements.  This approach is difficult to replicate on simplicial elements, as analogous quadrature rules on the triangle and tetrahedron contain more nodes than the dimension of the underlying polynomial space \cite{hicken2016multidimensional}.  As a result, the entropy stable schemes introduced in \cite{chen2017entropy, crean2018entropy} are not ``modal'', or associated with an underlying basis or approximation space.  
+
+Entropy stable schemes were extended to modal discretizations  in \cite{chan2017discretely}, allowing for the use of arbitrary basis functions and over-integrated quadrature rules.  In this work, we show how to extend the construction of high order entropy stable schemes to curvilinear meshes.  \note{finish}
+
 
 Introducing WADG \cite{chan2016weight1,chan2016weight2}.  
 
@@ -304,20 +315,20 @@ This work addresses high order accurate schemes for the following system of $n$ 
 where $\bm{u}(\bm{x},t)$ denotes the \emph{conservative variables} for this system.  %We assume the system is well-posed under appropriate boundary conditions.
 We are interested in nonlinear conservation laws for which an entropy function $U(\bm{u})$ exists, where $U(\bm{u})$ is convex with respect to the conservative variables $\bm{u}$.  If this function exists, then it is possible to define \emph{entropy variables} $\bm{v}(\bm{u}) = \pd{U}{\bm{u}}$.  These functions symmetrize the system of nonlinear conservation laws (\ref{eq:nonlineqs}) \cite{hughes1986new}.  
 
-It can be shown (see, for example, \cite{mock1980systems}) that symmetrization is equivalent to the existence of entropy flux function $F_j(\bm{u})$ and entropy potentials $\psi_j$ such that
+It can be shown (see, for example, \cite{mock1980systems}) that symmetrization is equivalent to the existence of entropy flux functions $F_j(\bm{u})$ and entropy potentials $\psi_j$ such that
 \[
 \bm{v}^T \pd{\bm{f}_j}{\bm{u}} = \pd{F_j(\bm{u})}{\bm{u}}^T, \qquad \psi_j(\bm{v}) = \bm{v}^T\bm{f}_j(\bm{u}(\bm{v})) - F_j(\bm{u}(\bm{v})), \qquad \psi_j'(\bm{v}) = \bm{f}_j(\bm{u}(\bm{v})).
 \]
-Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields %\lcwnote{(What layout conventions are used for the Matrix calculus, \url{https://en.wikipedia.org/wiki/Matrix_calculus\#Layout_conventions}?  For example, should $\pd{U(\bm{u})}{\bm{u}}$ be a row vector and $\pd{\bm{u}}{x_j}$ a column vector?)}  \note{JC: I think $\pd{U(\bm{u})}{\bm{u}}$ should be a row vector and $\pd{\bm{u}}{x_j}$ a column vector.  I haven't specified this since most of the other entropy stable papers haven't done so either - do you think we should be explicit?} \lcwnote{I don't think we need to be explicit but follow a convention.  I think there was as couple of places I changed to follow the convention you suggested.}
+Smooth solutions of (\ref{eq:nonlineqs}) can be shown to satisfy a conservation of entropy by multiplying (\ref{eq:nonlineqs}) by $\bm{v}(\bm{u})$. Using the definition of the entropy variables, entropy flux, and the chain rule yields
 \begin{equation}
-\bm{v}^T\pd{\bm{f}_j(\bm{u})}{x_j} = \pd{U(\bm{u})}{\bm{u}}^T\pd{\bm{f}_j(\bm{u})}{\bm{u}}\pd{\bm{u}}{x_j} = \pd{F_j(\bm{u})}{x_j},
+\bm{v}^T\pd{\bm{f}_j(\bm{u})}{x_j} = \pd{U(\bm{u})}{\bm{u}}^T\pd{\bm{f}_j(\bm{u})}{\bm{u}}\pd{\bm{u}}{x_j} = \pd{F_j(\bm{u})}{x_j}, \qquad \pd{U(\bm{u})}{t} + \sum_{j=1}^d \pd{F_j(\bm{u})}{x_j} = 0.
 \label{eq:chainrule}
 \end{equation}
-and that
-\begin{equation*}
-\pd{U(\bm{u})}{t} + \sum_{j=1}^d \pd{F_j(\bm{u})}{x_j} = 0.
-%\label{eq:entropyeqstrong}
-\end{equation*}
+%and that
+%\begin{equation*}
+%
+%%\label{eq:entropyeqstrong}
+%\end{equation*}
 Let $\Omega \subset \mathbb{R}^d$ be a closed domain with boundary $\partial \Omega$.  Integrating over $\Omega$ and using Gauss' theorem on the spatial derivative yields
 \begin{equation}
   \int_{\Omega}\pd{U(\bm{u})}{t}\diff{\bm{x}} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}{(\bm{u})}^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{\bm{x}} = 0,
@@ -364,7 +375,7 @@ We denote the dimension of the trace space as ${\rm dim}\LRp{P^N_f\LRp{\hat{f}}}
 
 We next define the $L^2$ norm and inner products over the reference element $\hat{D}$ and the surface of the reference element $\partial \hat{D}$ as
 \[
-  \LRp{\bm{u},\bm{v}}_{\hat{D}} =  \int_{\widehat{D}} \bm{u}\cdot\bm{v} \diff{\hat{\bm{x}}}, \qquad \nor{\bm{u}}^2_{\hat{D}} = (\bm{u},\bm{u})_{\hat{D}}, \qquad \LRa{\bm{u},\bm{v}}_{\partial \hat{D}} = \int_{\partial \hat{D}} \bm{u} \cdot \bm{v} \diff{\hat{\bm{x}}},
+  \LRp{\bm{u},\bm{v}}_{\hat{D}} =  \int_{\widehat{D}} \bm{u}\cdot\bm{v} \diff{\hat{\bm{x}}}, \qquad \nor{\bm{u}}^2_{\hat{D}} = (\bm{u},\bm{u})_{\hat{D}}, \qquad \LRa{\bm{u},\bm{v}}_{\partial \hat{D}} = \int_{\partial \hat{D}} \bm{u} \cdot \bm{v} \diff{\hat{\bm{x}}}.
 \]
 We also introduce the continuous $L^2$ projection operator $\Pi_N$ and lifting operator $L$.  For $u \in L^2\LRp{\widehat{D}}$, the $L^2$ projection $\Pi_N u$ is defined through
 \begin{equation}
@@ -411,12 +422,10 @@ where the numerical flux $\bm{f}^*$ is a function of the solution $\bm{u}$ on bo
 Unfortunately, solutions to (\ref{eq:weakdg}) do not (in general) obey a discrete version of the entropy inequality (\ref{eq:entropyineq}).  Since (\ref{eq:entropyineq}) is a generalized statement of energy stability, the lack of a discrete entropy inequality implies that the discrete solution can blow up in finite time.  The reason for this is due to the fact that, in practice, the integrals in (\ref{eq:weakdg}) are not computed exactly and are instead approximated using polynomially exact quadratures.  This is compounded by the fact that the nonlinear flux function $\bm{f}_j\LRp{\bm{u}}$ is often rational and impossible to integrate exactly using polynomial quadratures.  
 
 While this paper focuses on curved meshes, the inexactness of quadrature leads to the loss of the chain rule and thus the loss of entropy conservation or entropy dissipation (\ref{eq:entropyineq}) even on affine meshes.  We can rewrite (\ref{eq:weakdg}) in a strong form using a discrete quadrature-based $L^2$ projection.  For polynomial approximation spaces on affine meshes, $\pd{\bm{v}}{x_i}$ is polynomial.  
-%\lcwnote{(Is this true when have a non-affine element mapping?)} \note{No - good point.  I specified affine meshes in the revised text}.  
 Then, mapping (\ref{eq:weakdg}) back to the reference element $\hat{D}$ and using the $L^2$ projection and (\ref{eq:l2proj}), we have that
 \[
 \int_{D^k} \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} \diff{\bm{x}} = \int_{\hat{D}} \Pi_N \bm{f}_j(\bm{u}) \cdot \pd{\bm{v}}{x_i} J^k\diff{\bm{x}}.
 \]
-%\lcwnote{I don't understand the previous equation.  Should the geometry terms be included in the argument to the $L^2$ projection?  If so we might need to introduce $\bm{G}^k$ here.}  \note{Good point - I meant this to be for affine elements only to illustrate why the chain rule is lost.  It's more complicated for curvilinear elements.  }
 Thus, integrating by parts (\ref{eq:weakdg}) recovers a ``strong'' DG formulation involving the projection operator
 \begin{align}
 &\int_{D^k} \LRp{\pd{\bm{u}}{t} - \sum_{j=1}^d \pd{\Pi_N \bm{f}_j(\bm{u})}{x_j}} \cdot \bm{v} \diff{\bm{x}} \nonumber\\
@@ -474,7 +483,6 @@ Using the volume quadrature interpolation matrix $\bm{V}_q$, we can compute a qu
 \]
 The approximation in the formula for the mass matrix becomes an equality if the volume quadrature rule is exact for polynomials of degree $2N$.  The mass matrix is symmetric and positive definite under Assumption~\ref{ass:quad}; however, we do not make any distinctions between diagonal and dense (lumped) mass matrices in this work.  
 
-%\lcwnote{(It seems to be positive definite due to the fact we have a positive weight quadrature, not Assumption~\ref{ass:quad}.)} \note{Yes, but the degree of exactness of the quadrature is also necessary or it can be only positive semi-definite.  For example, if you just use a degree $2N$ quadrature, I think you can end up with a singular mass matrix.}; \lcwnote{Cool, I see this now.}
 
 The mass matrix appears in the discretization of $L^2$ projection (\ref{eq:l2proj}) and lift operators (\ref{eq:lift}) using quadrature.  The result are quadrature-based $L^2$ projection and lift operators $\bm{P}_q, \bm{L}_q$, 
 \begin{equation}
@@ -493,6 +501,7 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 }
 \label{eq:decoupledsbp}
 \end{equation}
+\lcwnote{(I am not sure why $\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}}$ changed to $\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}$.  I am guessing it was a typo but want to double check I am not missing something before I change it back everywhere.)}
 where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
@@ -534,7 +543,6 @@ The key difference between curvilinear and affine meshes is that geometric terms
 \pd{u}{x_i} = \sum_{j=1}^d \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad \bm{G}^k_{ij} = \pd{\hat{x}_j}{x_i},
 \]
 where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$.  We refer to the determinant of $\bm{G}^k$ as $J^k$, and denote evaluations of $J^k\bm{G}^k_{ij}$ at both volume and surface quadrature points  as the vector $\bm{JG}^k_{ij}$.
-%\lcwnote{(What about $\bm{J}^{\bm{G}^k_{ij}}$ instead of $\bm{JG}^k_{ij}$ to make it look more like a single object? I am debating if I should revert the changes to add the Hadamard product to the other surface terms.)} \note{Hm...I'm not sure about the expanding superscripts/subscripts.  What if we changed it to a different name instead of $J\bm{G}_{ij}$, like $\tilde{\bm{G}}^k_{ij}$?} \lcwnote{I got used to the way you have it, I don't think we need to change.}
 
 We assume in this work that the mesh is stationary.  It can be shown at the continuous level that, for any differentiable and invertible mapping, the quantity $J^k\bm{G}^k$ satisfies a geometric conservation law (GCL) \cite{kopriva2006metric, thomas1979geometric}
 \begin{equation}
@@ -651,7 +659,6 @@ We now introduce the $L^2$ projection of the entropy variables $\bm{v}_h$ and th
 \end{array}} = \bm{u}\LRp{\tilde{\bm{v}}}.
 \label{eq:evars1}
 \end{align}
-%\lcwnote{I changed $\bm{v}_h = \bm{P}_q \bm{v}\LRp{\bm{u}_q}$ to $\bm{v}_h = \bm{P}^k_q \bm{v}\LRp{\bm{u}_q}$.  Is this correct?} \note{Yup - thanks!}
 In (\ref{eq:evars1}), the entropy-projected conservative variables $\tilde{\bm{u}}$ denote the evaluation of the conservative variables in terms of the projected entropy variables at volume and face quadrature points.  We note that, under an appropriate choice of quadrature on quadrilaterals and hexahedra, this approach is equivalent to the approach taken in \cite{parsani2016entropy}, where the entropy variables are evaluated at Gauss nodes, then interpolated to a different set of nodes and used to compute the nonlinear fluxes.  
 
 We now introduce a semi-discrete DG formulation for $\bm{u}_h$
@@ -925,6 +932,7 @@ We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
 \sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
+\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
 Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and noting that $\LRp{\bm{B}^i_k \circ \bm{F}_{j,S}}\bm{1} = \bm{W}_f\diag{\bm{n}_j \circ \bm{J}^k_f}\bm{f}_j(\bm{u})$ (using the consistency of $\bm{f}_S$ and diagonal nature of $\bm{B}^i_k$) yields
 \[
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
@@ -932,7 +940,7 @@ Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and
 \]
 Since $\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} $ is skew-symmetric and $\bm{F}_{j,S}$ is symmetric, the Hadamard product of these two matrices is skew-symmetric.  As a result, $\bm{1}^T \LRp{\LRp{\bm{Q}^j_k-\LRp{\bm{Q}^j_k}^T} \circ \bm{F}_{j,S}}\bm{1} = 0$ and 
 \begin{equation}
-\bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*} = 0
+\bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*} = 0.
 \label{eq:localcons}
 \end{equation}
 Global conservation is shown by summing (\ref{eq:localcons}) over all elements $D^k$.  Because the flux $\bm{f}_j^*$ is single-valued on each face and the outward normal $\bm{n}_j$ changes sign on adjacent elements, the contributions $\bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^*}$ cancel on all interior interfaces.\footnote{Conservation still holds when incorporating entropy dissipation through penalty terms involving jumps.  This is because the definition of the jump changes sign on adjacent elements, such that jump contributions cancel when summing over all elements.} On periodic meshes, this yields conservation with respect to the weight-adjusted mass matrix
@@ -950,14 +958,14 @@ The simplest way to ensure local conservation is to approximate $J$ using a degr
 \begin{lemma}
 Let $J^k \in P^N$, and let integrals be computed using quadrature which is exact for degree $2N$ polynomials.  Then, 
 \[
-\bm{1}^T\bm{M}\bm{M}^{-1}_{1/J^k}\bm{M}\bm{u} = \int_{\hat{D}}T^{-1}_{1/J^k} u =  \int_{\hat{D}} u J^k.
+\bm{1}^T\bm{M}\bm{M}^{-1}_{1/J^k}\bm{M}\bm{u} = \int_{\hat{D}}T^{-1}_{1/J^k} u \diff{\hat{\bm{x}}}=  \int_{\hat{D}} u J^k\diff{\hat{\bm{x}}}.
 \]
 \label{eq:conscorrect1}
 \end{lemma}
 \begin{proof}
 The proof relies on (\ref{eq:wadgTw}), which states that $\LRp{\frac{1}{J^k} T^{-1}_{1/J^k}u,v}_{\hat{D}} = \LRp{u,v}_{\hat{D}}$ for all $v\in P^N$.  If $J^k$ is a polynomial of degree $N$, then taking $v = 1$ yields
 \[
-\LRp{T^{-1}_{1/J^k}u,1}_{\hat{D}} = \LRp{\frac{1}{J^k}T^{-1}_{1/J^k}u,{J^k}}_{\hat{D}}= \LRp{u,{J^k}}_{\hat{D}} = \int_{\hat{D}} uJ^k. 
+\LRp{T^{-1}_{1/J^k}u,1}_{\hat{D}} = \LRp{\frac{1}{J^k}T^{-1}_{1/J^k}u,{J^k}}_{\hat{D}}= \LRp{u,{J^k}}_{\hat{D}} = \int_{\hat{D}} uJ^k\diff{\hat{\bm{x}}}. 
 \]
 Additionally, the proof still holds if integrals are approximated using a quadrature rule which exactly integrates $uJ^k \in P^{2N}$.
 \end{proof}
@@ -1140,7 +1148,6 @@ Let $\tilde{\bm{D}}^{N+1}_i$ denote the nodal differentiation matrix of degree $
 \bm{JG^k}_{32} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_1 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_3\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_3 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}} \nonumber\\
 \bm{JG^k}_{33} &= -\bm{V}_{N+1}^N\LRp{\tilde{\bm{D}}^{N+1}_2 \LRp{ \LRp{\tilde{\bm{D}}^{N+1}_1\tilde{\bm{x}}_2} \circ\tilde{\bm{x}}_1} - \tilde{\bm{D}}^{N+1}_1 \LRp{  \LRp{\tilde{\bm{D}}^{N+1}_2\tilde{\bm{x}}_2 }\circ\tilde{\bm{x}}_1}}. \nonumber
 \end{align}
-%\lcwnote{Should we instead use the average of the two ``conservative forms'' given earlier in the next?  I guess we would have to change the code as well.}
 \begin{remark}
 
 We note that the discrete GCL (\ref{eq:dgcl}) can also be enforced directly through a local constrained minimization problem \cite{fernandez2016simultaneous, crean2018entropy}, which yields a solution in terms of a pseudo-inverse.  However, we have not found a straightforward way to simultaneously enforce both the discrete GCL condition (\ref{eq:dgcl}) and Assumption~\ref{ass:norm} using this approach.
@@ -1230,16 +1237,12 @@ coordinates{(0.5,0.00466574)(0.25,0.000804201)(0.125,0.000182886)(0.0625,2.96701
 \label{fig:superconverge}
 \end{figure}
 
-We next compare the approximation of the geometric factors on a curved three-dimensional mesh.  We generate a sequence of quasi-uniform unstructured tetrahedral meshes using GMSH \cite{geuzaine2009gmsh} and construct a curvilinear mesh from the distorted coordinates $\tilde{\bm{x}}$, where
-\begin{align}
-\tilde{\bm{x}} = \bm{x} + \frac{1}{8}\cos\LRp{\frac{\pi}{2}x_1}\cos\LRp{\frac{\pi}{2}x_2}\cos\LRp{\frac{\pi}{2}x_3}.  
-\label{eq:mapping}
-\end{align}
+We next compare the approximation of the geometric factors on a curved three-dimensional mesh.  We generate a sequence of quasi-uniform unstructured tetrahedral meshes using GMSH \cite{geuzaine2009gmsh} and construct a curvilinear mesh from the distorted coordinates $\tilde{\bm{x}} = \bm{x} + \frac{1}{8}\cos\LRp{\frac{\pi}{2}x_1}\cos\LRp{\frac{\pi}{2}x_2}\cos\LRp{\frac{\pi}{2}x_3}$.
 We then compute the $L^2$ error in approximating geometric terms for each element $D^k$ by computing $J^k\bm{G}^k_{ij}-\tilde{J^k\bm{G}^k_{ij}}$ at quadrature points.  
 %\[
 %\sqrt{\sum_{k}\sum_{ij=1}^d \nor{J^k\bm{G}^k_{ij} - \tilde{J^k\bm{G}^k_{ij}}}^2_{L^2\LRp{\hat{D}}}}.  
 %\]
-We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Geo-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Geo-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Geo-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Geo-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  We note that the error in both the Geo-$N$ and Geo-$(N+1)$ approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge at a rate of at least $O(h^{N+1})$, matching the rate of convergence of the best approximation error.  
+We estimate the mesh size as $h = \max_k \nor{J^k/J^k_f}_{L^{\infty}}$, since $J^k = O(h^d)$ and $J^k_f = O(h^{d-1})$ in $d$ dimensions \cite{chan2015gpu}.  Figure~\ref{fig:geomerr} shows errors for an $N=3$ and $N=4$ mesh.  We refer to the construction of approximate geometric terms $\tilde{J^k\bm{G}^k_{ij}}$ introduced in \cite{kopriva2006metric, hindenlang2012explicit} as ``Geo-$N$'', since the interpolation is performed using a degree $N$ interpolation operator.  We refer to the construction of $\tilde{J^k\bm{G}^k_{ij}}$ in (\ref{eq:iconscurl2}) and Theorem~\ref{thm:koprivagcl} as ``Geo-$(N+1)$'', since the main interpolation step is performed on degree $(N+1)$ polynomials instead.  It can be observed that the ``Geo-N'' scheme converges at a rate of $O(h^{N+1})$, while the ``Geo-(N+1)'' scheme converges at a rate of $O(h^{N+2})$.  We note that the error in both the Geo-$N$ and Geo-$(N+1)$ approximations of $\tilde{J^k\bm{G}^k_{ij}}$ converge at the same rate or faster than the best approximation error.  
 %\note{Optimal rates are observed for $N=5$, geometry order 3 by Hindenlang, but this is be because $J^k\bm{G}^k_{ij} \in Q^{2N_{\rm geo}-2} = Q^4$, so it should not be necessary to enforce the GCL in that situation. Note sensitivity of nonlinear solvers to geometry error \cite{toulorge2016optimizing}}.
 
 \begin{figure}
@@ -1367,7 +1370,7 @@ First, can examine the entropy RHS, which we define as the right hand side of (\
   \text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}.  
 \label{eq:entropyrhs}
 \end{equation}
-For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machine precision.  We can also track the change in entropy $\Delta U = \LRb{U(\bm{u}(\bm{x},t))-U(\bm{u}(\bm{x},0))}$, which should converge to $0$ as the timestep $dt$ approaches zero.  Furthermore, the rate of convergence should match the order of the time-stepper used \cite{gassner2016well,chan2017discretely}.  
+For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machine precision.  We can also track the change in entropy $\Delta U = \LRb{U(\bm{u}(\bm{x},t))-U(\bm{u}(\bm{x},0))}$, which should converge to $0$ as the timestep $dt$ approaches zero.  Furthermore, the rate of convergence should match the order of the time-stepper used \cite{gassner2016well, chan2017discretely}.  
 
 \begin{figure}
 \centering
@@ -1746,16 +1749,16 @@ x-x_0\\
 0
 \end{pmatrix}
 \]
-In this problem, we take $x_0 = y_0 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = .4$.  We solve the problem on the domain $[0,10]\times [0,20]\times [0,10]$.  
-\begin{figure}
-\centering
-\subfloat[$h = 1$]{\includegraphics[width=.4\textwidth]{figs/periodicCube2.png}}
-\hspace{2em}
-\subfloat[$h = 1/2$]{\includegraphics[width=.4\textwidth]{figs/periodicCube3.png}}
-\caption{Unstructured affine tetrahedral meshes used for convergence tests.}
-\label{fig:mesh3d}
-\end{figure}
-We use \textsc{GMSH} to construct three unstructured meshes consisting of 1354, 9543, and 72923 tetrahedra.  The latter two meshes are shown in Figure~\ref{fig:mesh3d}.  We apply a curvilinear warping by again mapping nodal positions each tetrahedron to warped nodal positions $(\tilde{x},\tilde{y},\tilde{z})$ via
+In this problem, we take $x_0 = y_0 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = .4$.  The problem is solved on the domain $[0,10]\times [0,20]\times [0,10]$.  
+%\begin{figure}
+%\centering
+%\subfloat[$h = 1$]{\includegraphics[width=.4\textwidth]{figs/periodicCube2.png}}
+%\hspace{2em}
+%\subfloat[$h = 1/2$]{\includegraphics[width=.4\textwidth]{figs/periodicCube3.png}}
+%\caption{Unstructured affine tetrahedral meshes used for convergence tests.}
+%\label{fig:mesh3d}
+%\end{figure}
+We use \textsc{GMSH} to construct three unstructured meshes consisting of 1354, 9543, and 72923 affine tetrahedra, corresponding to $h = 2$, $h = 1$, and $h = 1/2$ (shown in Figure~\ref{subfig:mesh3d}).  We apply a curvilinear warping by again mapping nodal positions each tetrahedron to warped nodal positions $(\tilde{x},\tilde{y},\tilde{z})$ via
 \begin{align*}
 \tilde{x} &= x + \frac{1}{2}\sin\LRp{\pi \frac{x}{10}}\sin\LRp{2\pi \frac{y}{20}}\sin\LRp{\pi \frac{z}{10}},\\
 \tilde{y} &= y - \sin\LRp{2 \pi \frac{x}{10}}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{z}{10}},\\
@@ -1765,7 +1768,8 @@ Additionally, we approximate the geometric terms using (\ref{eq:iconscurl2}) to 
 
 \begin{figure}
 \centering
-\begin{tikzpicture}
+\subfloat[Mesh for $h = 1/2$]{\raisebox{2em}{\includegraphics[width=.4\textwidth]{figs/periodicCube3.png}}\label{subfig:mesh3d}}
+\subfloat[$L^2$ errors]{\begin{tikzpicture}
 \begin{loglogaxis}[
     legend cell align=left,
     legend style={legend pos=south east, font=\tiny},
@@ -1801,8 +1805,8 @@ coordinates{(2,0.184547)(1,0.0104361)(.5,0.0003960681)};
 %\legend{$L^2$ projection,Weight-adjusted,Difference}
 %\legend{Uniform, Optimal, Smoothed}
 \end{loglogaxis}
-\end{tikzpicture}
-\caption{Convergence of $L^2$ errors for the 3D isentropic vortex problem on affine and curved meshes, with optimal $O(h^{N+1})$ rates of convergence shown for reference.}
+\end{tikzpicture}}
+\caption{Convergence of $L^2$ errors for the 3D isentropic vortex problem on unstructured affine and curved meshes, with optimal $O(h^{N+1})$ rates of convergence shown for reference.}
 \label{fig:converge3d}
 \end{figure}
 
@@ -1814,13 +1818,61 @@ We also compared approximations of geometric factors using degree $N$ polynomial
 
 \subsubsection{Inviscid Taylor-Green vortex}
 
-Our last numerical experiment investigates the behavior of ESDG schemes for the inviscid Taylor-Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  
+Our last numerical experiment investigates the behavior of ESDG schemes for the inviscid Taylor-Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  The domain is the periodic box $[-\pi,\pi]^3$, and the initial conditions are given as
+\begin{align*}
+\rho &= 1\\
+u &= \sin(x)\cos(y)\cos(z),\\
+v &= -\cos(x)\sin(y)\cos(z),\\ 
+w &= 0,\\
+p &= \frac{100}{\gamma} + \frac{1}{16} \LRp{\cos(2x) + \cos(2y)}\LRp{2+\cos(2z)}.
+\end{align*}
+The Taylor-Green vortex is used to study the transition and decay of turbulence \cite{debonis2013solutions}.  In the absence of viscosity, the Taylor-Green vortex develops smaller and smaller scales, implying that for sufficiently large times, the solution contains under-resolved features.  We study the evolution of the kinetic energy $\kappa(t)$ 
+\[
+\kappa(t) =\frac{1}{\LRb{\Omega}} \int_{\Omega} \rho \bm{u}\cdot\bm{u} \diff{\bm{x}},
+\]
+as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$.  
+
+\begin{figure}
+\centering
+\subfloat[$N=3$, $h = \pi/8$]{
+\begin{tikzpicture}
+\begin{axis}[
+        scaled ticks=false, 
+        tick label style={/pgf/number format/fixed},
+	legend cell align=left,
+	legend style={font=\tiny},
+	width=.475\textwidth,
+    xlabel={Time $t$},
+    ylabel={$-\pd{\kappa}{t}$},
+%    xmin=.005, xmax=1,
+%    ymin=1e-10, ymax=1e-1,
+    legend pos=north east,
+    xmajorgrids=true,
+    ymajorgrids=true,
+    grid style=dashed,
+%    ytick={0, .005, .01, .015},
+%    yticklabels={0, .005, .01, .015}    
+] 
+\addplot[color=blue,semithick, mark options={fill=markercolor}]
+coordinates{(0,-0)(0.18796,-8.45875e-06)(0.37592,-9.02267e-06)(0.563879,-1.63536e-05)(0.751839,-1.40979e-05)(0.939799,-2.48123e-05)(1.12776,-2.65041e-05)(1.31572,-2.76319e-05)(1.50368,-2.53763e-05)(1.69164,-2.0301e-05)(1.8796,-2.31206e-05)(2.06756,-1.69175e-05)(2.25552,-1.3534e-05)(2.44348,2.25567e-06)(2.63144,1.63536e-05)(2.8194,2.98876e-05)(3.00736,4.90608e-05)(3.19532,7.38731e-05)(3.38328,0.000117859)(3.57124,0.000183837)(3.7592,0.000306771)(3.94716,0.000514292)(4.13512,0.000819935)(4.32308,0.00122765)(4.51104,0.00175378)(4.699,0.00240454)(4.88696,0.00307729)(5.07491,0.00363332)(5.26288,0.00394291)(5.45083,0.00414817)(5.6388,0.00436754)(5.82676,0.00455927)(6.01471,0.00484235)(6.20267,0.00527544)(6.39063,0.00577169)(6.57859,0.0063638)(6.76655,0.00709971)(6.95451,0.00787679)(7.14247,0.00860142)(7.33043,0.0093097)(7.51839,0.0100575)(7.70635,0.0109236)(7.89431,0.011972)(8.08227,0.0129661)(8.27023,0.013675)(8.45819,0.0141244)(8.64615,0.0142863)(8.83411,0.0141814)(9.02207,0.0139541)(9.21003,0.0136913)(9.39799,0.0134325)(9.58595,0.0133152)(9.77391,0.0132047)(9.96187,0.0130733)(10.1498,0.0127473)(10.3378,0.0122686)(10.5258,0.0118191)(10.7137,0.0114588)(10.9017,0.011108)(11.0896,0.0107578)(11.2776,0.0104415)(11.4656,0.0101274)(11.6535,0.00979918)(11.8415,0.00946253)(12.0294,0.00913827)(12.2174,0.00885124)(12.4053,0.00859409)(12.5933,0.00836514)(12.7813,0.00814465)(12.9692,0.00790724)(13.1572,0.00766025)(13.3451,0.00740818)(13.5331,0.0071578)(13.7211,0.00691137)(13.909,0.00667057)(14.097,0.0064264)(14.2849,0.00616305)(14.4729,0.0058918)(14.6609,0.00565045)(14.8488,0.00543559)(15.0368,0.00524499)(15.2247,0.00506736)(15.4127,0.00490326)(15.6007,0.00475551)(15.7886,0.00460156)(15.9766,0.00443803)(16.1645,0.00427562)(16.3525,0.00412054)(16.5405,0.00397618)(16.7284,0.00384422)(16.9164,0.00371339)(17.1043,0.00357805)(17.2923,0.00344835)(17.4803,0.00333275)(17.6682,0.00323237)(17.8562,0.00313369)(18.0441,0.00303105)(18.2321,0.00292842)(18.4201,0.00282973)(18.608,0.00273556)(18.796,0.00264082)(18.9839,0.00254834)(19.1719,0.00246319)(19.3599,0.0023848)(19.5478,0.00231431)(19.7358,0.00225059)(19.9237,0.00218969)};
+
+\addplot[color=red, dashed,semithick, mark options={fill=markercolor}]
+coordinates{(0,5.36239e-07)(0.18796,-9.65229e-06)(0.37592,-1.01885e-05)(0.563879,-1.98408e-05)(0.751839,-1.76959e-05)(0.939799,-1.93046e-05)(1.12776,-2.14495e-05)(1.31572,-1.93046e-05)(1.50368,-2.4667e-05)(1.69164,-1.66234e-05)(1.8796,-8.57982e-06)(2.06756,-0)(2.25552,1.17972e-05)(2.44348,1.76959e-05)(2.63144,3.70005e-05)(2.8194,6.43486e-05)(3.00736,0.000107784)(3.19532,0.000173741)(3.38328,0.000268656)(3.57124,0.000432745)(3.7592,0.000693357)(3.94716,0.00106122)(4.13512,0.00156796)(4.32308,0.00222485)(4.51104,0.00299597)(4.699,0.00373597)(4.88696,0.00432584)(5.07491,0.00468404)(5.26288,0.00495645)(5.45083,0.00521599)(5.6388,0.00551361)(5.82676,0.0059426)(6.01471,0.00650672)(6.20267,0.00717005)(6.39063,0.00793258)(6.57859,0.00878681)(6.76655,0.0095858)(6.95451,0.0103457)(7.14247,0.0110685)(7.33043,0.0116551)(7.51839,0.0124011)(7.70635,0.013015)(7.89431,0.0133341)(8.08227,0.0135652)(8.27023,0.0136097)(8.45819,0.0135175)(8.64615,0.0134918)(8.83411,0.0133647)(9.02207,0.0131925)(9.21003,0.0130242)(9.39799,0.012703)(9.58595,0.0123292)(9.77391,0.011971)(9.96187,0.0115586)(10.1498,0.0111345)(10.3378,0.0107687)(10.5258,0.0103671)(10.7137,0.0100089)(10.9017,0.00969788)(11.0896,0.00941206)(11.2776,0.00916861)(11.4656,0.00893803)(11.6535,0.00868707)(11.8415,0.00840018)(12.0294,0.00807897)(12.2174,0.00776742)(12.4053,0.00747785)(12.5933,0.00721187)(12.7813,0.00696306)(12.9692,0.00670834)(13.1572,0.00645792)(13.3451,0.00619624)(13.5331,0.00595922)(13.7211,0.00574312)(13.909,0.00552219)(14.097,0.00531841)(14.2849,0.0051318)(14.4729,0.0049527)(14.6609,0.00476984)(14.8488,0.00459717)(15.0368,0.00443791)(15.2247,0.00428401)(15.4127,0.00412689)(15.6007,0.00396924)(15.7886,0.00382231)(15.9766,0.00368503)(16.1645,0.00355633)(16.3525,0.00343783)(16.5405,0.00332253)(16.7284,0.00320563)(16.9164,0.00309088)(17.1043,0.00298524)(17.2923,0.00288282)(17.4803,0.00277932)(17.6682,0.00268602)(17.8562,0.00260719)(18.0441,0.00253641)(18.2321,0.00245865)(18.4201,0.00237071)(18.608,0.0022833)(18.796,0.00220501)(18.9839,0.00213584)(19.1719,0.00207203)(19.3599,0.00201358)(19.5478,0.00196102)(19.7358,0.0019074)(19.9237,0.00185056)};
+
+\legend{Affine, Curved}
+\end{axis}\end{tikzpicture}
+}
+\subfloat[$N=5$, $h = \pi/4$]{}
+\caption{Evolution of the kinetic energy dissipation rate over time on affine and curvilinear meshes.  }
+\label{fig:tg}
+\end{figure}
 
 \note{Add Taylor-Green vortex}
 
 %\section{Computational results}
 
 \section{Conclusions}
+
 
 
 

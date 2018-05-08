@@ -1430,7 +1430,7 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
 }
 
 
-// Nq loop - non-curved. For WADG, add Vq*Pq step
+// kernel with sU[5] smem instead of (rho, rhou, ..., etc)
 kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
 				   const dfloat *restrict VqPq, // eval at qpts
 				   const dfloat *restrict VfPq, // eval at fpts
@@ -1633,7 +1633,7 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
             ii += p_Nq;
           }
 
-          // entropy variable projection
+	  // entropy variable projection
           dfloat V1 = 0.f;
           dfloat V2 = 0.f;
           dfloat V3 = 0.f;
