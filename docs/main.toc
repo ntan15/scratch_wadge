@@ -1,27 +1,28 @@
-\contentsline {section}{\numberline {1}Introduction}{2}{section.1}
-\contentsline {section}{\numberline {2}Systems of nonlinear conservation laws}{2}{section.2}
-\contentsline {subsection}{\numberline {2.1}Standard DG formulations for nonlinear conservation laws}{3}{subsection.2.1}
-\contentsline {subsubsection}{\numberline {2.1.1}Mathematical notation}{3}{subsubsection.2.1.1}
-\contentsline {subsubsection}{\numberline {2.1.2}Discontinuous Galerkin formulations and the $L^2$ projection}{4}{subsubsection.2.1.2}
-\contentsline {section}{\numberline {3}Discretely entropy stable DG methods on curved meshes}{5}{section.3}
-\contentsline {subsection}{\numberline {3.1}Basis and quadrature rules}{5}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}Reference element matrices}{6}{subsection.3.2}
-\contentsline {subsection}{\numberline {3.3}Matrices on curved physical elements}{7}{subsection.3.3}
-\contentsline {subsection}{\numberline {3.4}A discretely entropy stable DG formulation on curved meshes}{9}{subsection.3.4}
-\contentsline {section}{\numberline {4}Discretely stable and low storage DG methods on curved meshes}{10}{section.4}
-\contentsline {subsection}{\numberline {4.1}A weight-adjusted approximation to the curvilinear mass matrix}{10}{subsection.4.1}
-\contentsline {subsection}{\numberline {4.2}A discretely entropy stable low storage DG formulation on curved meshes}{11}{subsection.4.2}
-\contentsline {subsection}{\numberline {4.3}Analysis of weight-adjusted projection}{12}{subsection.4.3}
-\contentsline {subsubsection}{\numberline {4.3.1}Local and global conservation}{15}{subsubsection.4.3.1}
-\contentsline {section}{\numberline {5}Enforcing the discrete geometric conservation law}{16}{section.5}
-\contentsline {section}{\numberline {6}Numerical experiments}{20}{section.6}
-\contentsline {subsection}{\numberline {6.1}Accuracy of weight-adjusted projection and geometric terms}{20}{subsection.6.1}
-\contentsline {subsection}{\numberline {6.2}Two-dimensional compressible Euler equations}{22}{subsection.6.2}
-\contentsline {subsubsection}{\numberline {6.2.1}Entropy conservation}{23}{subsubsection.6.2.1}
-\contentsline {subsubsection}{\numberline {6.2.2}Local and global conservation}{24}{subsubsection.6.2.2}
-\contentsline {subsubsection}{\numberline {6.2.3}Accuracy and convergence}{25}{subsubsection.6.2.3}
-\contentsline {subsection}{\numberline {6.3}Three dimensional compressible Euler equations}{26}{subsection.6.3}
-\contentsline {subsubsection}{\numberline {6.3.1}Accuracy and convergence}{27}{subsubsection.6.3.1}
-\contentsline {subsubsection}{\numberline {6.3.2}Inviscid Taylor-Green vortex}{28}{subsubsection.6.3.2}
-\contentsline {section}{\numberline {7}Conclusions}{29}{section.7}
-\contentsline {section}{\numberline {8}Acknowledgements}{29}{section.8}
+\contentsline {section}{\tocsection {}{1}{Introduction}}{1}{section.1}
+\contentsline {section}{\tocsection {}{2}{Systems of nonlinear conservation laws}}{2}{section.2}
+\contentsline {subsection}{\tocsubsection {}{2.1}{Standard DG formulations for nonlinear conservation laws}}{2}{subsection.2.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.1.1}{Mathematical notation}}{3}{subsubsection.2.1.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.1.2}{Discontinuous Galerkin formulations and the $L^2$ projection}}{4}{subsubsection.2.1.2}
+\contentsline {section}{\tocsection {}{3}{Discretely entropy stable DG methods on curved meshes}}{4}{section.3}
+\contentsline {subsection}{\tocsubsection {}{3.1}{Basis and quadrature rules}}{5}{subsection.3.1}
+\contentsline {subsection}{\tocsubsection {}{3.2}{Reference element matrices}}{5}{subsection.3.2}
+\contentsline {subsection}{\tocsubsection {}{3.3}{Matrices on curved physical elements}}{6}{subsection.3.3}
+\contentsline {subsection}{\tocsubsection {}{3.4}{A discretely entropy stable DG formulation on curved meshes}}{8}{subsection.3.4}
+\contentsline {section}{\tocsection {}{4}{Discretely stable and low storage DG methods on curved meshes}}{9}{section.4}
+\contentsline {subsection}{\tocsubsection {}{4.1}{A weight-adjusted approximation to the curvilinear mass matrix}}{9}{subsection.4.1}
+\contentsline {subsection}{\tocsubsection {}{4.2}{A discretely entropy stable low storage DG formulation on curved meshes}}{10}{subsection.4.2}
+\contentsline {subsection}{\tocsubsection {}{4.3}{Analysis of weight-adjusted projection}}{11}{subsection.4.3}
+\contentsline {subsubsection}{\tocsubsubsection {}{4.3.1}{Local and global conservation}}{13}{subsubsection.4.3.1}
+\contentsline {section}{\tocsection {}{5}{Enforcing the discrete geometric conservation law}}{15}{section.5}
+\contentsline {section}{\tocsection {}{6}{Numerical experiments}}{18}{section.6}
+\contentsline {subsection}{\tocsubsection {}{6.1}{Accuracy of weight-adjusted projection and geometric terms}}{18}{subsection.6.1}
+\contentsline {subsection}{\tocsubsection {}{6.2}{Two-dimensional compressible Euler equations}}{19}{subsection.6.2}
+\contentsline {subsubsection}{\tocsubsubsection {}{6.2.1}{Entropy conservation}}{21}{subsubsection.6.2.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{6.2.2}{Local and global conservation}}{21}{subsubsection.6.2.2}
+\contentsline {subsubsection}{\tocsubsubsection {}{6.2.3}{Accuracy and convergence}}{22}{figure.caption.7}
+\contentsline {subsection}{\tocsubsection {}{6.3}{Three dimensional compressible Euler equations}}{24}{subsection.6.3}
+\contentsline {subsubsection}{\tocsubsubsection {}{6.3.1}{Accuracy and convergence}}{25}{subsubsection.6.3.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{6.3.2}{Inviscid Taylor-Green vortex}}{26}{subsubsection.6.3.2}
+\contentsline {section}{\tocsection {}{7}{Conclusions}}{26}{section.7}
+\contentsline {section}{\tocsection {}{8}{Acknowledgements}}{26}{section.8}
+\contentsline {section}{\tocsection {}{}{References}}{27}{section*.11}
