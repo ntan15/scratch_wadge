@@ -1,6 +1,6 @@
 //#define USE_DOUBLE 0 // JC: FIX and add this to kernel initialization
 
-#define TAU 1.f // for penalty term
+#define TAU 0.f // for penalty term
 
 #if USE_DOUBLE
 #define dfloat double

@@ -1,12 +1,13 @@
 // This is from the demos distributed with gmsh
 SetFactory("OpenCASCADE");
 
-h = 1/4; //10;
+R = 3.14159265359;
+
+h = R/2; //10;
 Mesh.Algorithm = 6;
 Mesh.CharacteristicLengthMin = h;
-Mesh.CharacteristicLengthMax = 2*h;
+Mesh.CharacteristicLengthMax = h;
 
-R = 3.14159265359;
 Box(1) = {-R,-R,-R, 2*R,2*R,2*R}; // x0,y0,z0, dx, dy, dz
 
 Periodic Surface{2} = {1} Translate{2*R,0,0};

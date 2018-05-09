@@ -521,6 +521,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   MatrixXd yy = y.array();
   MatrixXd zz = z.array();
   double a = 0.5;
+  a = .1; // for really coarse meshes...
   x.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
   y.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
   z.array() += a*x.array().sin()*y.array().sin()*z.array().sin();

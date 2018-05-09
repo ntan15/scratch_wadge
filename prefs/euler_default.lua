@@ -1,6 +1,6 @@
 
 if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare2.msh"
-elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTG3.msh"
+elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTG1.msh"
 else
   print("Unknown element type")
 end
@@ -8,7 +8,7 @@ end
 app = {
   occa = {
     -- OpenMP
-    -- info = "mode = Serial",
+     info = "mode = Serial",
     -- flags = " -O2 -g -fno-common -fomit-frame-pointer \z
      --          -Wno-sign-conversion \z
      --          -Wcast-align -Wchar-subscripts -Wall -W \z
@@ -24,7 +24,7 @@ app = {
     --           -cl-fast-relaxed-math"
 
     -- CUDA
-       info = string.format("mode = CUDA , deviceID = 1"),
+    -- info = string.format("mode = CUDA , deviceID = 1"),
     -- flags = "--compiler-options -O3 --ftz=true --prec-div=false \z
     --                            --prec-sqrt=false --use_fast_math \z
     --                            --fmad=true"
@@ -38,12 +38,12 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 3,
-    M = 6,
+    N = 2,
+    M = 4,
     sfc_partition = true
   },
   physical={
-    FinalTime = 20.0,
+    FinalTime = .250,
     CFL = .25,
   },
   output = {

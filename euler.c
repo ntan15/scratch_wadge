@@ -3771,6 +3771,30 @@ int main(int argc, char *argv[])
     }
   }
 
+#if 1
+  printf("Computing initial entropy\n");
+  dfloat_t S0 = 0.0;
+  for (uintloc_t e = 0; e < K; ++e)
+  {
+    for (int i = 0; i < Nq; ++i)
+    {
+
+      dfloat_t wJq = (app->hops->wq[i]) * (app->hops->Jq[i + e * Nq]);
+      dfloat_t rho  = Q[i + 0 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhou = Q[i + 1 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhov = Q[i + 2 * Nq + e * Nq * NFIELDS];
+      dfloat_t rhow = Q[i + 3 * Nq + e * Nq * NFIELDS];
+      dfloat_t E    = Q[i + 4 * Nq + e * Nq * NFIELDS];
+
+      dfloat_t gamma = app->prefs->physical_gamma;
+      dfloat_t rhoe = E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;      
+      dfloat_t s = LOGDF((gamma - 1.0) * rhoe / POWDF(rho, gamma));
+      S0 += wJq*(-rho*s);
+    }
+  }
+#endif
+  
+
   // copy mem to device
   printf("Copying to device\n");
   occaCopyPtrToMem(app->Q, Q, Nq * NFIELDS * K * sizeof(dfloat_t),
@@ -3819,6 +3843,9 @@ int main(int argc, char *argv[])
                    occaNoOffset);
 #endif
 
+  //#if 0
+  //#endif
+  
 #if 0
   printf("Computing L2 error\n");
   dfloat_t err = 0.0;
@@ -3868,9 +3895,10 @@ int main(int argc, char *argv[])
   printf("L2 err = %7.7g\n", sqrt(err));
 #endif
 
-#if 1
-  printf("Computing norm of solution \n");
+#if VDIM==3
+  printf("Computing norm of 3D solution \n");
   dfloat_t Unorm = 0.0;
+  dfloat_t Sval = 0.0;
   for (uintloc_t e = 0; e < K; ++e)
   {
     for (int i = 0; i < Nq; ++i)
@@ -3890,6 +3918,12 @@ int main(int argc, char *argv[])
       dfloat_t rhow = Q[i + 3 * Nq + e * Nq * NFIELDS];
       dfloat_t E    = Q[i + 4 * Nq + e * Nq * NFIELDS];
 
+      dfloat_t gamma = app->prefs->physical_gamma;
+      dfloat_t rhoe = E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;      
+      dfloat_t s = LOGDF((gamma - 1.0) * rhoe / POWDF(rho, gamma));
+
+      Sval += wJq*(-rho*s);
+
       dfloat_t err1 = (rho );
       dfloat_t err2 = (rhou);
       dfloat_t err3 = (rhov);
@@ -3898,7 +3932,8 @@ int main(int argc, char *argv[])
       Unorm += (err1 * err1 + err2 * err2 + err3 * err3 + err4 * err4 + err5 * err5) * wJq;
     }
   }
-  printf("L2 norm of sol = %7.7g\n", sqrt(Unorm));
+  //printf("L2 norm of sol = %7.7g\n", sqrt(Unorm));
+  printf("Change in entropy = %7.7g\n", Sval-S0);
 #endif
 
 

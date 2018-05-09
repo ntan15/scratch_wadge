@@ -1,7 +1,7 @@
 // This is from the demos distributed with gmsh
 SetFactory("OpenCASCADE");
 
-h = 1; //10;
+h = 1/2; //10;
 Mesh.Algorithm = 6;
 Mesh.CharacteristicLengthMin = h;
 Mesh.CharacteristicLengthMax = h;
