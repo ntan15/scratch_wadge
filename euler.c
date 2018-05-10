@@ -279,6 +279,7 @@ typedef struct prefs
   dfloat_t physical_gamma;
   dfloat_t FinalTime;
   dfloat_t CFL;
+  dfloat_t tau;
 
   char *mesh_filename;
   int mesh_sfc_partition;
@@ -343,6 +344,8 @@ static prefs_t *prefs_new(const char *filename, MPI_Comm comm)
       (dfloat_t)asd_lua_expr_number(L, "app.physical.FinalTime", .1);
   prefs->CFL =
       (dfloat_t)asd_lua_expr_number(L, "app.physical.CFL", .25);
+  prefs->tau =
+      (dfloat_t)asd_lua_expr_number(L, "app.physical.tau", 1.0);
 
   prefs->mesh_sfc_partition =
       asd_lua_expr_boolean(L, "app.mesh.sfc_partition", 1);
@@ -2855,6 +2858,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   occaKernelInfoAddDefine(info, "p_KblkV", occaUInt(app->prefs->kernel_KblkV));
   occaKernelInfoAddDefine(info, "p_KblkS", occaUInt(app->prefs->kernel_KblkS));
   occaKernelInfoAddDefine(info, "p_KblkF", occaUInt(app->prefs->kernel_KblkF));
+  occaKernelInfoAddDefine(info, "p_TAU", occaDfloat(app->prefs->tau));
 
   const int T = ASD_MAX(Nq, Nfq * Nfaces);
   occaKernelInfoAddDefine(info, "p_T", occaUInt(T));
@@ -2900,7 +2904,7 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   printf("building 2D kernels\n");
   //  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
   //                                             "euler_vol_2d", info);
-    app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
+  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
   					     "euler_vol_2d_curved", info);
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler2D.okl",
                                               "euler_surf_2d", info);
@@ -2910,16 +2914,15 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                                               "test_kernel_2d", info);
 #else
   printf("building 3D kernels\n");
-  //   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-  //					      "euler_vol_3d", info);
-  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-					     "euler_vol_3d_curved", info);
+  //app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl", "euler_vol_3d", info);
+  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_vol_3d_curved", info);
+
+  //app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d", info);
+  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved2", info);
+
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "euler_surf_3d", info);
-  //    app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-  //                                                "euler_update_3d", info);
-  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-						"euler_update_3d_curved", info);
+
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "test_kernel", info);
   app->aux = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
@@ -3306,9 +3309,9 @@ void euler_Taylor_Green(app_t *app, coord X, euler_fields *U)
   //dfloat_t p = 100.0/gamma + (1.0/16.0)*(COSDF(2.0*x)*COSDF(2.0*z) + 2.0*COSDF(2.0*y) + 2.0*COSDF(2.0*y)*COSDF(2.0*z));
   dfloat_t p = 100.0/gamma + (1.0/16.0)*(COSDF(2.0*x) + COSDF(2.0*y))*(2.0 + COSDF(2.0*z));
 
-  //  u = 1.0;
-  //  v = 1.0;
-  //  p = 1.0;
+
+  //  rho = 1.0;  u = 1.0;  v = 1.0;  p = 1.0; //testing
+
 
   U->U1 = rho;
   U->U2 = rho*u;
@@ -3356,6 +3359,65 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
   occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
                 app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
 
+#if 0
+  int K = app->hm->E;
+  int Nq = app->hops->Nq;
+  int size = NFIELDS * Nq * K;
+  dfloat_t *Q = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * size);
+  occaCopyMemToPtr(Q, app->Q, size * sizeof(dfloat_t), occaNoOffset);
+  dfloat_t *rhs = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * size);
+  occaCopyMemToPtr(rhs, app->rhsQ, size * sizeof(dfloat_t), occaNoOffset);
+
+  dfloat_t Srhs = 0.0;
+  for (int e = 0; e < K; ++e){
+    dfloat_t *QV = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS);
+    for (int i = 0; i < Nq; ++i){
+      int id = i + NFIELDS*Nq*e;
+      dfloat_t wJq = (app->hops->wq[i]) * (app->hops->Jq[i + e * Nq]);
+
+      euler_fields U, V;
+      U.U1 = Q[id + 0*Nq];;
+      U.U2 = Q[id + 1*Nq];;
+      U.U3 = Q[id + 2*Nq];;
+      U.U4 = Q[id + 3*Nq];;
+      U.U5 = Q[id + 4*Nq];;
+
+      VU(app, U, &V);
+
+      VV[i] = V.U1;
+      VV[i + Nq]  = V.U2;
+      VV[i + 2*Nq] = V.U3;
+      VV[i + 3*Nq] = V.U4;
+      VV[i + 4*Nq] = V.U5;
+    }
+
+    // check testing with projected entropy vars
+    for (int i = 0; i < Nq; ++i){
+      dfloat_t V1 = 0.0;
+      dfloat_t V2 = 0.0;
+      dfloat_t V3 = 0.0;
+      dfloat_t V4 = 0.0;
+      dfloat_t V5 = 0.0;
+      for (int j = 0; j < Nq; ++j){
+        dfloat_t VqPq_ij = app->hops->VqPq[i + j * Nq];
+        V1 += VqPq_ij*VV[j + 0*Nq];
+        V2 += VqPq_ij*VV[j + 1*Nq];
+        V3 += VqPq_ij*VV[j + 2*Nq];
+        V4 += VqPq_ij*VV[j + 3*Nq];
+        V5 += VqPq_ij*VV[j + 4*Nq];
+      }
+      dfloat_t r1 = rhs[id];
+      dfloat_t r2 = rhs[id + Nq];
+      dfloat_t r3 = rhs[id + 2*Nq];
+      dfloat_t r4 = rhs[id + 3*Nq];
+      dfloat_t r5 = rhs[id + 4*Nq];
+
+      Srhs += wJq*(V1*r1 + V2*r2 + V3*r3 + V4*r4 + V5*r5);
+    }
+  }
+  printf("Entropy rhs = %g\n",Srhs);
+#endif
+
   occaKernelRun(app->update, occaInt(app->hm->E), app->Jq, app->VqPq, app->VfPq,
                 occaDfloat((dfloat_t)rka), occaDfloat((dfloat_t)rkb),
                 occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q,
@@ -3393,7 +3455,7 @@ static void rk_run(app_t *app, double dt, double FinalTime)
       // app_test(app);
     }
 
-#if 1
+#if 0
     occaKernelRun(app->aux, occaInt(app->hm->E), app->Jq, app->wq, app->Q, o_KE);
     occaCopyMemToPtr(KE, o_KE, K * sizeof(dfloat_t), occaNoOffset);
     double ke = 0.0;
@@ -3412,6 +3474,7 @@ static void rk_run(app_t *app, double dt, double FinalTime)
     }
   }
 
+#if 0
   int sk = 1;
   if (Nsteps > 2500){
     sk = Nsteps/2500; // int division
@@ -3427,6 +3490,7 @@ static void rk_run(app_t *app, double dt, double FinalTime)
     printf("%f ",((double)tstep)*dt);
   }
   printf("];\n");
+#endif
 
 }
 
@@ -3787,13 +3851,13 @@ int main(int argc, char *argv[])
       dfloat_t E    = Q[i + 4 * Nq + e * Nq * NFIELDS];
 
       dfloat_t gamma = app->prefs->physical_gamma;
-      dfloat_t rhoe = E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;      
+      dfloat_t rhoe = E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;
       dfloat_t s = LOGDF((gamma - 1.0) * rhoe / POWDF(rho, gamma));
       S0 += wJq*(-rho*s);
     }
   }
 #endif
-  
+
 
   // copy mem to device
   printf("Copying to device\n");
@@ -3825,16 +3889,19 @@ int main(int argc, char *argv[])
   printf("hmin = %f, CFL = %f, dt = %f, Final Time = %f\n", hmin, CFL, dt, FinalTime);
 
 #if 0
+
   app_test(app);
   const double rka = app->rk4a[0];
   const double rkb = app->rk4b[0];
   rk_step(app,rka,rkb,dt);
   app_test(app);
+
 #else
+
   printf("Running...\n");
   rk_run(app, dt, FinalTime);
   printf("Done with simulation. \n");
-  //app_test(app);
+
 #endif
 
 #if 1
@@ -3845,8 +3912,8 @@ int main(int argc, char *argv[])
 
   //#if 0
   //#endif
-  
-#if 0
+
+#if 1
   printf("Computing L2 error\n");
   dfloat_t err = 0.0;
   for (uintloc_t e = 0; e < K; ++e)
@@ -3919,7 +3986,7 @@ int main(int argc, char *argv[])
       dfloat_t E    = Q[i + 4 * Nq + e * Nq * NFIELDS];
 
       dfloat_t gamma = app->prefs->physical_gamma;
-      dfloat_t rhoe = E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;      
+      dfloat_t rhoe = E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;
       dfloat_t s = LOGDF((gamma - 1.0) * rhoe / POWDF(rho, gamma));
 
       Sval += wJq*(-rho*s);
@@ -3933,7 +4000,7 @@ int main(int argc, char *argv[])
     }
   }
   //printf("L2 norm of sol = %7.7g\n", sqrt(Unorm));
-  printf("Change in entropy = %7.7g\n", Sval-S0);
+  printf("Initial entropy = %f, final entropy = %f, change in entropy = %7.7g\n", S0, Sval, fabs(Sval-S0));
 #endif
 
 

@@ -514,14 +514,14 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 
 #endif
 
-#if 1
+#if 0
   printf("Adding curvilinear perturbation for TG vortex\n");
   // add curvilinear perturbation to [-pi,pi]^3
   MatrixXd xx = x.array();
   MatrixXd yy = y.array();
   MatrixXd zz = z.array();
   double a = 0.5;
-  a = .1; // for really coarse meshes...
+  a = .125; // for really coarse meshes...
   x.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
   y.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
   z.array() += a*x.array().sin()*y.array().sin()*z.array().sin();
@@ -680,6 +680,12 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   szJ = V21 * szJ;
   tzJ = V21 * tzJ;
 
+  // check satisfaction of GCL
+  MatrixXd divx = ((ref_data->Dr*rxJ + ref_data->Ds*sxJ + ref_data->Dt*txJ).array().abs()).matrix();
+  MatrixXd divy = ((ref_data->Dr*ryJ + ref_data->Ds*syJ + ref_data->Dt*tyJ).array().abs()).matrix();
+  MatrixXd divz = ((ref_data->Dr*rzJ + ref_data->Ds*szJ + ref_data->Dt*tzJ).array().abs()).matrix();
+  printf("divxyz = %g, %g, %g\n", divx.sum(), divy.sum(), divz.sum());
+
   // compute normals
   MatrixXd Vfq = ref_data->Vfq;
   rxJf = Vfq * rxJ;
@@ -697,17 +703,6 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
         tyJf.array() * ntJ.array();
   nzJ = rzJf.array() * nrJ.array() + szJf.array() * nsJ.array() +
         tzJf.array() * ntJ.array();
-
-  // eval at fqpts
-  rxJf = Vfq * rxJ;
-  sxJf = Vfq * sxJ;
-  txJf = Vfq * txJ;
-  ryJf = Vfq * ryJ;
-  syJf = Vfq * syJ;
-  tyJf = Vfq * tyJ;
-  rzJf = Vfq * rzJ;
-  szJf = Vfq * szJ;
-  tzJf = Vfq * tzJ;
 
   // eval at qpts
   MatrixXd Vq = ref_data->Vq;
@@ -757,7 +752,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
   geo->nzJ = nzJ;
 
   MatrixXd VqPq = (ref_data->Vq)*(ref_data->Pq);
-  geo->J = VqPq*J; // to ensure conservation
+  geo->J = VqPq*J; // to ensure conservation, project onto deg N polynomials
   //  geo->J = J;
   geo->sJ = sJ;
   return geo;

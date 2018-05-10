@@ -1,6 +1,6 @@
 //#define USE_DOUBLE 0 // JC: FIX and add this to kernel initialization
 
-#define TAU 0.f // for penalty term
+//#define p_TAU 0.f // for penalty term
 
 #if USE_DOUBLE
 #define dfloat double
@@ -48,7 +48,7 @@ dfloat logmean(dfloat aL, dfloat aR)
   const dfloat u2 = u * u;
 
   dfloat F = LOGDF(xi) / 2.f / f;
-  if (fabs(u) < 1.fe-3)
+  if (fabs(u) < 1.fe-5)
   {
     F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f + u2 * u2 / 9.f;
   }
@@ -524,7 +524,7 @@ kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
           const dfloat lamP = sqrt(uP * uP + vP * vP + wP * wP) +
                               sqrt(p_gamma * pfun(rhoP, uP, vP, wP, EP) / rhoP);
           const dfloat Lfc_sJ =
-              TAU * .25f * max(lamM, lamP) *
+              p_TAU * .25f * max(lamM, lamP) *
               sJ; // local max wavespeed estimate - assumes tau = 1
 
           dfloat dU[5];
@@ -1038,7 +1038,7 @@ kernel void euler_vol_3d_curved(
                     FxS[jj] * nxJ + FyS[jj] * nyJ + FzS[jj] * nzJ;
                 divF[jj] += VqLq_ij * Fjj;
               }
-            }
+            }// j < p_NfqNfaces
 
             int id = i + k * p_Nfields * p_Nq;
             for (int jj = 0; jj < p_Nfields; ++jj)
@@ -1046,7 +1046,7 @@ kernel void euler_vol_3d_curved(
               rhsQ[id] = divF[jj];
               id += p_Nq;
             }
-          }
+          }// i < Nq
 
           // now apply VfPq
           if (i < p_NfqNfaces)
@@ -1146,7 +1146,7 @@ kernel void euler_vol_3d_curved(
 }
 
 
-// Nq loop - non-curved. For WADG, add Vq*Pq step
+// Nq loop: wadg weight-adjusted projection
 kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
 				   const dfloat *restrict VqPq, // eval at qpts
 				   const dfloat *restrict VfPq, // eval at fpts
@@ -1206,15 +1206,6 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
           // prefetch Jacobian
           const dfloat Jqi = Jq[i + k * p_Nq];
 
-          // prefetch res arrays
-          dfloat res1, res2, res3, res4, res5;
-          int id = i + k * p_Nq * p_Nfields;
-          res1 = resQ[id + 0 * p_Nq];
-          res2 = resQ[id + 1 * p_Nq];
-          res3 = resQ[id + 2 * p_Nq];
-          res4 = resQ[id + 3 * p_Nq];
-          res5 = resQ[id + 4 * p_Nq];
-
           dfloat r1 = 0.f;
           dfloat r2 = 0.f;
           dfloat r3 = 0.f;
@@ -1237,9 +1228,36 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
           sV3[k2][i] = r3 / Jqi;
           sV4[k2][i] = r4 / Jqi;
           sV5[k2][i] = r5 / Jqi;
+        }
+      }
+    }
+    barrier(localMemFence);
 
-	  r1 = 0.f; r2 = 0.f; r3 = 0.f;
-	  r4 = 0.f; r5 = 0.f;
+    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
+    {
+      for (int i = 0; i < p_Nq; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkU + k2;
+
+        if (k < K)
+        {
+
+          const dfloat Jqi = Jq[i + k * p_Nq];
+          // prefetch res arrays
+          dfloat res1, res2, res3, res4, res5;
+          int id = i + k * p_Nq * p_Nfields;
+          res1 = resQ[id + 0 * p_Nq];
+          res2 = resQ[id + 1 * p_Nq];
+          res3 = resQ[id + 2 * p_Nq];
+          res4 = resQ[id + 3 * p_Nq];
+          res5 = resQ[id + 4 * p_Nq];
+
+          dfloat r1 = 0.f;
+          dfloat r2 = 0.f;
+          dfloat r3 = 0.f;
+          dfloat r4 = 0.f;
+          dfloat r5 = 0.f;
           for (int j = 0; j < p_Nq; ++j)
           {
             const dfloat VqPq_ij = VqPq[i + j * p_Nq];
@@ -1294,57 +1312,94 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
           dfloat V1, V2, V3, V4, V5;
           VU(rho, rhou, rhov, rhow, E, V1, V2, V3, V4, V5);
 
+          /*
           // smem transfer, premult for WADG
           sV1[k2][i] = V1;
           sV2[k2][i] = V2;
           sV3[k2][i] = V3;
           sV4[k2][i] = V4;
           sV5[k2][i] = V5;
+          */
 
-#if 1
           // smem transfer, premult for WADG
-          sV1[k2][i] = V1 * Jqi;
-          sV2[k2][i] = V2 * Jqi;
-          sV3[k2][i] = V3 * Jqi;
-          sV4[k2][i] = V4 * Jqi;
-          sV5[k2][i] = V5 * Jqi;
-
-	  // apply WADG projection P*(1/J * P(uJ))
-	  r1 = 0.f;  r2 = 0.f;
-	  r3 = 0.f;  r4 = 0.f; r5 = 0.f;
-	  for (int j = 0; j < p_Nq; ++j)
-	    {
-	      const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-	      r1 += VqPq_ij * sV1[k2][j];
-	      r2 += VqPq_ij * sV2[k2][j];
-	      r3 += VqPq_ij * sV3[k2][j];
-	      r4 += VqPq_ij * sV4[k2][j];
-	      r5 += VqPq_ij * sV5[k2][j];
-	    }
-	  srho[k2][i] = r1/Jqi;
-	  srhou[k2][i] = r2/Jqi;
-	  srhov[k2][i] = r3/Jqi;
-	  srhow[k2][i] = r4/Jqi;
-	  sE[k2][i] = r5/Jqi;
-
-	  r1 = 0.f;  r2 = 0.f;
-	  r3 = 0.f;  r4 = 0.f; r5 = 0.f;
-	  for (int j = 0; j < p_Nq; ++j)
-	    {
-	      const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-	      r1 += VqPq_ij * srho[k2][j];
-	      r2 += VqPq_ij * srhou[k2][j];
-	      r3 += VqPq_ij * srhov[k2][j];
-	      r4 += VqPq_ij * srhow[k2][j];
-	      r5 += VqPq_ij * sE[k2][j];
-	    }
-	  sV1[k2][i] = r1;
-	  sV2[k2][i] = r2;
-	  sV3[k2][i] = r3;
-	  sV4[k2][i] = r4;
-	  sV5[k2][i] = r5;
-#endif
+          srho[k2][i] = V1 * Jqi;
+          srhou[k2][i] = V2 * Jqi;
+          srhov[k2][i] = V3 * Jqi;
+          srhow[k2][i] = V4 * Jqi;
+          sE[k2][i] = V5 * Jqi;
         }
+      }
+    }
+    barrier(localMemFence);
+
+    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
+    {
+      for (int i = 0; i < p_Nq; ++i; inner0)
+      {
+        const int k = k1 * p_KblkU + k2;
+
+        if (k < K)
+          {
+            const dfloat Jqi = Jq[i + k * p_Nq];
+
+            // apply WADG projection P*(1/J * P(uJ))
+            dfloat r1 = 0.f;
+            dfloat r2 = 0.f;
+            dfloat r3 = 0.f;
+            dfloat r4 = 0.f;
+            dfloat r5 = 0.f;
+            for (int j = 0; j < p_Nq; ++j)
+              {
+                const dfloat VqPq_ij = VqPq[i + j * p_Nq];
+                r1 += VqPq_ij * srho[k2][j];
+                r2 += VqPq_ij * srhou[k2][j];
+                r3 += VqPq_ij * srhov[k2][j];
+                r4 += VqPq_ij * srhow[k2][j];
+                r5 += VqPq_ij * sE[k2][j];
+              }
+
+            sV1[k2][i] = r1/Jqi;
+            sV2[k2][i] = r2/Jqi;
+            sV3[k2][i] = r3/Jqi;
+            sV4[k2][i] = r4/Jqi;
+            sV5[k2][i] = r5/Jqi;
+          }// k < K
+
+      } // inner 0
+    }   // inner1
+
+    barrier(localMemFence);
+
+    // project to nodal dofs
+    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
+    {
+      for (int i = 0; i < p_Nq; ++i; inner0)
+      {
+        const int k = k1 * p_KblkU + k2;
+
+        if (k < K)
+          {
+            // apply WADG projection P*(1/J * P(uJ))
+            dfloat r1 = 0.f;
+            dfloat r2 = 0.f;
+            dfloat r3 = 0.f;
+            dfloat r4 = 0.f;
+            dfloat r5 = 0.f;
+            for (int j = 0; j < p_Nq; ++j)
+              {
+                const dfloat VqPq_ij = VqPq[i + j * p_Nq];
+                r1 += VqPq_ij * sV1[k2][j];
+                r2 += VqPq_ij * sV2[k2][j];
+                r3 += VqPq_ij * sV3[k2][j];
+                r4 += VqPq_ij * sV4[k2][j];
+                r5 += VqPq_ij * sV5[k2][j];
+              }
+            srho[k2][i] = r1;
+            srhou[k2][i] = r2;
+            srhov[k2][i] = r3;
+            srhow[k2][i] = r4;
+            sE[k2][i] = r5;
+          }
 
       } // inner 0
     }   // inner1
@@ -1374,11 +1429,11 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
             for (int j = 0; j < p_Nq; ++j)
             {
               const dfloat VfPq_ij = VfPq[ii + j * p_NfqNfaces];
-              V1 += VfPq_ij * sV1[k2][j];
-              V2 += VfPq_ij * sV2[k2][j];
-              V3 += VfPq_ij * sV3[k2][j];
-              V4 += VfPq_ij * sV4[k2][j];
-              V5 += VfPq_ij * sV5[k2][j];
+              V1 += VfPq_ij * srho[k2][j];
+              V2 += VfPq_ij * srhou[k2][j];
+              V3 += VfPq_ij * srhov[k2][j];
+              V4 += VfPq_ij * srhow[k2][j];
+              V5 += VfPq_ij * sE[k2][j];
             }
 
             // eval conserv vars in terms of entropy vars
@@ -1403,11 +1458,11 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
           for (int j = 0; j < p_Nq; ++j)
           {
             const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-            V1 += VqPq_ij * sV1[k2][j];
-            V2 += VqPq_ij * sV2[k2][j];
-            V3 += VqPq_ij * sV3[k2][j];
-            V4 += VqPq_ij * sV4[k2][j];
-            V5 += VqPq_ij * sV5[k2][j];
+            V1 += VqPq_ij * srho[k2][j];
+            V2 += VqPq_ij * srhou[k2][j];
+            V3 += VqPq_ij * srhov[k2][j];
+            V4 += VqPq_ij * srhow[k2][j];
+            V5 += VqPq_ij * sE[k2][j];
           }
 
           // evaluate U(P*V) and write out
@@ -1494,7 +1549,7 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
             r5 += VqPq_ij * sU[k2][4][j];
           }
 
-	  // WADG step: divide by J and project
+	  // WADG step: divide by J pointwise and project
 	  sV[k2][0][i] = r1/Jqi;
 	  sV[k2][1][i] = r2/Jqi;
 	  sV[k2][2][i] = r3/Jqi;
@@ -1507,7 +1562,9 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
 
     for (int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for (int i = 0; i < p_Nq; ++i; inner0){
+
         const int k = k1 * p_KblkU + k2;
+
         if (k < K){
 
 	  dfloat r1 = 0.f;
