@@ -544,7 +544,7 @@ The matrix $\bm{D}_N^i$ reduces to polynomial differentiation when applied to po
 
 The key difference between curvilinear and affine meshes is that geometric terms now vary spatially over each element.  In practice, derivatives are computed over the reference element and mapped to the physical element $D^k$ through a change of variables formula
 \[
-J^k \pd{u}{x_i} = \sum_{j=1}^d \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad G^k_{ij} = J^k\pd{\hat{x}_j}{x_i},
+J^k \pd{u}{x_i} = \sum_{j=1}^d G^k_{ij}\pd{u}{\hat{x}_j}, \qquad G^k_{ij} = J^k\pd{\hat{x}_j}{x_i},
 \]
 where we have defined the elements of the matrix $\bm{G}^k$ as the derivatives of the reference coordinates $\hat{x}_j$ with respect to the physical coordinates $x_i$ on $D^k$ times the Jacobian of the transformation from reference to physical coordinates $J^k$.  We denote evaluations of $G^k_{ij}$ at both volume and surface quadrature points as the vector $\bm{G}^k_{ij}$.
 
@@ -1009,11 +1009,11 @@ An important aspect of Theorem~\ref{thm:stab1} is the assumption that $\bm{Q}^j_
 From (\ref{eq:dik}), the condition $\bm{Q}^j_k\bm{1} = 0$ is equivalent to
 \begin{align*}
 \bm{Q}^j_k\bm{1} = \bm{W}_N\sum_{j=1}^d\bm{D}^j_N\circ \avg{\bm{G}_{ij}^k}\bm{1} &= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \LRp{ \diag{\bm{G}_{ij}^k}\bm{D}^j_N \bm{1} + \bm{D}^j_N\diag{\bm{G}_{ij}^k}\bm{1}} \\
-&= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{G}_{ij}^k} = 0,
+&= \frac{1}{2}\bm{W}_N\sum_{j=1}^d \bm{D}^j_N \bm{G}_{ij}^k = 0,
 \end{align*}
 where we have used that $\bm{D}^j_N \bm{1} = 0$ to eliminate the first term.  Since $\bm{W}_N$ is a diagonal matrix with positive entries, $\bm{Q}^j_k\bm{1} = 0$ is equivalent to ensuring that a discrete version of the GCL (\ref{eq:gcl}) holds
 \begin{equation}
-\sum_{j=1}^d \bm{D}^j_N\LRp{\bm{G}_{ij}^k} = 0.
+\sum_{j=1}^d \bm{D}^j_N \bm{G}_{ij}^k = 0.
 \label{eq:dgcl}
 \end{equation}
 This condition is required to ensure that free-stream preservation holds at the discrete level.  In other words, we wish to ensure that the semi-discrete scheme preserves (for $\bm{u}$ constant) 
@@ -1102,7 +1102,7 @@ Let the mesh satisfy Assumption~\ref{ass:norm}, and let the interpolation points
 \label{thm:koprivagcl}
 \end{theorem}
 \begin{proof}
-The satisfaction of (\ref{eq:dgcl}) relies on the fact that $\tilde{G^k}_{ij}$ is a degree $N$ polynomial and is equal to its own $L^2$ projection.  Let $\tilde{\bm{G}^k_{ij}}$ denote the polynomial coefficients of $\tilde{G^k}_{ij}$.  
+  The satisfaction of (\ref{eq:dgcl}) relies on the fact that $\tilde{G^k_{ij}}$ is a degree $N$ polynomial and is equal to its own $L^2$ projection.  Let $\tilde{\bm{G}^k_{ij}}$ denote the polynomial coefficients of $\tilde{G^k_{ij}}$.  
 Then, applying $\bm{D}^j_N$ to evaluations of $\tilde{G^k_{ij}}$ at volume and surface quadrature points and using (\ref{eq:dnvqvf}), we have
 \[
 \sum_{j=1}^d\bm{D}^j_N \LRs{
