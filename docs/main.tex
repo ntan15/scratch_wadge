@@ -297,7 +297,7 @@ The low numerical dissipation of high order DG methods combined with the lack of
 
 The lack of inherently stable formulations was addressed for high order nodal DG methods on quadrilateral and hexahedral meshes in \cite{fisher2013high, carpenter2014entropy}.  The resulting schemes ensure that that the numerical solution satisfies a semi-discrete version of an entropy inequality, independently of discrete effects such as under-integration.  This results in significantly more robust high order simulations, where the numerical solution does not blow up even in the presence of under-resolved features such as shock discontinuities or turbulence.  High order entropy stable schemes have since been extended to staggered grid and non-conforming \cite{parsani2016entropy, friedrich2017entropy} tensor product elements, as well as to simplicial meshes \cite{chen2017entropy, chan2017discretely, crean2018entropy}.  
 
-Entropy stable methods have largely relied on a finite difference summation-by-parts (SBP) framework.  The summation-by-parts property holds for spectral element DG methods (DG-SEM), which assume a polynomial basis which collocates the solution at Gauss-Legendre-Lobatto (GLL) quadrature nodes on tensor product elements.  The collocation approach requires the number of quadrature nodes to be identical to the number of basis functions.  Because analogous quadrature rules on the triangle and tetrahedron must contain more nodes than the dimension of the underlying polynomial space \cite{helenbrook2009existence, hicken2016multidimensional}, GLL-like collocation cannot be replicated on simplicial elements.  It is still possible to construct entropy stable schemes on simplicial elements within the SBP framework \cite{chen2017entropy, crean2018entropy}.   However, the resulting SBP operators are not ``modal'', in the sense that the matrices are not associated with an underlying basis or approximation space.  
+Entropy stable methods have largely relied on a finite difference summation-by-parts (SBP) framework.  The summation-by-parts property holds for spectral element DG methods (DG-SEM), which assume a polynomial basis which collocates the solution at Gauss--Legendre--Lobatto (GLL) quadrature nodes on tensor product elements.  The collocation approach requires the number of quadrature nodes to be identical to the number of basis functions.  Because analogous quadrature rules on the triangle and tetrahedron must contain more nodes than the dimension of the underlying polynomial space \cite{helenbrook2009existence, hicken2016multidimensional}, GLL-like collocation cannot be replicated on simplicial elements.  It is still possible to construct entropy stable schemes on simplicial elements within the SBP framework \cite{chen2017entropy, crean2018entropy}.   However, the resulting SBP operators are not ``modal'', in the sense that the matrices are not associated with an underlying basis or approximation space.  
 
 Entropy stable schemes were extended to modal discretizations on affine meshes in \cite{chan2017discretely}, allowing for the use of arbitrary basis functions and over-integrated quadrature rules.  In this work, we show how to extend the construction of modal high order entropy stable schemes to curved meshes.  As noted in \cite{crean2018entropy}, this requires the use of a split formulation for the geometric terms involved in differentiation, as well as the satisfaction of a discrete geometric conservation law (GCL) \cite{thomas1979geometric, kopriva2006metric}.  We also show how to extend entropy stable schemes to accomodate weight-adjusted mass matrices, which provide low storage approximations of inverse weighted mass matrices appearing for curved meshes \cite{chan2016weight2}.  These weight-adjusted approximations can be applied more efficiently than inverse weighted mass matrices on many-core architectures such as Graphics Processing Units (GPUs) \cite{chan2017weight}.   However, additional steps are required to ensure entropy stability and the conservation of mass, momentum, and energy under weight-adjusted mass matrices.
 
@@ -1184,7 +1184,7 @@ In choosing the timestep $dt$, we follow \cite{chan2015gpu} and set
 \begin{equation}
 dt = \min_{k} {\rm CFL} \frac{\nor{J}_{L^{\infty}\LRp{D^k}}}{C_N\nor{J^f}_{L^{\infty}\LRp{\partial D^k}}},
 \end{equation}
-where $C_N$ is the $O(N^2)$ order-dependent constant in the surface trace inequality \cite{chan2015gpu} and ${\rm CFL}$ is a user-chosen constant.  All numerical experiments in this work utilize the five-stage fourth order low storage Runge Kutta (LSRK-45) time-stepper \cite{carpenter1994fourth}.  
+where $C_N$ is the $O(N^2)$ order-dependent constant in the surface trace inequality \cite{chan2015gpu} and ${\rm CFL}$ is a user-chosen constant.  All numerical experiments in this work utilize the five-stage fourth order low storage Runge--Kutta (LSRK-45) time-stepper \cite{carpenter1994fourth}.  
 
 
 \subsection{Accuracy of weight-adjusted projection and geometric terms}
@@ -1200,7 +1200,7 @@ where $H$ is the Heaviside function.  For the smooth function $f(\bm{x})$, we ob
 \begin{figure}
 \centering
 \subfloat[Warped curvilinear mesh]{\includegraphics[width=.285\textwidth]{figs/wadgCurved.png}}
-\subfloat[$f(\bm{x}) = e^{x+y}\sin\LRp{{\pi x}}\sin\LRp{{\pi y}}$]{
+\subfloat[$f(\bm{x}) = e^{x_1+x_2}\sin\LRp{{\pi x_1}}\sin\LRp{{\pi x_2}}$]{
 \begin{tikzpicture}
 \begin{loglogaxis}[
     legend cell align=left,
@@ -1226,7 +1226,7 @@ coordinates{(0.5,0.00237193)(0.25,5.41179e-05)(0.125,7.6934e-07)(0.0625,1.18362e
 \end{loglogaxis}
 \end{tikzpicture}
 }
-\subfloat[$g(\bm{x}) = f(\bm{x}) + H(x+y-\sin(\pi x))$]{
+\subfloat[$g(\bm{x}) = f(\bm{x}) + H(x_1+x_2-\sin(\pi x_1))$]{
 \begin{tikzpicture}
 \begin{loglogaxis}[
     legend cell align=left,
@@ -1333,10 +1333,10 @@ coordinates{(0.673351,0.00405434)(0.373777,0.000213685)(0.166655,3.7653e-06)(0.0
 
 The compressible Euler equations in two dimensions are given as follows:
 \begin{align}
-\pd{\rho}{t} + \pd{\LRp{\rho u}}{x} + \pd{\LRp{\rho v}}{y} &= 0,\\
-\pd{\rho u}{t} + \pd{\LRp{\rho u^2 + p }}{x} + \pd{\LRp{\rho uv}}{y} &= 0,\nonumber\\
-\pd{\rho v}{t} + \pd{\LRp{\rho uv}}{x} + \pd{\LRp{\rho v^2 + p }}{y} &= 0,\nonumber\\
-\pd{E}{t} + \pd{\LRp{u(E+p)}}{x} + \pd{\LRp{v(E+p)}}{y}&= 0.\nonumber
+\pd{\rho}{t} + \pd{\LRp{\rho u}}{x_1} + \pd{\LRp{\rho v}}{x_2} &= 0,\\
+\pd{\rho u}{t} + \pd{\LRp{\rho u^2 + p }}{x_1} + \pd{\LRp{\rho uv}}{x_2} &= 0,\nonumber\\
+\pd{\rho v}{t} + \pd{\LRp{\rho uv}}{x_1} + \pd{\LRp{\rho v^2 + p }}{x_2} &= 0,\nonumber\\
+\pd{E}{t} + \pd{\LRp{u(E+p)}}{x_1} + \pd{\LRp{v(E+p)}}{x_2}&= 0.\nonumber
 \end{align}
 In two dimensions, the pressure is $p = (\gamma-1)\LRp{E - \frac{1}{2}\rho (u^2+v^2)}$, and the specific internal energy is $\rho e = E - \frac{1}{2}\rho (u^2+v^2)$.  
 
@@ -1375,7 +1375,7 @@ p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\
 We begin by testing the propagation of a shock on a two-dimensional curved mesh using a discontinuous profile on the domain $\Omega = [0,20] \times [-5,5]$.   We set the initial velocities to be zero, and initialize the density and pressure as a discontinuous square pulse as in \cite{chan2017discretely}
 \begin{equation}
 \rho(\bm{x},t) = \begin{cases}
-3 & \LRb{x} < 1/2 \text{ and } \LRb{y} < 1/2\\
+3 & \LRb{x_1} < 1/2 \text{ and } \LRb{x_2} < 1/2\\
 2 & \text{otherwise},
 \end{cases} \qquad 
 u(\bm{x},t) = v(\bm{x},t) = 0, \qquad
@@ -1499,7 +1499,7 @@ We consider three different cases:
 \item \textbf{Polynomial approximation:} the weight-adjusted DG scheme (\ref{eq:dgform2}) utilizes the $L^2$ projection of $J^k$ onto $P^N(\hat{D})$ in the weight-adjusted mass matrix (such that Lemma~\ref{eq:conscorrect1} holds), 
 \item \textbf{Conservative correction:} the conservation correction (\ref{eq:conscorrect}) is applied to the right hand side of the scheme (\ref{eq:dgform2}).  
 \end{enumerate}
-All results use a Lax-Friedrichs flux, a CFL of $1/2$, $N=4$, and the curved mesh warping shown in Figure~\ref{fig:warp2d}.  We use volume quadrature rules from \cite{xiao2010quadrature} which are exact for degree $2N+1$ polynomials, and use $(N+1)$-node 1D Gauss-Legendre quadrature rules on the faces.  
+All results use a Lax-Friedrichs flux, a CFL of $1/2$, $N=4$, and the curved mesh warping shown in Figure~\ref{fig:warp2d}.  We use volume quadrature rules from \cite{xiao2010quadrature} which are exact for degree $2N+1$ polynomials, and use $(N+1)$-node 1D Gauss--Legendre quadrature rules on the faces.  
 
 Figure~\ref{subfig:cons1} shows computed conservation residuals from (\ref{eq:consres}) on the curved mesh in Figure~\ref{fig:warp2d} for the discontinuous pulse initial condition (\ref{eq:discontin}).  The conservation residual oscillates around $O(10^{-6})$ for the unmodified scheme (\ref{eq:dgform2}).  Modifying the scheme using either the ``Polynomial approximation'' or ``Conservative correction'' approaches reduces the conservation error to $O(10^{-12})$.  %The magnitude of the conservation residual is due to roundoff effects.  Repeating the same experiments on a smaller mesh of $8\times 8$ curved elements reduces the conservation residual to $O(10^{-13})$, while using a larger mesh of $32\times 32$ curved elements results in a conservation residual of $O(10^{-11})$.  
 We have also studied the accuracy of each case in by comparing $L^2$ errors on a curved mesh for a smooth vortex solution  at time $T=5$.  We observe that in all cases, the $L^2$ errors are virtually identical.  For $N=4$ on an $8\times 8$ mesh, the $L^2$ errors for each case differ only in the 5th digit, while for the $16\times 16$ and $32\times 32$ meshes, they differ only in the 8th digit.  This confirms that both approaches outlined in Section~\ref{sec:conservation} restore primary conservation with no perceivable effect on accuracy.  
@@ -1614,13 +1614,13 @@ Finally, we test the accuracy of the proposed schemes for smooth solutions on cu
 We use the isentropic vortex problem \cite{shu1998essentially}, which has an analytical solution 
 \begin{align}
 \rho(\bm{x},t) &= \LRp{1 - \frac{\frac{1}{2}(\gamma-1)(\beta e^{1-r(\bm{x},t)^2})^2}{8\gamma \pi^2}}^{\frac{1}{\gamma-1}}, \qquad p = \rho^{\gamma},\\
-u(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0), \qquad v(\bm{x},t) = \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0),\nonumber
+u(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(x_2-c_2), \qquad v(\bm{x},t) = \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(x_2-c_2),\nonumber
 \end{align}
-where $u, v$ are the $x$ and $y$ velocity and $r(\bm{x},t) = \sqrt{(x-x_0-t)^2 + (y-y_0)^2}$.  Here, we take $x_0 = 5, y_0 = 0$ and $\beta = 5$.  
-The solution is computed on a periodic rectangular domain $[0, 20] \times [-5,5]$ at final time $T=5$.  Quasi-uniform triangular meshes are generated using \textsc{GMSH} \cite{geuzaine2009gmsh}, and a curvilinear warping is applied to the mesh to test the effect of non-affine mappings.  This warping is shown in Figure~\ref{fig:warp2dconverge} and is defined by mapping nodal positions on each triangle to warped nodal positions $(\tilde{x},\tilde{y})$ via
+where $u, v$ are the $x_1$ and $x_2$ velocity and $r(\bm{x},t) = \sqrt{(x_1-c_1-t)^2 + (x_2-c_2)^2}$.  Here, we take $c_1 = 5, c_2 = 0$ and $\beta = 5$.  
+The solution is computed on a periodic rectangular domain $[0, 20] \times [-5,5]$ at final time $T=5$.  Quasi-uniform triangular meshes are generated using \textsc{GMSH} \cite{geuzaine2009gmsh}, and a curvilinear warping is applied to the mesh to test the effect of non-affine mappings.  This warping is shown in Figure~\ref{fig:warp2dconverge} and is defined by mapping nodal positions on each triangle to warped nodal positions $(\tilde{x_1},\tilde{x_2})$ via
 \begin{align*}
-\tilde{x} &= x + \sin\LRp{\pi x / 20}\sin\LRp{2\pi (y+5)/10}\\
-\tilde{y} &= y - \frac{1}{2}\sin\LRp{2 \pi x / 20}\sin\LRp{\pi (y+5)/10}.
+\tilde{x_1} &= x_1 + \sin\LRp{\pi x_1 / 20}\sin\LRp{2\pi (x_2+5)/10}\\
+\tilde{x_2} &= x_2 - \frac{1}{2}\sin\LRp{2 \pi x_1 / 20}\sin\LRp{\pi (x_2+5)/10}.
 \end{align*}  
 To ensure primary conservation, we use the ``Polynomial Approximation'' strategy described in Section~\ref{sec:conservation} and compute the inverse of the weight-adjusted mass matrix using the degree $N$ $L^2$ projection $\hat{\Pi}_N J^k$ instead of $J^k$.  The computed $L^2$ errors are shown in Figure~\ref{fig:converge2d}.  We observe optimal $O(h^{N+1})$ rates of convergence for $N=2, N= 4$.  For degree $N=3$, the rate of convergence is slightly higher than $O(h^{4})$ and may indicate that the mesh is not yet sufficiently fine for the $L^2$ error to show the asymptotic convergence rate.  
 
@@ -1757,21 +1757,21 @@ p_{\rm avg} &= \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{
 
 \subsubsection{Accuracy and convergence}
 
-As before, we test the accuracy of the proposed scheme using an isentropic vortex solution adapted to three dimensions.  We take the solution to be the extruded 2D vortex propagating in the $y$ direction, whose analytic expression is derived from \cite{williams2013nodal}
+As before, we test the accuracy of the proposed scheme using an isentropic vortex solution adapted to three dimensions.  We take the solution to be the extruded 2D vortex propagating in the $x_2$ direction, whose analytic expression is derived from \cite{williams2013nodal}
 \begin{align*}
 \rho(\bm{x},t) &= \LRp{1-\frac{(\gamma-1)}{2}\Pi^2}^{\frac{1}{\gamma-1}}\\
 \bm{u}(\bm{x},t) &= \Pi \bm{r}, \\
 E(\bm{x},t) &= \frac{p_0}{\gamma-1}\LRp{1-\frac{\gamma-1}{2}\Pi^2}^{\frac{\gamma}{\gamma-1}} + \frac{\rho}{2}\LRb{\bm{u}}.
 \end{align*}
-where $\bm{u} = (u,v,w)^T$ is the velocity vector, and $c_0, \bm{r} = (r_x, r_y, r_z)^T$, and $\Pi$ are defined as
+where $\bm{u} = (u,v,w)^T$ is the velocity vector and % $\Pi$, $\bm{r}$ are defined as
 \[
-\Pi = \Pi_{\max}e^{\frac{1-\LRp{\LRb{\bm{r}}/r_0}^2}{2}}, \qquad \bm{r} = \begin{pmatrix}
--(y-y_0-t)\\
-x-x_0\\
+\Pi = \Pi_{\max}e^{\frac{1-\bm{r}^T\bm{r}}{2}}, \qquad \bm{r} = \begin{pmatrix}
+-(x_2-c_2-t)\\
+x-c_1\\
 0
-\end{pmatrix}
+\end{pmatrix}.
 \]
-In this problem, we take $x_0 = y_0 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = .4$.  The problem is solved on the domain $[0,10]\times [0,20]\times [0,10]$.  
+In this problem, we take $c_1 = c_2 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = 0.4$.  The problem is solved on the domain $[0,10]\times [0,20]\times [0,10]$.  
 %\begin{figure}
 %\centering
 %\subfloat[$h = 1$]{\includegraphics[width=.4\textwidth]{figs/periodicCube2.png}}
@@ -1780,11 +1780,11 @@ In this problem, we take $x_0 = y_0 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} 
 %\caption{Unstructured affine tetrahedral meshes used for convergence tests.}
 %\label{fig:mesh3d}
 %\end{figure}
-We use \textsc{GMSH} to construct three unstructured meshes consisting of 1354, 9543, and 72923 affine tetrahedra, corresponding to $h = 2$, $h = 1$, and $h = 1/2$ (shown in Figure~\ref{subfig:mesh3d}).  We apply a curvilinear warping by again mapping nodal positions each tetrahedron to warped nodal positions $(\tilde{x},\tilde{y},\tilde{z})$ via
+We use \textsc{GMSH} to construct three unstructured meshes consisting of 1354, 9543, and 72923 affine tetrahedra, corresponding to $h = 2$, $h = 1$, and $h = 1/2$ (shown in Figure~\ref{subfig:mesh3d}).  We apply a curvilinear warping by again mapping nodal positions each tetrahedron to warped nodal positions $(\tilde{x_1},\tilde{x_2},\tilde{x_3})$ via
 \begin{align*}
-\tilde{x} &= x + \frac{1}{2}\sin\LRp{\pi \frac{x}{10}}\sin\LRp{2\pi \frac{y}{20}}\sin\LRp{\pi \frac{z}{10}},\\
-\tilde{y} &= y - \sin\LRp{2 \pi \frac{x}{10}}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{z}{10}},\\
-\tilde{z} &= z + \frac{1}{2}\sin\LRp{\pi \frac{y}{10}}\sin\LRp{2\pi \frac{y}{10}}\sin\LRp{\pi \frac{z}{10}}.
+\tilde{x_1} &= x_1 + \frac{1}{2}\sin\LRp{\pi \frac{x_1}{10}}\sin\LRp{2\pi \frac{x_2}{20}}\sin\LRp{\pi \frac{x_3}{10}},\\
+\tilde{x_2} &= x_2 - \sin\LRp{2 \pi \frac{x_1}{10}}\sin\LRp{\pi \frac{x_2}{10}}\sin\LRp{2\pi \frac{x_3}{10}},\\
+\tilde{x_3} &= x_3 + \frac{1}{2}\sin\LRp{\pi \frac{x_1}{10}}\sin\LRp{2\pi \frac{x_2}{10}}\sin\LRp{\pi \frac{x_3}{10}}.
 \end{align*} 
 The geometric terms are approximated using (\ref{eq:iconscurl2}) to ensure the satisfaction of the discrete GCL.  
 
@@ -1838,21 +1838,21 @@ We also compared approximations of geometric factors using degree $N$ polynomial
 
 %\note{Isentropic vortex on curved and non-curved meshes}
 
-\subsubsection{Inviscid Taylor-Green vortex}
+\subsubsection{Inviscid Taylor--Green vortex}
 
-Our last numerical experiment investigates the behavior of ESDG schemes for the inviscid Taylor-Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  The domain is the periodic box $[-\pi,\pi]^3$, and the initial conditions are given as
+Our last numerical experiment investigates the behavior of entropy stable DG schemes for the inviscid Taylor--Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  The domain is the periodic box $[-\pi,\pi]^3$, and the initial conditions are given as
 \begin{align*}
 \rho &= 1\\
-u &= \sin(x)\cos(y)\cos(z),\\
-v &= -\cos(x)\sin(y)\cos(z),\\ 
+u &= \sin(x_1)\cos(x_2)\cos(x_3),\\
+v &= -\cos(x_1)\sin(x_2)\cos(x_3),\\ 
 w &= 0,\\
 p &= \frac{100}{\gamma} + \frac{1}{16} \LRp{\cos(2x) + \cos(2y)}\LRp{2+\cos(2z)}.
 \end{align*}
-The Taylor-Green vortex is used to study the transition and decay of turbulence \cite{debonis2013solutions}.  In the absence of viscosity, the Taylor-Green vortex develops smaller and smaller scales, implying that for sufficiently large times, the solution contains under-resolved features.  We study the evolution of the kinetic energy $\kappa(t)$ 
+The Taylor--Green vortex is used to study the transition and decay of turbulence \cite{debonis2013solutions}.  In the absence of viscosity, the Taylor--Green vortex develops smaller and smaller scales, implying that for sufficiently large times, the solution contains under-resolved features.  We study the evolution of the kinetic energy $\kappa(t)$ 
 \[
 \kappa(t) =\frac{1}{\LRb{\Omega}} \int_{\Omega} \rho \bm{u}\cdot\bm{u} \diff{\bm{x}},
 \]
-as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$ and $N = 3, 4$.  The kinetic energy is plotted at 100 equally spaced times between $[0,20]$.  In both cases, the simulation is stable and does not blow up despite the lack of filtering, limiting, or artificial viscosity.  The results are qualitatively similar to those reported in the literature, with the kinetic energy dissipation rate increasing around $t = 4$ and peaking with a value of roughly $.014$ before $t = 9$ \cite{debonis2013solutions, gassner2016split}.  
+as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$ and $N = 3, 4$.  The kinetic energy is plotted at 100 equally spaced times between $[0,20]$.  In both cases, the simulation is stable and does not blow up despite the lack of filtering, limiting, or artificial viscosity.  The results are qualitatively similar to those reported in the literature, with the kinetic energy dissipation rate increasing around $t = 4$ and peaking with a value of roughly $0.014$ before $t = 9$ \cite{debonis2013solutions, gassner2016split}.  
 
 \begin{figure}
 \centering
@@ -1917,7 +1917,7 @@ coordinates{(0,-0)(0.183846,-9.31935e-06)(0.367692,-9.86755e-06)(0.551538,-1.809
 \label{fig:tg}
 \end{figure}
 
-%\note{Add Taylor-Green vortex}
+%\note{Add Taylor--Green vortex}
 
 \section{Conclusions}
 
