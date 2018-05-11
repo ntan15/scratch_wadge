@@ -1482,7 +1482,7 @@ These results suggest that the weight-adjusted projection is necessary to produc
 \label{sec:conservationcheck}
 Next, we check that primary conservation is maintained numerically on curved meshes.  We follow \cite{friedrich2017entropy} and examine the semi-discrete evolution of the average of $\bm{u}$ over the domain $\Omega$
 \begin{align}
-\pd{}{t}\int_{\Omega} \bm{u} = \sum_k \int_{D^k} \pd{\bm{u}}{t} = \sum_k \int_{\hat{D}} \pd{\bm{u}}{t} J^k = \sum_k \bm{1}^T \bm{W}\diag{\bm{J}^k} \bm{V}_q \td{\bm{u}_h}{t}.  
+  \pd{}{t}\int_{\Omega} \bm{u} \diff{\bm{x}} = \sum_k \int_{D^k} \pd{\bm{u}}{t} \diff{\bm{x}} = \sum_k \int_{\hat{D}} \pd{\bm{u}}{t} J^k \diff{\hat{\bm{x}}} = \sum_k \bm{1}^T \bm{W}\diag{\bm{J}^k} \bm{V}_q \td{\bm{u}_h}{t}.  
 \label{eq:conssemidiscrete}
 \end{align}
 The quantity (\ref{eq:conssemidiscrete}) is computed using quadrature by multiplying the semi-discrete system (\ref{eq:dgform2}) by $\bm{1}^T\bm{W}\diag{\bm{J}^k} \bm{V}_q$
