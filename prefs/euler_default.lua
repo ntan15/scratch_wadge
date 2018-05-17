@@ -1,6 +1,6 @@
 
 if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare2.msh"
-elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTG1.msh"
+elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeCoarse.msh"
 else
   print("Unknown element type")
 end
@@ -44,7 +44,7 @@ app = {
   },
   physical={
     FinalTime = .01,
-    CFL = .25,
+    CFL = .125,
     tau = 0.0,
   },
   output = {

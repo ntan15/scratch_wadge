@@ -48,9 +48,9 @@ dfloat logmean(dfloat aL, dfloat aR)
   const dfloat u2 = u * u;
 
   dfloat F = LOGDF(xi) / 2.f / f;
-  if (fabs(u) < 1.fe-5)
+  if (fabs(u) < 1.fe-4)
   {
-    F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f + u2 * u2 / 9.f;
+    F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f;
   }
   return (aL + aR) / (2.f * F);
 }
@@ -259,15 +259,11 @@ kernel void euler_vol_3d(const int K, const dfloat *restrict vgeo,
           if (i < p_Nq)
           {
             int id = i + k * p_Nq * p_Nfields;
-            srho[k2][i] = rhsQ[id];
-            id += p_Nq;
-            srhou[k2][i] = rhsQ[id];
-            id += p_Nq;
-            srhov[k2][i] = rhsQ[id];
-            id += p_Nq;
-            srhow[k2][i] = rhsQ[id];
-            id += p_Nq;
-            sE[k2][i] = rhsQ[id];
+            srho[k2][i] = rhsQ[id + 0*p_Nq];
+            srhou[k2][i] = rhsQ[id + 1*p_Nq];
+            srhov[k2][i] = rhsQ[id + 2*p_Nq];
+            srhow[k2][i] = rhsQ[id + 3*p_Nq];
+            sE[k2][i] = rhsQ[id + 4*p_Nq];
           }
 
           // load face values into smem
@@ -381,6 +377,7 @@ kernel void euler_vol_3d(const int K, const dfloat *restrict vgeo,
               }
             }
 
+	    // write out top block of DNi.*FS result to rhsQ
             int id = i + k * p_Nfields * p_Nq;
             for (int jj = 0; jj < p_Nfields; ++jj)
             {
@@ -454,365 +451,6 @@ kernel void euler_vol_3d(const int K, const dfloat *restrict vgeo,
   }
 }
 
-// split part of kernel
-kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
-                            const int *restrict mapPq,
-                            const dfloat *restrict VqLq,
-                            const dfloat *restrict Qf,
-                            const dfloat *restrict rhsQf, dfloat *restrict rhsQ)
-{
-
-  // loop over elements
-  for (int k1 = 0; k1 < (K + p_KblkS - 1) / p_KblkS; ++k1; outer0)
-  {
-
-    shared dfloat sfS[p_Nfields][p_KblkS][p_NfqNfaces];
-
-    for (int k2 = 0; k2 < p_KblkS; ++k2; inner1)
-    {
-      for (int i = 0; i < p_T; ++i; inner0)
-      {
-        const int k = k1 * p_KblkS + k2;
-
-        // read traces
-        if ((k < K) && (i < p_NfqNfaces))
-        {
-
-          int idM = i + k * p_NfqNfaces * p_Nfields;
-          int idP = mapPq[i + k * p_NfqNfaces];
-          const int isBoundary = idM == idP;
-
-          int fid = i + p_Nfgeo * p_NfqNfaces * k;
-          const dfloat nxJ = fgeo[fid + 0 * p_NfqNfaces];
-          const dfloat nyJ = fgeo[fid + 1 * p_NfqNfaces];
-          const dfloat nzJ = fgeo[fid + 2 * p_NfqNfaces];
-          const dfloat sJ = fgeo[fid + 3 * p_NfqNfaces];
-
-          const dfloat rhoM = Qf[idM + 0 * p_NfqNfaces];
-          const dfloat rhouM = Qf[idM + 1 * p_NfqNfaces];
-          const dfloat rhovM = Qf[idM + 2 * p_NfqNfaces];
-          const dfloat rhowM = Qf[idM + 3 * p_NfqNfaces];
-          const dfloat EM = Qf[idM + 4 * p_NfqNfaces];
-
-          const dfloat rhoP = Qf[idP + 0 * p_NfqNfaces];
-          const dfloat rhouP = Qf[idP + 1 * p_NfqNfaces];
-          const dfloat rhovP = Qf[idP + 2 * p_NfqNfaces];
-          const dfloat rhowP = Qf[idP + 3 * p_NfqNfaces];
-          const dfloat EP = Qf[idP + 4 * p_NfqNfaces];
-
-          const dfloat uM = rhouM / rhoM;
-          const dfloat vM = rhovM / rhoM;
-          const dfloat wM = rhowM / rhoM;
-          const dfloat uP = rhouP / rhoP;
-          const dfloat vP = rhovP / rhoP;
-          const dfloat wP = rhowP / rhoP;
-          const dfloat betaM = beta(rhoM, uM, vM, wM, EM);
-          const dfloat betaP = beta(rhoP, uP, vP, wM, EP);
-
-          // if (isBoundary)
-          // {
-          //   // add BCs here - assume periodic for now
-          // }
-
-          dfloat FxS[5], FyS[5], FzS[5];
-          euler3d_flux(rhoM, rhoP, uM, uP, vM, vP, wM, wP, EM, EP, betaM,
-                        betaP, FxS, FyS, FzS);
-
-          // entropy conservative fluxes + LF penalties
-          const dfloat lamM = sqrt(uM * uM + vM * vM + wM * wM) +
-                              sqrt(p_gamma * pfun(rhoM, uM, vM, wM, EM) / rhoM);
-          const dfloat lamP = sqrt(uP * uP + vP * vP + wP * wP) +
-                              sqrt(p_gamma * pfun(rhoP, uP, vP, wP, EP) / rhoP);
-          const dfloat Lfc_sJ =
-              p_TAU * .25f * max(lamM, lamP) *
-              sJ; // local max wavespeed estimate - assumes tau = 1
-
-          dfloat dU[5];
-          dU[0] = rhoP - rhoM;
-          dU[1] = rhouP - rhouM;
-          dU[2] = rhovP - rhovM;
-          dU[3] = rhowP - rhowM;
-          dU[4] = EP - EM;
-
-          // add in rhsQf contribution
-          int id = i + k * p_Nfields * p_NfqNfaces;
-          for (int jj = 0; jj < p_Nfields; ++jj)
-          {
-            const dfloat rhsQfjj = rhsQf[id];
-            id += p_NfqNfaces;
-
-            const dfloat fn =
-                .5f * (FxS[jj] * nxJ + FyS[jj] * nyJ + FzS[jj] * nzJ);
-            sfS[jj][k2][i] = fn + rhsQfjj - Lfc_sJ * dU[jj];
-          }
-
-        } // if k < K and i < NfqNfaces
-      }
-    }
-    barrier(localMemFence);
-
-    // apply lift to accumulated flux
-    for (int k2 = 0; k2 < p_KblkS; ++k2; inner1)
-    {
-      for (int i = 0; i < p_T; ++i; inner0)
-      {
-
-        const int k = k1 * p_KblkS + k2;
-        if (k < K && i < p_Nq)
-        {
-
-          // accumulate lifted contributions into vol rhs
-          dfloat val[p_Nfields];
-          for (int jj = 0; jj < p_Nfields; ++jj)
-          {
-            val[jj] = 0.f;
-          }
-
-          for (int j = 0; j < p_NfqNfaces; ++j)
-          {
-            const dfloat VqLq_ij = VqLq[i + j * p_Nq];
-            for (int jj = 0; jj < p_Nfields; ++jj)
-            {
-              val[jj] += VqLq_ij * sfS[jj][k2][j];
-            }
-          }
-
-          const int id = i + k * p_Nfields * p_Nq;
-          for (int jj = 0; jj < p_Nfields; ++jj)
-          {
-            rhsQ[id + jj * p_Nq] += val[jj];
-          }
-        }
-      }
-    }
-  }
-}
-
-// Nq loop - non-curved. For WADG, add Vq*Pq step
-kernel void euler_update_3d(const int K, const dfloat *restrict Jq,
-                            const dfloat *restrict VqPq, // eval at qpts
-                            const dfloat *restrict VfPq, // eval at fpts
-                            const dfloat fa, const dfloat fb, const dfloat fdt,
-                            dfloat *restrict rhsQ, dfloat *restrict resQ,
-                            dfloat *restrict Q, dfloat *restrict Qf)
-{
-
-  for (int k1 = 0; k1 < (K + p_KblkU - 1) / p_KblkU; ++k1; outer0)
-  {
-
-    shared dfloat srho[p_KblkU][p_Nq];
-    shared dfloat srhou[p_KblkU][p_Nq];
-    shared dfloat srhov[p_KblkU][p_Nq];
-    shared dfloat srhow[p_KblkU][p_Nq];
-    shared dfloat sE[p_KblkU][p_Nq];
-
-    // use double smem instead of register
-    // since we're not storing trace dofs?
-    shared dfloat sV1[p_KblkU][p_Nq];
-    shared dfloat sV2[p_KblkU][p_Nq];
-    shared dfloat sV3[p_KblkU][p_Nq];
-    shared dfloat sV4[p_KblkU][p_Nq];
-    shared dfloat sV5[p_KblkU][p_Nq];
-
-    // load in RHS to project
-    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
-    {
-      for (int i = 0; i < p_Nq; ++i; inner0)
-      {
-
-        const int k = k1 * p_KblkU + k2;
-
-        if (k < K)
-        {
-          int id = i + k * p_Nq * p_Nfields;
-          srho[k2][i] = rhsQ[id + 0 * p_Nq];
-          srhou[k2][i] = rhsQ[id + 1 * p_Nq];
-          srhov[k2][i] = rhsQ[id + 2 * p_Nq];
-          srhow[k2][i] = rhsQ[id + 3 * p_Nq];
-          sE[k2][i] = rhsQ[id + 4 * p_Nq];
-        }
-      }
-    }
-    barrier(localMemFence);
-
-    // project RHS and increment U
-    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
-    {
-      for (int i = 0; i < p_Nq; ++i; inner0)
-      {
-
-        const int k = k1 * p_KblkU + k2;
-
-        if (k < K)
-        {
-          // prefetch Jacobian
-          const dfloat Jqi = Jq[i + k * p_Nq];
-
-          // prefetch res arrays
-          dfloat res1, res2, res3, res4, res5;
-          int id = i + k * p_Nq * p_Nfields;
-          res1 = resQ[id + 0 * p_Nq];
-          res2 = resQ[id + 1 * p_Nq];
-          res3 = resQ[id + 2 * p_Nq];
-          res4 = resQ[id + 3 * p_Nq];
-          res5 = resQ[id + 4 * p_Nq];
-
-          dfloat r1 = 0.f;
-          dfloat r2 = 0.f;
-          dfloat r3 = 0.f;
-          dfloat r4 = 0.f;
-          dfloat r5 = 0.f;
-          for (int j = 0; j < p_Nq; ++j)
-          {
-            // note 2*rhs = from flux differencing formulation
-            const dfloat VqPq_ij = -2.f * VqPq[i + j * p_Nq];
-            r1 += VqPq_ij * srho[k2][j];
-            r2 += VqPq_ij * srhou[k2][j];
-            r3 += VqPq_ij * srhov[k2][j];
-            r4 += VqPq_ij * srhow[k2][j];
-            r5 += VqPq_ij * sE[k2][j];
-          }
-          r1 /= Jqi;
-          r2 /= Jqi;
-          r3 /= Jqi;
-          r4 /= Jqi;
-          r5 /= Jqi;
-
-          // update res arrays
-          id = i + k * p_Nq * p_Nfields;
-          res1 = fa * res1 + fdt * r1;
-          res2 = fa * res2 + fdt * r2;
-          res3 = fa * res3 + fdt * r3;
-          res4 = fa * res4 + fdt * r4;
-          res5 = fa * res5 + fdt * r5;
-
-          // store res arrays
-          id = i + k * p_Nq * p_Nfields;
-          resQ[id] = res1;
-          id += p_Nq;
-          resQ[id] = res2;
-          id += p_Nq;
-          resQ[id] = res3;
-          id += p_Nq;
-          resQ[id] = res4;
-          id += p_Nq;
-          resQ[id] = res5;
-
-          // update soln vars
-          id = i + k * p_Nq * p_Nfields;
-          dfloat rho = Q[id + 0 * p_Nq];
-          dfloat rhou = Q[id + 1 * p_Nq];
-          dfloat rhov = Q[id + 2 * p_Nq];
-          dfloat rhow = Q[id + 3 * p_Nq];
-          dfloat E = Q[id + 4 * p_Nq];
-
-          rho += fb * res1;
-          rhou += fb * res2;
-          rhov += fb * res3;
-          rhow += fb * res4;
-          E += fb * res5;
-
-          Q[id + 0 * p_Nq] = rho;
-          Q[id + 1 * p_Nq] = rhou;
-          Q[id + 2 * p_Nq] = rhov;
-          Q[id + 3 * p_Nq] = rhow;
-          Q[id + 4 * p_Nq] = E;
-
-          // evaluate entropy variables at updated vars
-          dfloat V1, V2, V3, V4, V5;
-          VU(rho, rhou, rhov, rhow, E, V1, V2, V3, V4, V5);
-
-          // smem transfer
-          sV1[k2][i] = V1;
-          sV2[k2][i] = V2;
-          sV3[k2][i] = V3;
-          sV4[k2][i] = V4;
-          sV5[k2][i] = V5;
-        }
-
-      } // inner 0
-    }   // inner1
-
-    barrier(localMemFence);
-
-    // project to nodal dofs
-    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
-    {
-      for (int i = 0; i < p_Nq; ++i; inner0)
-      {
-
-        const int k = k1 * p_KblkU + k2;
-
-        if (k < K)
-        {
-
-          // this can be made more efficient
-          int ii = i;
-          while (ii < p_NfqNfaces)
-          {
-            dfloat V1 = 0.f;
-            dfloat V2 = 0.f;
-            dfloat V3 = 0.f;
-            dfloat V4 = 0.f;
-            dfloat V5 = 0.f;
-            for (int j = 0; j < p_Nq; ++j)
-            {
-              const dfloat VfPq_ij = VfPq[ii + j * p_NfqNfaces];
-              V1 += VfPq_ij * sV1[k2][j];
-              V2 += VfPq_ij * sV2[k2][j];
-              V3 += VfPq_ij * sV3[k2][j];
-              V4 += VfPq_ij * sV4[k2][j];
-              V5 += VfPq_ij * sV5[k2][j];
-            }
-
-            // eval conserv vars in terms of entropy vars
-            const int id = ii + k * p_NfqNfaces * p_Nfields;
-            dfloat rho, rhou, rhov, rhow, E;
-            UV(V1, V2, V3, V4, V5, rho, rhou, rhov, rhow, E);
-
-            Qf[id + 0 * p_NfqNfaces] = rho;
-            Qf[id + 1 * p_NfqNfaces] = rhou;
-            Qf[id + 2 * p_NfqNfaces] = rhov;
-            Qf[id + 3 * p_NfqNfaces] = rhow;
-            Qf[id + 4 * p_NfqNfaces] = E;
-            ii += p_Nq;
-          }
-
-          // entropy variable projection
-          dfloat V1 = 0.f;
-          dfloat V2 = 0.f;
-          dfloat V3 = 0.f;
-          dfloat V4 = 0.f;
-          dfloat V5 = 0.f;
-          for (int j = 0; j < p_Nq; ++j)
-          {
-            const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-            V1 += VqPq_ij * sV1[k2][j];
-            V2 += VqPq_ij * sV2[k2][j];
-            V3 += VqPq_ij * sV3[k2][j];
-            V4 += VqPq_ij * sV4[k2][j];
-            V5 += VqPq_ij * sV5[k2][j];
-          }
-
-          // evaluate U(P*V) and write out
-          dfloat rho, rhou, rhov, rhow, E;
-          UV(V1, V2, V3, V4, V5, rho, rhou, rhov, rhow, E);
-
-          const int id = i + k * p_Nq * p_Nfields;
-          rhsQ[id + 0 * p_Nq] = rho;
-          rhsQ[id + 1 * p_Nq] = rhou;
-          rhsQ[id + 2 * p_Nq] = rhov;
-          rhsQ[id + 3 * p_Nq] = rhow;
-          rhsQ[id + 4 * p_Nq] = E;
-
-        } // end if
-
-      } // inner0
-    }   // inner1
-
-  } // outer 0
-}
-
 // in preparation for variable geofacs... not done yet.
 kernel void euler_vol_3d_curved(
     const int K, const dfloat *restrict vgeo, const dfloat *restrict vfgeo,
@@ -870,15 +508,11 @@ kernel void euler_vol_3d_curved(
           if (i < p_Nq)
           {
             int id = i + k * p_Nq * p_Nfields;
-            srho[k2][i] = rhsQ[id];
-            id += p_Nq;
-            srhou[k2][i] = rhsQ[id];
-            id += p_Nq;
-            srhov[k2][i] = rhsQ[id];
-            id += p_Nq;
-            srhow[k2][i] = rhsQ[id];
-            id += p_Nq;
-            sE[k2][i] = rhsQ[id];
+            srho[k2][i] = rhsQ[id + 0*p_Nq];
+            srhou[k2][i] = rhsQ[id + 1*p_Nq];
+            srhov[k2][i] = rhsQ[id + 2*p_Nq];
+            srhow[k2][i] = rhsQ[id + 3*p_Nq];
+            sE[k2][i] = rhsQ[id + 4*p_Nq];
           }
 
           // load face values into smem
@@ -932,10 +566,6 @@ kernel void euler_vol_3d_curved(
 	    const dfloat txJi = vgeo[gidi + 6*p_Nq];
 	    const dfloat tyJi = vgeo[gidi + 7*p_Nq];
 	    const dfloat tzJi = vgeo[gidi + 8*p_Nq];
-
-	    //	    if (k==0){
-	    //	      printf("rho,u,v,w,E,beta = %f,%f,%f,%f,%f,%f\n",rho_i,u_i,v_i,w_i,E_i,beta_i);
-	    //	    }
 
             for (int j = 0; j < p_Nq; ++j)
             {
@@ -1036,6 +666,7 @@ kernel void euler_vol_3d_curved(
               {
                 const dfloat Fjj =
                     FxS[jj] * nxJ + FyS[jj] * nyJ + FzS[jj] * nzJ;
+		
                 divF[jj] += VqLq_ij * Fjj;
               }
             }// j < p_NfqNfaces
@@ -1147,7 +778,7 @@ kernel void euler_vol_3d_curved(
 
 
 // Nq loop: wadg weight-adjusted projection
-kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
+kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
 				   const dfloat *restrict VqPq, // eval at qpts
 				   const dfloat *restrict VfPq, // eval at fpts
 				   const dfloat fa, const dfloat fb, const dfloat fdt,
@@ -1485,22 +1116,166 @@ kernel void euler_update_3d_curved2(const int K, const dfloat *restrict Jq,
 }
 
 
-// kernel with sU[5] smem instead of (rho, rhou, ..., etc)
-kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
-				   const dfloat *restrict VqPq, // eval at qpts
-				   const dfloat *restrict VfPq, // eval at fpts
-				   const dfloat fa, const dfloat fb, const dfloat fdt,
-				   dfloat *restrict rhsQ, dfloat *restrict resQ,
-				   dfloat *restrict Q, dfloat *restrict Qf)
+// split part of kernel
+kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
+                            const int *restrict mapPq,
+                            const dfloat *restrict VqLq,
+                            const dfloat *restrict Qf,
+                            const dfloat *restrict rhsQf, dfloat *restrict rhsQ)
+{
+
+  // loop over elements
+  for (int k1 = 0; k1 < (K + p_KblkS - 1) / p_KblkS; ++k1; outer0)
+  {
+
+    shared dfloat sfS[p_Nfields][p_KblkS][p_NfqNfaces];
+
+    for (int k2 = 0; k2 < p_KblkS; ++k2; inner1)
+    {
+      for (int i = 0; i < p_T; ++i; inner0)
+      {
+        const int k = k1 * p_KblkS + k2;
+
+        // read traces
+        if ((k < K) && (i < p_NfqNfaces))
+        {
+
+          int idM = i + k * p_NfqNfaces * p_Nfields;
+          int idP = mapPq[i + k * p_NfqNfaces];
+          const int isBoundary = idM == idP;
+
+          int fid = i + p_Nfgeo * p_NfqNfaces * k;
+          const dfloat nxJ = fgeo[fid + 0 * p_NfqNfaces];
+          const dfloat nyJ = fgeo[fid + 1 * p_NfqNfaces];
+          const dfloat nzJ = fgeo[fid + 2 * p_NfqNfaces];
+          const dfloat sJ = fgeo[fid + 3 * p_NfqNfaces];
+
+          const dfloat rhoM = Qf[idM + 0 * p_NfqNfaces];
+          const dfloat rhouM = Qf[idM + 1 * p_NfqNfaces];
+          const dfloat rhovM = Qf[idM + 2 * p_NfqNfaces];
+          const dfloat rhowM = Qf[idM + 3 * p_NfqNfaces];
+          const dfloat EM = Qf[idM + 4 * p_NfqNfaces];
+
+          const dfloat rhoP = Qf[idP + 0 * p_NfqNfaces];
+          const dfloat rhouP = Qf[idP + 1 * p_NfqNfaces];
+          const dfloat rhovP = Qf[idP + 2 * p_NfqNfaces];
+          const dfloat rhowP = Qf[idP + 3 * p_NfqNfaces];
+          const dfloat EP = Qf[idP + 4 * p_NfqNfaces];
+
+          const dfloat uM = rhouM / rhoM;
+          const dfloat vM = rhovM / rhoM;
+          const dfloat wM = rhowM / rhoM;
+          const dfloat uP = rhouP / rhoP;
+          const dfloat vP = rhovP / rhoP;
+          const dfloat wP = rhowP / rhoP;
+          const dfloat betaM = beta(rhoM, uM, vM, wM, EM);
+          const dfloat betaP = beta(rhoP, uP, vP, wM, EP);
+
+          // if (isBoundary)
+          // {
+          //   // add BCs here - assume periodic for now
+          // }
+
+          dfloat FxS[5], FyS[5], FzS[5];
+          euler3d_flux(rhoM, rhoP, uM, uP, vM, vP, wM, wP, EM, EP, betaM,
+                        betaP, FxS, FyS, FzS);
+
+          dfloat FxSM[5], FySM[5], FzSM[5];
+          euler3d_flux(rhoM, rhoM, uM, uM, vM, vM, wM, wM, EM, EM, betaM,
+                        betaM, FxSM, FySM, FzSM);
+	  
+          // entropy conservative fluxes + LF penalties
+          const dfloat lamM = sqrt(uM * uM + vM * vM + wM * wM) +
+                              sqrt(p_gamma * pfun(rhoM, uM, vM, wM, EM) / rhoM);
+          const dfloat lamP = sqrt(uP * uP + vP * vP + wP * wP) +
+                              sqrt(p_gamma * pfun(rhoP, uP, vP, wP, EP) / rhoP);
+          const dfloat Lfc_sJ =
+              p_TAU * .25f * max(lamM, lamP) * sJ; // local max wavespeed estimate
+
+          dfloat dU[5];
+          dU[0] = rhoP - rhoM;
+          dU[1] = rhouP - rhouM;
+          dU[2] = rhovP - rhovM;
+          dU[3] = rhowP - rhowM;
+          dU[4] = EP - EM;
+
+          // add in rhsQf contribution
+          const int id = i + k * p_Nfields * p_NfqNfaces;
+          for (int jj = 0; jj < p_Nfields; ++jj)
+          {
+            const dfloat fn =
+	      FxS[jj] * nxJ + FyS[jj] * nyJ + FzS[jj] * nzJ;
+	    
+            sfS[jj][k2][i] = .5f*fn + rhsQf[id+jj*p_NfqNfaces]  - Lfc_sJ * dU[jj];
+          }
+
+        } // if k < K and i < NfqNfaces
+      }
+    }
+    barrier(localMemFence);
+
+    // apply lift to accumulated flux
+    for (int k2 = 0; k2 < p_KblkS; ++k2; inner1)
+    {
+      for (int i = 0; i < p_T; ++i; inner0)
+      {
+
+        const int k = k1 * p_KblkS + k2;
+        if (k < K && i < p_Nq)
+        {
+
+          // accumulate lifted contributions into vol rhs
+          dfloat val[p_Nfields];
+          for (int jj = 0; jj < p_Nfields; ++jj)
+          {
+            val[jj] = 0.f;
+          }
+
+          for (int j = 0; j < p_NfqNfaces; ++j)
+          {
+            const dfloat VqLq_ij = VqLq[i + j * p_Nq];
+            for (int jj = 0; jj < p_Nfields; ++jj)
+            {
+              val[jj] += VqLq_ij * sfS[jj][k2][j];
+            }
+          }
+
+          const int id = i + k * p_Nfields * p_Nq;
+          for (int jj = 0; jj < p_Nfields; ++jj)
+          {
+            rhsQ[id + jj * p_Nq] += val[jj];
+          }
+        }
+      }
+    }
+  }
+}
+
+// Nq loop - non-curved. For WADG, add Vq*Pq step
+kernel void euler_update_3d(const int K, const dfloat *restrict Jq,
+                            const dfloat *restrict VqPq, // eval at qpts
+                            const dfloat *restrict VfPq, // eval at fpts
+                            const dfloat fa, const dfloat fb, const dfloat fdt,
+                            dfloat *restrict rhsQ, dfloat *restrict resQ,
+                            dfloat *restrict Q, dfloat *restrict Qf)
 {
 
   for (int k1 = 0; k1 < (K + p_KblkU - 1) / p_KblkU; ++k1; outer0)
   {
 
+    shared dfloat srho[p_KblkU][p_Nq];
+    shared dfloat srhou[p_KblkU][p_Nq];
+    shared dfloat srhov[p_KblkU][p_Nq];
+    shared dfloat srhow[p_KblkU][p_Nq];
+    shared dfloat sE[p_KblkU][p_Nq];
+
     // use double smem instead of register
     // since we're not storing trace dofs?
-    shared dfloat sU[p_KblkU][5][p_Nq];
-    shared dfloat sV[p_KblkU][5][p_Nq];
+    shared dfloat sV1[p_KblkU][p_Nq];
+    shared dfloat sV2[p_KblkU][p_Nq];
+    shared dfloat sV3[p_KblkU][p_Nq];
+    shared dfloat sV4[p_KblkU][p_Nq];
+    shared dfloat sV5[p_KblkU][p_Nq];
 
     // load in RHS to project
     for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
@@ -1513,25 +1288,37 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
         if (k < K)
         {
           int id = i + k * p_Nq * p_Nfields;
-          sU[k2][0][i] = rhsQ[id + 0 * p_Nq];
-          sU[k2][1][i] = rhsQ[id + 1 * p_Nq];
-          sU[k2][2][i] = rhsQ[id + 2 * p_Nq];
-          sU[k2][3][i] = rhsQ[id + 3 * p_Nq];
-          sU[k2][4][i] = rhsQ[id + 4 * p_Nq];
+          srho[k2][i] = rhsQ[id + 0 * p_Nq];
+          srhou[k2][i] = rhsQ[id + 1 * p_Nq];
+          srhov[k2][i] = rhsQ[id + 2 * p_Nq];
+          srhow[k2][i] = rhsQ[id + 3 * p_Nq];
+          sE[k2][i] = rhsQ[id + 4 * p_Nq];
         }
       }
     }
     barrier(localMemFence);
 
     // project RHS and increment U
-    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-      for (int i = 0; i < p_Nq; ++i; inner0){
+    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1)
+    {
+      for (int i = 0; i < p_Nq; ++i; inner0)
+      {
 
         const int k = k1 * p_KblkU + k2;
 
-        if (k < K){
+        if (k < K)
+        {
           // prefetch Jacobian
           const dfloat Jqi = Jq[i + k * p_Nq];
+
+          // prefetch res arrays
+          dfloat res1, res2, res3, res4, res5;
+          int id = i + k * p_Nq * p_Nfields;
+          res1 = resQ[id + 0 * p_Nq];
+          res2 = resQ[id + 1 * p_Nq];
+          res3 = resQ[id + 2 * p_Nq];
+          res4 = resQ[id + 3 * p_Nq];
+          res5 = resQ[id + 4 * p_Nq];
 
           dfloat r1 = 0.f;
           dfloat r2 = 0.f;
@@ -1542,53 +1329,17 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
           {
             // note 2*rhs = from flux differencing formulation
             const dfloat VqPq_ij = -2.f * VqPq[i + j * p_Nq];
-            r1 += VqPq_ij * sU[k2][0][j];
-            r2 += VqPq_ij * sU[k2][1][j];
-            r3 += VqPq_ij * sU[k2][2][j];
-            r4 += VqPq_ij * sU[k2][3][j];
-            r5 += VqPq_ij * sU[k2][4][j];
+            r1 += VqPq_ij * srho[k2][j];
+            r2 += VqPq_ij * srhou[k2][j];
+            r3 += VqPq_ij * srhov[k2][j];
+            r4 += VqPq_ij * srhow[k2][j];
+            r5 += VqPq_ij * sE[k2][j];
           }
-
-	  // WADG step: divide by J pointwise and project
-	  sV[k2][0][i] = r1/Jqi;
-	  sV[k2][1][i] = r2/Jqi;
-	  sV[k2][2][i] = r3/Jqi;
-	  sV[k2][3][i] = r4/Jqi;
-	  sV[k2][4][i] = r5/Jqi;
-  	}
-      }
-    }
-    barrier(localMemFence);
-
-    for (int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-      for (int i = 0; i < p_Nq; ++i; inner0){
-
-        const int k = k1 * p_KblkU + k2;
-
-        if (k < K){
-
-	  dfloat r1 = 0.f;
-	  dfloat r2 = 0.f;
-	  dfloat r3 = 0.f;
-	  dfloat r4 = 0.f;
-	  dfloat r5 = 0.f;
-	  for (int j = 0; j < p_Nq; ++j){
-            const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-            r1 += VqPq_ij * sV[k2][0][j];
-            r2 += VqPq_ij * sV[k2][1][j];
-            r3 += VqPq_ij * sV[k2][2][j];
-            r4 += VqPq_ij * sV[k2][3][j];
-            r5 += VqPq_ij * sV[k2][4][j];
-          }
-
-          // prefetch res arrays
-          dfloat res1, res2, res3, res4, res5;
-          int id = i + k * p_Nq * p_Nfields;
-          res1 = resQ[id + 0 * p_Nq];
-          res2 = resQ[id + 1 * p_Nq];
-          res3 = resQ[id + 2 * p_Nq];
-          res4 = resQ[id + 3 * p_Nq];
-          res5 = resQ[id + 4 * p_Nq];
+          r1 /= Jqi;
+          r2 /= Jqi;
+          r3 /= Jqi;
+          r4 /= Jqi;
+          r5 /= Jqi;
 
           // update res arrays
           id = i + k * p_Nq * p_Nfields;
@@ -1600,15 +1351,11 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
 
           // store res arrays
           id = i + k * p_Nq * p_Nfields;
-          resQ[id] = res1;
-          id += p_Nq;
-          resQ[id] = res2;
-          id += p_Nq;
-          resQ[id] = res3;
-          id += p_Nq;
-          resQ[id] = res4;
-          id += p_Nq;
-          resQ[id] = res5;
+          resQ[id + 0*p_Nq] = res1;
+          resQ[id + 1*p_Nq] = res2;
+          resQ[id + 2*p_Nq] = res3;
+          resQ[id + 3*p_Nq] = res4;
+          resQ[id + 4*p_Nq] = res5;
 
           // update soln vars
           id = i + k * p_Nq * p_Nfields;
@@ -1635,11 +1382,11 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
           VU(rho, rhou, rhov, rhow, E, V1, V2, V3, V4, V5);
 
           // smem transfer
-          sU[k2][0][i] = V1;
-          sU[k2][1][i] = V2;
-          sU[k2][2][i] = V3;
-          sU[k2][3][i] = V4;
-          sU[k2][4][i] = V5;
+          sV1[k2][i] = V1;
+          sV2[k2][i] = V2;
+          sV3[k2][i] = V3;
+          sV4[k2][i] = V4;
+          sV5[k2][i] = V5;
         }
 
       } // inner 0
@@ -1670,11 +1417,11 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
             for (int j = 0; j < p_Nq; ++j)
             {
               const dfloat VfPq_ij = VfPq[ii + j * p_NfqNfaces];
-              V1 += VfPq_ij * sU[k2][0][j];
-              V2 += VfPq_ij * sU[k2][1][j];
-              V3 += VfPq_ij * sU[k2][2][j];
-              V4 += VfPq_ij * sU[k2][3][j];
-              V5 += VfPq_ij * sU[k2][4][j];
+              V1 += VfPq_ij * sV1[k2][j];
+              V2 += VfPq_ij * sV2[k2][j];
+              V3 += VfPq_ij * sV3[k2][j];
+              V4 += VfPq_ij * sV4[k2][j];
+              V5 += VfPq_ij * sV5[k2][j];
             }
 
             // eval conserv vars in terms of entropy vars
@@ -1690,7 +1437,7 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
             ii += p_Nq;
           }
 
-	  // entropy variable projection
+          // entropy variable projection
           dfloat V1 = 0.f;
           dfloat V2 = 0.f;
           dfloat V3 = 0.f;
@@ -1699,11 +1446,11 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
           for (int j = 0; j < p_Nq; ++j)
           {
             const dfloat VqPq_ij = VqPq[i + j * p_Nq];
-	    V1 += VqPq_ij * sU[k2][0][j];
-	    V2 += VqPq_ij * sU[k2][1][j];
-	    V3 += VqPq_ij * sU[k2][2][j];
-	    V4 += VqPq_ij * sU[k2][3][j];
-	    V5 += VqPq_ij * sU[k2][4][j];
+            V1 += VqPq_ij * sV1[k2][j];
+            V2 += VqPq_ij * sV2[k2][j];
+            V3 += VqPq_ij * sV3[k2][j];
+            V4 += VqPq_ij * sV4[k2][j];
+            V5 += VqPq_ij * sV5[k2][j];
           }
 
           // evaluate U(P*V) and write out
@@ -1724,6 +1471,8 @@ kernel void euler_update_3d_curved(const int K, const dfloat *restrict Jq,
 
   } // outer 0
 }
+
+
 
 // compute auxiliary quantities
 kernel void euler_3d_compute_aux(const int K,

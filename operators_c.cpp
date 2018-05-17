@@ -176,6 +176,7 @@ host_operators_t *host_operators_new_2D(int N, int M, uintloc_t E,
 
   ops->Jq = to_c(geo_data->J);
   ops->mapPq = to_c(map_data->mapPq);
+  //  ops->mapPqNoFields = to_c(map_data->mapPq);  // save
 
   /*
   // JC: FIX LATER - only valid for tri2.msh
@@ -239,6 +240,19 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   MatrixXd Drstq(Drq.rows(),3*Drq.cols());
   Drstq << Drq,Dsq,Dtq;
 
+  /*
+  cout << "VqPq = " << endl << VqPq << endl;
+  cout << "VqLq = " << endl << VqLq << endl;
+  cout << "VfPq = " << endl << VfPq << endl;
+
+  cout << "Drq = " << endl << Drq << endl;
+  cout << "nrJ = " << endl << nrJ << endl;  
+  cout << "Dsq = " << endl << Dsq << endl;
+  cout << "nsJ = " << endl << nsJ << endl;  
+  cout << "Dtq = " << endl << Dtq << endl;
+  cout << "ntJ = " << endl << ntJ << endl;
+  */
+ 
   ops->dim = 3;
 
   ops->N = N;

@@ -2914,14 +2914,14 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                                               "test_kernel_2d", info);
 #else
   printf("building 3D kernels\n");
-  //app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl", "euler_vol_3d", info);
+  //app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl", "euler_vol_3d", info);
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_vol_3d_curved", info);
 
-  //app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d", info);
-  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved2", info);
+  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_update_3d", info);
+  //app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved", info);
 
-  app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
-                                              "euler_surf_3d", info);
+  app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_surf_3d", info);
+  //app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_surf_3d", info);  
 
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "test_kernel", info);
@@ -2934,7 +2934,6 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   return app;
 }
 
-// 2D only for now
 static void modify_mapP(app_t *app, int usePeriodic)
 {
 
@@ -3089,20 +3088,23 @@ static void modify_mapP(app_t *app, int usePeriodic)
 
   // FIX
   // modify mapPq to accomodate arrays of size NFIELDS
+  uintloc_t* mapPqFields = (uintloc_t *)malloc(sizeof(uintloc_t) * Nfq*Nfaces*E);
+  
   for (uintloc_t e = 0; e < E; ++e)
   {
     for (int i = 0; i < Nfq * Nfaces; ++i)
     {
       int idP = app->hops->mapPq[i + e * Nfq * Nfaces];
       int enbr = idP / (Nfq * Nfaces);
-      app->hops->mapPq[i + e * Nfq * Nfaces] =
-          (idP - Nfq * Nfaces * enbr) + enbr * Nfq * Nfaces * NFIELDS;
+      //app->hops->mapPq[i + e * Nfq * Nfaces] =
+      //	(idP - Nfq * Nfaces * enbr) + enbr * Nfq * Nfaces * NFIELDS;
+      mapPqFields[i + e * Nfq * Nfaces] = (idP - Nfq * Nfaces * enbr) + enbr * Nfq * Nfaces * NFIELDS;
     }
   }
-
+  
   occaMemoryFree(app->mapPq);
-  app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,
-                             app->hops->mapPq);
+  app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E, mapPqFields);
+  //app->mapPq = device_malloc(app->device, sizeof(uintloc_t) * Nfq * Nfaces * E,app->hops->mapPq);
 }
 
 static double get_hmin(app_t *app)
@@ -3248,6 +3250,8 @@ void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
 
 #else
 
+  dfloat_t z = X.z;
+  
   // 3D vortex on [0,10] x [0,20] x [0,10]
   dfloat_t x0 = 5.0;
   dfloat_t y0 = 5.0;
@@ -3283,6 +3287,16 @@ void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   rhow = 4.0;
   E = 1.0 + .5*(rhou*rhou+rhov*rhov+rhow*rhow)/rho;
   */
+ 
+  // more testing: entropy RHS
+  dfloat_t du = EXPDF(-4.0*((x-5.0)*(x-5.0) + (y-10.0)*(y-10.0) + (z-5.0)*(z-5.0)));
+  rho = 1.0 + du;
+  dfloat_t u = du;
+  rhou = rho*u;
+  rhov = 0.0;
+  rhow = 0.0;
+  dfloat_t p = 1.0;
+  E = p/gm1 + .5*rho*(u*u);
 
   U->U1 = rho;
   U->U2 = rhou;
@@ -3306,12 +3320,10 @@ void euler_Taylor_Green(app_t *app, coord X, euler_fields *U)
   dfloat_t u = SINDF(x)*COSDF(y)*COSDF(z);
   dfloat_t v = -COSDF(x)*SINDF(y)*COSDF(z);
   dfloat_t w = 0.0;
-  //dfloat_t p = 100.0/gamma + (1.0/16.0)*(COSDF(2.0*x)*COSDF(2.0*z) + 2.0*COSDF(2.0*y) + 2.0*COSDF(2.0*y)*COSDF(2.0*z));
   dfloat_t p = 100.0/gamma + (1.0/16.0)*(COSDF(2.0*x) + COSDF(2.0*y))*(2.0 + COSDF(2.0*z));
 
 
-  //  rho = 1.0;  u = 1.0;  v = 1.0;  p = 1.0; //testing
-
+  //rho = 1.0;  u = 1.0;  v = 0.0;  p = 1.0; //testing
 
   U->U1 = rho;
   U->U2 = rho*u;
@@ -3333,6 +3345,192 @@ static void app_test(app_t *app)
 }
 #endif
 
+static void test_rhs(app_t *app)
+{
+  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
+  		app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
+  		app->Q, app->Qf, app->rhsQ, app->rhsQf);
+  
+  //  occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
+		//		app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
+  int K = app->hm->E;
+  int Nq = app->hops->Nq;
+  int Nfq = app->hops->Nfq;
+  int Nfaces = app->hops->Nfaces;
+  int size = NFIELDS * Nq * K;
+  int sizef = NFIELDS * Nfq * Nfaces * K;
+  const int Nvgeo = app->hops->Nvgeo;
+  const int Nfgeo = app->hops->Nfgeo;
+
+#if 0
+  
+  for (int e = 0; e < K; ++e){
+    for (int i = 0; i < Nq; ++i){
+      dfloat_t xq = app->hops->xyzq[i + 0*Nq + e*Nq*3];
+      dfloat_t yq = app->hops->xyzq[i + 1*Nq + e*Nq*3];
+      dfloat_t zq = app->hops->xyzq[i + 2*Nq + e*Nq*3];    
+      printf("xq(%d,%d) = %f;yq(%d,%d) = %f;zq(%d,%d) = %f;\n",i+1,e+1,xq,i+1,e+1,yq,i+1,e+1,zq);
+
+      dfloat_t rxJ = app->hops->vgeo[e * Nq * Nvgeo + 0 * Nq + i];
+      dfloat_t ryJ = app->hops->vgeo[e * Nq * Nvgeo + 1 * Nq + i];
+      dfloat_t rzJ = app->hops->vgeo[e * Nq * Nvgeo + 2 * Nq + i];
+      dfloat_t sxJ = app->hops->vgeo[e * Nq * Nvgeo + 3 * Nq + i];
+      dfloat_t syJ = app->hops->vgeo[e * Nq * Nvgeo + 4 * Nq + i];
+      dfloat_t szJ = app->hops->vgeo[e * Nq * Nvgeo + 5 * Nq + i];
+      dfloat_t txJ = app->hops->vgeo[e * Nq * Nvgeo + 6 * Nq + i];
+      dfloat_t tyJ = app->hops->vgeo[e * Nq * Nvgeo + 7 * Nq + i];
+      dfloat_t tzJ = app->hops->vgeo[e * Nq * Nvgeo + 8 * Nq + i];
+
+      printf("rxJ(%d,%d) = %f; sxJ(%d,%d) = %f; txJ(%d,%d) = %f;\n",i+1,e+1,rxJ,i+1,e+1,sxJ,i+1,e+1,txJ);
+      printf("ryJ(%d,%d) = %f; syJ(%d,%d) = %f; tyJ(%d,%d) = %f;\n",i+1,e+1,ryJ,i+1,e+1,syJ,i+1,e+1,tyJ);
+      printf("rzJ(%d,%d) = %f; szJ(%d,%d) = %f; tzJ(%d,%d) = %f;\n",i+1,e+1,rzJ,i+1,e+1,szJ,i+1,e+1,tzJ);            
+    }
+    for (int i = 0; i < Nfq*Nfaces; ++i){
+      dfloat_t xf = app->hops->xyzf[i + 0*Nfq*Nfaces + e*Nfq*Nfaces*3];
+      dfloat_t yf = app->hops->xyzf[i + 1*Nfq*Nfaces + e*Nfq*Nfaces*3];
+      dfloat_t zf = app->hops->xyzf[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*3];    
+      printf("xf(%d,%d) = %f;yf(%d,%d) = %f;zf(%d,%d) = %f;\n",i+1,e+1,xf,i+1,e+1,yf,i+1,e+1,zf);
+
+      dfloat_t rxJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 0 * Nfq*Nfaces + i];
+      dfloat_t ryJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 1 * Nfq*Nfaces + i];
+      dfloat_t rzJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 2 * Nfq*Nfaces + i];
+      dfloat_t sxJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 3 * Nfq*Nfaces + i];
+      dfloat_t syJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 4 * Nfq*Nfaces + i];
+      dfloat_t szJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 5 * Nfq*Nfaces + i];
+      dfloat_t txJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 6 * Nfq*Nfaces + i];
+      dfloat_t tyJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 7 * Nfq*Nfaces + i];
+      dfloat_t tzJ = app->hops->vfgeo[e * Nfq*Nfaces * Nvgeo + 8 * Nfq*Nfaces + i];
+
+      printf("rxJf(%d,%d) = %f; sxJf(%d,%d) = %f; txJf(%d,%d) = %f;\n",i+1,e+1,rxJ,i+1,e+1,sxJ,i+1,e+1,txJ);
+      printf("ryJf(%d,%d) = %f; syJf(%d,%d) = %f; tyJf(%d,%d) = %f;\n",i+1,e+1,ryJ,i+1,e+1,syJ,i+1,e+1,tyJ);
+      printf("rzJf(%d,%d) = %f; szJf(%d,%d) = %f; tzJf(%d,%d) = %f;\n",i+1,e+1,rzJ,i+1,e+1,szJ,i+1,e+1,tzJ);
+
+      dfloat_t nxJ = app->hops->fgeo[e * Nfq*Nfaces * Nvgeo + 0 * Nfq*Nfaces + i];
+      dfloat_t nyJ = app->hops->fgeo[e * Nfq*Nfaces * Nvgeo + 1 * Nfq*Nfaces + i];
+      dfloat_t nzJ = app->hops->fgeo[e * Nfq*Nfaces * Nvgeo + 2 * Nfq*Nfaces + i];      
+      
+      printf("nxJ(%d,%d) = %f;nyJ(%d,%d) = %f;nzJ(%d,%d) = %f;\n",i+1,e+1,nxJ,i+1,e+1,nyJ,i+1,e+1,nzJ);      
+
+      int idM = i + e*Nfq*Nfaces;
+      //int idP = app->hops->mapPqNoFields[i + e*Nfq*Nfaces];
+      int idP = app->hops->mapPq[idM];
+      printf("mapM(%d,%d) = %d; mapP(%d,%d) = %d;\n",i+1,e+1,idM,i+1,e+1,idP);
+    }
+  }
+#endif
+
+  // checking node maps which don't match
+  int i = 3;
+  int e = 4;
+  int idM = i + e*Nfq*Nfaces;  
+  int idP = app->hops->mapPq[idM];
+  printf("idM = %d, idP = %d\n",idM,idP);
+  
+  dfloat_t xf = app->hops->xyzf[i + 0*Nfq*Nfaces + e*Nfq*Nfaces*3];
+  dfloat_t yf = app->hops->xyzf[i + 1*Nfq*Nfaces + e*Nfq*Nfaces*3];
+  dfloat_t zf = app->hops->xyzf[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*3];
+  printf("xyzfM = %f, %f, %f\n",xf,yf,zf);
+  
+  i = 8;
+  e = 112;
+  printf("idM2 = %d\n",i+e*Nfq*Nfaces);
+  xf = app->hops->xyzf[i + 0*Nfq*Nfaces + e*Nfq*Nfaces*3];
+  yf = app->hops->xyzf[i + 1*Nfq*Nfaces + e*Nfq*Nfaces*3];
+  zf = app->hops->xyzf[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*3];    
+  printf("xyzfP = %f, %f, %f\n",xf,yf,zf);
+
+
+#if 1 // test RHS with entropy vars after computing vol/surface RHS  
+  dfloat_t *Q = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * size);
+  occaCopyMemToPtr(Q, app->Q, size * sizeof(dfloat_t), occaNoOffset);
+  dfloat_t *rhs = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * size);
+  occaCopyMemToPtr(rhs, app->rhsQ, size * sizeof(dfloat_t), occaNoOffset);
+
+  dfloat_t *rhsf = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * sizef);
+  occaCopyMemToPtr(rhsf, app->rhsQf, sizef * sizeof(dfloat_t), occaNoOffset);  
+  //  occaDeviceFinish(app->device);
+
+  dfloat_t Srhs = 0.0;
+  dfloat_t rhssum = 0.0;  
+  dfloat_t rhsfsum = 0.0;
+  for (int e = 0; e < K; ++e){
+    dfloat_t *VV = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS);
+    dfloat_t *rr = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS);    
+    for (int i = 0; i < Nq; ++i){
+      int id = i + NFIELDS*Nq*e;
+
+      euler_fields U, V;
+      U.U1 = Q[id + 0*Nq];;
+      U.U2 = Q[id + 1*Nq];;
+      U.U3 = Q[id + 2*Nq];;
+      U.U4 = Q[id + 3*Nq];;
+      U.U5 = Q[id + 4*Nq];;
+
+      VU(app, U, &V);
+      VV[i       ] = V.U1;
+      VV[i + Nq  ] = V.U2;
+      VV[i + 2*Nq] = V.U3;
+      VV[i + 3*Nq] = V.U4;
+      VV[i + 4*Nq] = V.U5;
+
+      rr[i     ] = rhs[id];
+      rr[i + Nq] = rhs[id + Nq];
+      rr[i + 2*Nq] = rhs[id + 2*Nq];
+      rr[i + 3*Nq] = rhs[id + 3*Nq];
+      rr[i + 4*Nq] = rhs[id + 4*Nq]; 
+    }
+
+    // check testing projected RHS with projected entropy vars (should be zero for affine)
+    for (int i = 0; i < Nq; ++i){
+      dfloat_t V1 = 0.0;      dfloat_t V2 = 0.0;      dfloat_t V3 = 0.0;
+      dfloat_t V4 = 0.0;      dfloat_t V5 = 0.0;
+      
+      dfloat_t r1 = 0.0;      dfloat_t r2 = 0.0;      dfloat_t r3 = 0.0;
+      dfloat_t r4 = 0.0;      dfloat_t r5 = 0.0;      
+      
+      for (int j = 0; j < Nq; ++j){
+        dfloat_t VqPq_ij = app->hops->VqPq[i + j * Nq];
+        V1 += VqPq_ij*VV[j + 0*Nq];
+        V2 += VqPq_ij*VV[j + 1*Nq];
+        V3 += VqPq_ij*VV[j + 2*Nq];
+        V4 += VqPq_ij*VV[j + 3*Nq];
+        V5 += VqPq_ij*VV[j + 4*Nq];
+	
+	r1 += VqPq_ij*rr[j + 0*Nq];
+	r2 += VqPq_ij*rr[j + 1*Nq];
+	r3 += VqPq_ij*rr[j + 2*Nq];
+	r4 += VqPq_ij*rr[j + 3*Nq];
+	r5 += VqPq_ij*rr[j + 4*Nq];	
+      }
+      dfloat_t wq = (app->hops->wq[i]);
+      dfloat_t Jq =  (app->hops->Jq[i + e * Nq]);
+
+
+      /*
+	r1 = rr[i+0*Nq];
+	r2 = rr[i+1*Nq];
+	r3 = rr[i+2*Nq];
+	r4 = rr[i+3*Nq];
+	r5 = rr[i+4*Nq];      
+      */
+      
+      Srhs += wq*(V1*r1 + V2*r2 + V3*r3 + V4*r4 + V5*r5);
+      rhssum += rhs[i + 0*Nq + Nq*NFIELDS*e];
+      //Srhs += V1;      
+      //printf("rhoq(%d,%d) = %f;\n",i+1,e+1,Q[i + Nq*NFIELDS*e]);
+    }
+
+    for (int i = 0; i < Nfq*Nfaces; ++i){
+      rhsfsum += rhsf[i + 0*Nfq*Nfaces + Nfq*Nfaces*NFIELDS*e];//wq*(V1*r1);
+      //printf("FxS(%d,%d) = %f;\n",i+1,e+1,rhsf[i + Nfq*Nfaces*NFIELDS*e]);
+    }
+  }
+  printf("Rhs vol = %g, rhs face = %g, entropy rhs = %g\n",rhssum,rhsfsum,Srhs);
+  //printf("Entropy rhs vol = %g\n",Srhs);
+#endif
+
+}
+
 static void rk_step(app_t *app, double rka, double rkb, double dt)
 {
 
@@ -3352,71 +3550,13 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
 
 #else
 
+
   occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
                 app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
                 app->Q, app->Qf, app->rhsQ, app->rhsQf);
 
   occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
                 app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
-
-#if 0
-  int K = app->hm->E;
-  int Nq = app->hops->Nq;
-  int size = NFIELDS * Nq * K;
-  dfloat_t *Q = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * size);
-  occaCopyMemToPtr(Q, app->Q, size * sizeof(dfloat_t), occaNoOffset);
-  dfloat_t *rhs = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * size);
-  occaCopyMemToPtr(rhs, app->rhsQ, size * sizeof(dfloat_t), occaNoOffset);
-
-  dfloat_t Srhs = 0.0;
-  for (int e = 0; e < K; ++e){
-    dfloat_t *QV = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS);
-    for (int i = 0; i < Nq; ++i){
-      int id = i + NFIELDS*Nq*e;
-      dfloat_t wJq = (app->hops->wq[i]) * (app->hops->Jq[i + e * Nq]);
-
-      euler_fields U, V;
-      U.U1 = Q[id + 0*Nq];;
-      U.U2 = Q[id + 1*Nq];;
-      U.U3 = Q[id + 2*Nq];;
-      U.U4 = Q[id + 3*Nq];;
-      U.U5 = Q[id + 4*Nq];;
-
-      VU(app, U, &V);
-
-      VV[i] = V.U1;
-      VV[i + Nq]  = V.U2;
-      VV[i + 2*Nq] = V.U3;
-      VV[i + 3*Nq] = V.U4;
-      VV[i + 4*Nq] = V.U5;
-    }
-
-    // check testing with projected entropy vars
-    for (int i = 0; i < Nq; ++i){
-      dfloat_t V1 = 0.0;
-      dfloat_t V2 = 0.0;
-      dfloat_t V3 = 0.0;
-      dfloat_t V4 = 0.0;
-      dfloat_t V5 = 0.0;
-      for (int j = 0; j < Nq; ++j){
-        dfloat_t VqPq_ij = app->hops->VqPq[i + j * Nq];
-        V1 += VqPq_ij*VV[j + 0*Nq];
-        V2 += VqPq_ij*VV[j + 1*Nq];
-        V3 += VqPq_ij*VV[j + 2*Nq];
-        V4 += VqPq_ij*VV[j + 3*Nq];
-        V5 += VqPq_ij*VV[j + 4*Nq];
-      }
-      dfloat_t r1 = rhs[id];
-      dfloat_t r2 = rhs[id + Nq];
-      dfloat_t r3 = rhs[id + 2*Nq];
-      dfloat_t r4 = rhs[id + 3*Nq];
-      dfloat_t r5 = rhs[id + 4*Nq];
-
-      Srhs += wJq*(V1*r1 + V2*r2 + V3*r3 + V4*r4 + V5*r5);
-    }
-  }
-  printf("Entropy rhs = %g\n",Srhs);
-#endif
 
   occaKernelRun(app->update, occaInt(app->hm->E), app->Jq, app->VqPq, app->VfPq,
                 occaDfloat((dfloat_t)rka), occaDfloat((dfloat_t)rkb),
@@ -3698,8 +3838,8 @@ int main(int argc, char *argv[])
 
       // vortex solution, start at time t = 0
       euler_fields U;
-      //euler_vortex(app, X, 0.0, &U);
-      euler_Taylor_Green(app,X,&U);
+      euler_vortex(app, X, 0.0, &U);
+      //euler_Taylor_Green(app,X,&U);
 
       Q[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
       Q[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
@@ -3724,12 +3864,12 @@ int main(int argc, char *argv[])
           dfloat_t VqPq_ij = app->hops->VqPq[i + j * Nq];
           qi += VqPq_ij * Qj;
         }
-        Qe[i + fld * Nq] = qi;
+        Qe[i] = qi;
       }
       // copy back projected init cond to global array
       for (int i = 0; i < Nq; ++i)
       {
-        Q[i + fld * Nq + e * Nq * NFIELDS] = Qe[i + fld * Nq];
+        Q[i + fld * Nq + e * Nq * NFIELDS] = Qe[i];
       }
     }
 
@@ -3794,6 +3934,7 @@ int main(int argc, char *argv[])
       Qvq[i + 4 * Nq + e * Nq * NFIELDS] = U.U5;
 #endif
     }
+    
     // project entropy vars, eval at face qpts
     for (int i = 0; i < Nfq * Nfaces; ++i)
     {
@@ -3888,6 +4029,9 @@ int main(int argc, char *argv[])
   double dt = CFL * hmin / CN;
   printf("hmin = %f, CFL = %f, dt = %f, Final Time = %f\n", hmin, CFL, dt, FinalTime);
 
+  test_rhs(app);
+  return 0;
+
 #if 0
 
   app_test(app);
@@ -3913,7 +4057,7 @@ int main(int argc, char *argv[])
   //#if 0
   //#endif
 
-#if 1
+#if 0
   printf("Computing L2 error\n");
   dfloat_t err = 0.0;
   for (uintloc_t e = 0; e < K; ++e)
