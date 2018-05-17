@@ -670,11 +670,14 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
         {
           asd_free(line);
           line = asd_getline(fid);
+// Don't read periodic section
+#if 0
           char *child = strtok(line, " ");
           char *mother = strtok(NULL, " ");
 
           ASD_TRACE("Periodic %s -> %s", child, mother);
           asd_dictionary_insert(&periodic_vertices, child, mother);
+#endif
         }
         asd_free(line);
         line = asd_getline(fid);
@@ -735,6 +738,8 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
       // Store the periodic vertex numbers for the topology (i.e., connectivity)
       char child[ASD_BUFSIZ];
       snprintf(child, ASD_BUFSIZ, "%" UINTGLO_PRI, v + 1);
+// Turn off gmsh based periodic crap
+#if 0
       char *mother = asd_dictionary_get_value(&periodic_vertices, child);
 
       if (mother)
@@ -749,6 +754,7 @@ static host_mesh_t *host_mesh_read_msh(const prefs_t *prefs)
         snprintf(child, ASD_BUFSIZ, "%" UINTGLO_PRI, v + 1);
         mother = asd_dictionary_get_value(&periodic_vertices, child);
       }
+#endif
 
       mesh->EToVG[NVERTS * (e - ethis) + n] = v;
     }
