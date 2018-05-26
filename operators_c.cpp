@@ -246,13 +246,13 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
   cout << "VfPq = " << endl << VfPq << endl;
 
   cout << "Drq = " << endl << Drq << endl;
-  cout << "nrJ = " << endl << nrJ << endl;  
+  cout << "nrJ = " << endl << nrJ << endl;
   cout << "Dsq = " << endl << Dsq << endl;
-  cout << "nsJ = " << endl << nsJ << endl;  
+  cout << "nsJ = " << endl << nsJ << endl;
   cout << "Dtq = " << endl << Dtq << endl;
   cout << "ntJ = " << endl << ntJ << endl;
   */
- 
+
   ops->dim = 3;
 
   ops->N = N;
@@ -370,13 +370,16 @@ host_operators_t *host_operators_new_3D(int N, int M, uintloc_t E,
           (dfloat_t)geo_data->tzJf(n, e);
 
       ops->fgeo[e * Nfq * Nfaces * Nfgeo + 0 * Nfq * Nfaces + n] =
-          (dfloat_t)geo_data->nxJ(n, e);
+        (dfloat_t)geo_data->nxJ(n, e);
       ops->fgeo[e * Nfq * Nfaces * Nfgeo + 1 * Nfq * Nfaces + n] =
-          (dfloat_t)geo_data->nyJ(n, e);
+        (dfloat_t)geo_data->nyJ(n, e);
       ops->fgeo[e * Nfq * Nfaces * Nfgeo + 2 * Nfq * Nfaces + n] =
-          (dfloat_t)geo_data->nzJ(n, e);
+        (dfloat_t)geo_data->nzJ(n, e);
       ops->fgeo[e * Nfq * Nfaces * Nfgeo + 3 * Nfq * Nfaces + n] =
-          (dfloat_t)geo_data->sJ(n, e);
+        (dfloat_t)geo_data->sJ(n, e);
+      //      if (e==99){
+      //        printf("n = %d, nxJ = %f\n", n, (dfloat_t) geo_data->nxJ(n,e));
+      //      }
     }
   }
 
