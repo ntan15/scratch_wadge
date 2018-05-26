@@ -38,13 +38,13 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 1,
-    M = 2,
+    N = 2,
+    M = 4,
     sfc_partition = true
   },
   physical={
-    FinalTime = 10.0,
-    CFL = .0625,
+    FinalTime = 5.0,
+    CFL = .25,
     tau = 0.0,
   },
   output = {

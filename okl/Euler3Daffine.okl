@@ -442,7 +442,7 @@ kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
           const dfloat vP = rhovP / rhoP;
           const dfloat wP = rhowP / rhoP;
           const dfloat betaM = beta(rhoM, uM, vM, wM, EM);
-          const dfloat betaP = beta(rhoP, uP, vP, wM, EP);
+          const dfloat betaP = beta(rhoP, uP, vP, wP, EP);
 
           // if (isBoundary)
           // {

@@ -1169,7 +1169,7 @@ kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
           const dfloat vP = rhovP / rhoP;
           const dfloat wP = rhowP / rhoP;
           const dfloat betaM = beta(rhoM, uM, vM, wM, EM);
-          const dfloat betaP = beta(rhoP, uP, vP, wM, EP);
+          const dfloat betaP = beta(rhoP, uP, vP, wP, EP);
 
           // if (isBoundary)
           // {
@@ -1177,12 +1177,12 @@ kernel void euler_surf_3d(const int K, const dfloat *restrict fgeo,
           // }
 
           dfloat FxS[5], FyS[5], FzS[5];
-          euler3d_flux(rhoM, rhoP, uM, uP, vM, vP, wM, wP, EM, EP, betaM,
-                        betaP, FxS, FyS, FzS);
+          euler3d_flux(rhoM, rhoP, uM, uP, vM, vP, wM, wP, EM, EP,
+		       betaM, betaP, FxS, FyS, FzS);
 
           dfloat FxSM[5], FySM[5], FzSM[5];
-          euler3d_flux(rhoM, rhoM, uM, uM, vM, vM, wM, wM, EM, EM, betaM,
-                        betaM, FxSM, FySM, FzSM);
+          euler3d_flux(rhoM, rhoM, uM, uM, vM, vM, wM, wM, EM, EM,
+		       betaM, betaM, FxSM, FySM, FzSM);
 	  
           // entropy conservative fluxes + LF penalties
           const dfloat lamM = sqrt(uM * uM + vM * vM + wM * wM) +

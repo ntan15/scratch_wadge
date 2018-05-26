@@ -3,7 +3,8 @@ SetFactory("OpenCASCADE");
 
 R = 3.14159265359;
 
-h = R/2; //10;
+//h = R*9/10; //10;
+h = R; //10;
 Mesh.Algorithm = 6;
 Mesh.CharacteristicLengthMin = h;
 Mesh.CharacteristicLengthMax = h;

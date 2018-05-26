@@ -2923,11 +2923,11 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   //app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl", "euler_vol_3d", info);
   app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_vol_3d_curved", info);
 
-  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_update_3d", info);
-  //app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved", info);
+  //app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_update_3d", info);
+  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved", info);
 
-  app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_surf_3d", info);
-  //app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_surf_3d", info);
+  //app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_surf_3d", info);
+  app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_surf_3d", info);
 
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "test_kernel", info);
@@ -3328,8 +3328,14 @@ void euler_Taylor_Green(app_t *app, coord X, euler_fields *U)
   dfloat_t w = 0.0;
   dfloat_t p = 100.0/gamma + (1.0/16.0)*(COSDF(2.0*x) + COSDF(2.0*y))*(2.0 + COSDF(2.0*z));
 
+  /*
   //rho = 1.0;  u = 1.0;  v = 0.0;  p = 1.0; //testing
-
+  rho = 2.0 + .1*((dfloat_t) (rand()) / (dfloat_t) (RAND_MAX));
+  u   = 1.0 + .1*((dfloat_t) (rand()) / (dfloat_t) (RAND_MAX));
+  v   = 1.0 + .1*((dfloat_t) (rand()) / (dfloat_t) (RAND_MAX));
+  w = 1.0 + .1*((dfloat_t) (rand()) / (dfloat_t) (RAND_MAX));
+  p = 2.0 + .1*((dfloat_t) (rand()) / (dfloat_t) (RAND_MAX));
+  */
   U->U1 = rho;
   U->U2 = rho*u;
   U->U3 = rho*v;
@@ -3357,7 +3363,7 @@ static void test_rhs(app_t *app)
   		app->Q, app->Qf, app->rhsQ, app->rhsQf);
 
   occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
-		app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
+  		app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
   int K = app->hm->E;
   int Nq = app->hops->Nq;
   int Nfq = app->hops->Nfq;
