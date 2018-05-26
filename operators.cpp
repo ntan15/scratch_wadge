@@ -514,7 +514,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 
 #endif
 
-#if 0
+#if 1
   printf("Adding curvilinear perturbation for TG vortex\n");
   // add curvilinear perturbation to [-pi,pi]^3
   MatrixXd xx = x.array();

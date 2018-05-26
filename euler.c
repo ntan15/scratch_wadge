@@ -3357,8 +3357,8 @@ static void test_rhs(app_t *app)
   		app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
   		app->Q, app->Qf, app->rhsQ, app->rhsQf);
   
-  //  occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
-		//		app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
+  occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
+		app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
   int K = app->hm->E;
   int Nq = app->hops->Nq;
   int Nfq = app->hops->Nfq;
@@ -3425,7 +3425,8 @@ static void test_rhs(app_t *app)
   }
 #endif
 
-  // checking node maps which don't match
+  /*
+// checking node maps which don't match
   int i = 3;
   int e = 4;
   int idM = i + e*Nfq*Nfaces;  
@@ -3444,7 +3445,7 @@ static void test_rhs(app_t *app)
   yf = app->hops->xyzf[i + 1*Nfq*Nfaces + e*Nfq*Nfaces*3];
   zf = app->hops->xyzf[i + 2*Nfq*Nfaces + e*Nfq*Nfaces*3];    
   printf("xyzfP = %f, %f, %f\n",xf,yf,zf);
-
+  */
 
 #if 1 // test RHS with entropy vars after computing vol/surface RHS  
   dfloat_t *Q = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * size);
@@ -3510,8 +3511,6 @@ static void test_rhs(app_t *app)
       }
       dfloat_t wq = (app->hops->wq[i]);
       dfloat_t Jq =  (app->hops->Jq[i + e * Nq]);
-
-
       /*
 	r1 = rr[i+0*Nq];
 	r2 = rr[i+1*Nq];
@@ -4035,8 +4034,8 @@ int main(int argc, char *argv[])
   double dt = CFL * hmin / CN;
   printf("hmin = %f, CFL = %f, dt = %f, Final Time = %f\n", hmin, CFL, dt, FinalTime);
 
-  test_rhs(app);
-  return 0;
+  //  test_rhs(app);
+  //  return 0;
 
 #if 0
 
