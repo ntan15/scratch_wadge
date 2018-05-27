@@ -503,10 +503,6 @@ Finally, we introduce quadrature-based operators $\bm{D}_N^i$ which will be used
 }
 \label{eq:decoupledsbp}
 \end{equation}
-%<<<<<<< HEAD
-%%\lcwnote{(I am not sure why $\diag{\hat{\bm{n}}_i\circ\bm{\hat{J}}}$ changed to $\diag{\hat{\bm{n}}_i}\circ\bm{\hat{J}}$.  I am guessing it was a typo but want to double check I am not missing something before I change it back everywhere.)}
-%=======
-%>>>>>>> cd72d858ec79933e123c7bf1361e488006d5956d
 where $\hat{\bm{n}}_i$ is the vector containing values of the $i$th component of the unit normal on the surface of the reference element $\hat{D}$, and $\bm{\hat{J}}_f$ is the vector containing values of the face Jacobian factor $\hat{J}_f$ which result from mapping a face of $\hat{D}$ to a reference face.  Here $\hat{\bm{n}}_i\circ\bm{\hat{J}}_f$ is the Hadamard product (i.e., the entrywise product) of the vectors $\hat{\bm{n}}_i$ and $\bm{\hat{J}}_f$.  When combined with projection and lifting matrices, $\bm{D}_N^i$ produces a high order approximation of non-conservative products.  Let $\bm{f},\bm{g}$ denote vectors containing the evaluation of functions $f(\bm{x}),g(\bm{x})$ at both volume and surface quadrature points
 \[
 \LRs{\begin{array}{cc}\bm{P}_q & \bm{L}_q\end{array}} \diag{\bm{f}}\bm{D}_N^i \bm{g} \approx f\pd{g}{\hat{x}_i}.
@@ -711,7 +707,7 @@ Under the assumption that $\bm{Q}^j_k\bm{1} = 0$ for $i = 1,\ldots,d$ over each 
 \end{proof}
 An entropy stable scheme can be constructed by adding an entropy-dissipating penalty term, such as a Lax-Friedrichs penalization or the matrix dissipation terms introduced in \cite{chandrashekar2013kinetic, winters2017uniquely}.  For example, Lax-Friedrichs penalization can be incorporated by replacing the flux term with
 \[
-\bm{L}^k_q \diag{\bm{n}_j} \LRp{\bm{f}_j^*-\bm{f}(\bm{u})} \Longrightarrow \bm{L}^k_q\LRp{\diag{\bm{n}_j} \bm{f}_j^* - \frac{\lambda}{2}\jump{\tilde{\bm{u}}_f}- \bm{f}(\bm{u})},
+\bm{L}^k_q \diag{\bm{n}_j} \LRp{\bm{f}_j^*-\bm{f}(\bm{u})} \Longrightarrow \bm{L}^k_q\LRp{\diag{\bm{n}_j} \LRp{\bm{f}_j^*- \bm{f}(\bm{u})} - \frac{\lambda}{2}\jump{\tilde{\bm{u}}_f}},
 \]
 where $\lambda$ is an estimate of the maximum eigenvalue of $\pd{\bm{f}(\bm{u})}{\bm{u}}$ \cite{chen2017entropy, chan2017discretely}.
 
@@ -824,7 +820,7 @@ Then, multiplying by the weight-adjusted mass matrix $\bm{M}\bm{M}_{1/J^k}^{-1}\
 Testing with the weight-adjusted projection of the entropy variables $\bm{v}_h = \tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}$ and using (\ref{eq:projidentity}) then yields for the time term
 \begin{align*}
 \LRp{\tilde{\bm{P}}^k_q \bm{v}\LRp{\bm{u}_q}}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag{\bm{J}^k}\bm{V}_q \bm{M}^{-1}\bm{M}_{1/J^k} \bm{M}^{-1} \bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t}\\
-                                                                                               &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}\diag{\bm{J}^k} \left(\bm{v}\LRp{\bm{u}_q}\circ\td{\bm{u}_q}{t}\right) \\
+                                                                                               &= \bm{v}\LRp{\bm{u}_q}^T\bm{W}\diag{\bm{J}^k} \td{\bm{V}_q\bm{u}_h}{t} = \bm{1}^T\bm{W}\diag{\bm{J}^k} \left({\rm diag}\LRp{\bm{v}\LRp{\bm{u}_q}}\td{\bm{u}_q}{t}\right) \\
                                                                                                &= \bm{1}^T\bm{W}\diag{\bm{J}^k} \td{U(\bm{u}_q)}{t}.
 \end{align*}
 The remainder of the proof is identical to that of Theorem~\ref{thm:stab1} and \cite{chan2017discretely}.
@@ -937,11 +933,6 @@ We next address local conservation of the weight-adjusted scheme (\ref{eq:dgform
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
 \sum_{j=1}^d \bm{1}^T \LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \sum_{j=1}^d \bm{1}^T\bm{W}_f \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)} = 0.
 \]
-%<<<<<<< HEAD
-%%\lcwnote{I think $\diag{\bm{n}_j}$ needs to be replaced with something like $\diag{\bm{n}_j \circ \bm{J}_f^k}$.}
-%%\note{The $\bm{J}^k_f$ is wrapped up in the definition of $\bm{L}^k_q$}
-%=======
-%>>>>>>> cd72d858ec79933e123c7bf1361e488006d5956d
 Local conservation can be shown by applying the SBP property (\ref{eq:sbpk}) and noting that $\LRp{\bm{B}^i_k \circ \bm{F}_{j,S}}\bm{1} = \bm{W}_f\diag{\bm{n}_j \circ \bm{J}^k_f}\bm{f}_j(\bm{u})$ (using the consistency of $\bm{f}_S$ and diagonal nature of $\bm{B}^i_k$) yields
 \[
 \bm{1}^T\bm{M}\bm{M}_{1/J^k}^{-1}\bm{M}\td{\bm{u}_h}{t} + 
@@ -1061,7 +1052,7 @@ From (\ref{eq:conscurl}), it can be observed that, because the divergence of a c
 %J^k\bm{G}^k_{2i}\\
 %J^k\bm{G}^k_{3i}\end{array}} = \sum_{j=1}^d \pd{}{\hat{x}_j}J^k\bm{G}^k_{ij} = 0.
 %\end{align}
-The idea of Kopriva~\cite{kopriva2006metric} is to use (\ref{eq:conscurl}), but to interpolate before applying the curl  %This approximates the geometric terms via
+The central idea of \cite{visbal2002use, kopriva2006metric} is to use (\ref{eq:conscurl}), but to interpolate before applying the curl  %This approximates the geometric terms via
 \begin{align}
 \LRs{\begin{array}{c}
 G^k_{1i}\\
@@ -1403,10 +1394,10 @@ To test the scheme (\ref{eq:dgform2}), we utilize an entropy conservative flux a
 
 First, can examine the entropy RHS, which we define as the right hand side of (\ref{eq:dgform2}) tested with $\bm{v}_h$ 
 \begin{equation}
-  \text{entropy RHS}= \sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}.  
+  \text{entropy RHS}= -\sum_{j=1}^d\LRp{ \tilde{\bm{v}}^T\LRp{2\bm{Q}^j_k \circ \bm{F}_{j,S}}\bm{1} + \tilde{\bm{v}}_f^T\bm{W}_f^k \diag{\bm{n}_j}\LRp{\bm{f}_j^* - \bm{f}_j(\tilde{\bm{u}}_f)}}.  
 \label{eq:entropyrhs}
 \end{equation}
-\lcwnote{I put a 2 in the previous equation to match \eqref{eq:dgform2weak}.  Do we also want minus signs since these terms are moved to the RHS?}
+%\lcwnote{I put a 2 in the previous equation to match \eqref{eq:dgform2weak}.  Do we also want minus signs since these terms are moved to the RHS?}  JC: thanks!  sure - added a zero, though the term should be zero so the sign shouldn't matter
 For positive density and pressure, (\ref{eq:entropyrhs}) should be zero to machine precision.  We can also track the change in entropy $\Delta U = \LRb{U(\bm{u}(\bm{x},t))-U(\bm{u}(\bm{x},0))}$, which should converge to $0$ as the timestep $dt$ approaches zero.  Furthermore, the rate of convergence should match the order of the time-stepper used \cite{gassner2016well, chan2017discretely}.  
 
 \begin{figure}
@@ -1869,11 +1860,15 @@ The Taylor--Green vortex is used to study the transition and decay of turbulence
 \[
 \kappa(t) =\frac{1}{\LRb{\Omega}} \int_{\Omega} \rho \bm{u}\cdot\bm{u} \diff{\bm{x}},
 \]
-as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$ and $N = 3, 4$.  The kinetic energy is plotted at 100 equally spaced times between $[0,20]$.  In both cases, the simulation is stable and does not blow up despite the lack of filtering, limiting, or artificial viscosity.  The results are qualitatively similar to those reported in the literature, with the kinetic energy dissipation rate increasing around $t = 4$ and peaking with a value of roughly $0.014$ before $t = 9$ \cite{debonis2013solutions, gassner2016split}.  
+as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$ and $N = 3$.  We also use a curved coarse mesh with element size $h = \pi$ test the convergence of the average entropy for a non-dissipative entropy conservative formulation as the timestep decreases.  In both cases, the mesh is defined by constructing nodal positions $\tilde{\bm{u}}$ from warpings of affine nodal positions $\bm{x}$ as follows 
+\[
+\tilde{\bm{x}} = \bm{x} + .125 \sin(x)\sin(y)\sin(z).
+\]
+The kinetic energy is plotted at 100 equally spaced times between $[0,20]$.  The simulation is stable and does not blow up despite the lack of filtering, limiting, or artificial viscosity.  The results are qualitatively similar to those reported in the literature, with the kinetic energy dissipation rate increasing around $t = 4$ and peaking with a value of roughly $0.014$ before $t = 9$ \cite{debonis2013solutions, gassner2016split}.  We also observe that, for an entropy conservative formulation, the average entropy appears to converge at a rate of $O(dt^{5})$ for a 4th order time-stepping method.  The same phenomena was also observed in \cite{chan2017discretely, crean2018entropy}.  
 
 \begin{figure}
 \centering
-\subfloat[$N=3$, $h = \pi/8$]{
+\subfloat[KE dissipation rate for $N=3$, $h = \pi/8$]{
 \begin{tikzpicture}
 \begin{axis}[
         scaled ticks=false, 
@@ -1902,35 +1897,40 @@ coordinates{(0,5.36239e-07)(0.18796,-9.65229e-06)(0.37592,-1.01885e-05)(0.563879
 \legend{Affine, Curved}
 \end{axis}\end{tikzpicture}
 }
-\subfloat[$N=4$, $h = \pi/8$]{
+%\hspace{1em}
+\subfloat[Entropy conservative convergence of $\int_{\Omega}U(\bm{u})$ ]{
 \begin{tikzpicture}
-\begin{axis}[
+\begin{loglogaxis}[
         scaled ticks=false, 
         tick label style={/pgf/number format/fixed},
 	legend cell align=left,
 	legend style={font=\tiny},
 	width=.475\textwidth,
-    xlabel={Time $t$},
-    ylabel={$-\pd{\kappa}{t}$},
+    xlabel={CFL},
+    ylabel={Average entropy},
 %    xmin=.005, xmax=1,
-ymin=-.0025, ymax=.017,
-    legend pos=north east,
+%ymin=-.0025, ymax=.017,
+    legend pos=south east,
     xmajorgrids=true,
     ymajorgrids=true,
     grid style=dashed,
-    ytick={0, .005, .01, .015},
-    yticklabels={0, .005, .01, .015}    
+%    ytick={0, .005, .01, .015},
+%    yticklabels={0, .005, .01, .015}    
 ] 
-\addplot[color=blue,semithick, mark options={fill=markercolor}]
-coordinates{(0,-0)(0.183846,-9.31935e-06)(0.367692,-9.86755e-06)(0.551538,-1.80905e-05)(0.735384,-1.53495e-05)(0.91923,-2.13797e-05)(1.10308,-2.30243e-05)(1.28692,-2.19279e-05)(1.47077,-2.74099e-05)(1.65461,-2.13797e-05)(1.83846,-2.35725e-05)(2.02231,-2.08315e-05)(2.20615,-2.02833e-05)(2.39,-2.08315e-05)(2.57384,-1.42531e-05)(2.75769,-1.09639e-05)(2.94154,-3.28918e-06)(3.12538,4.93377e-06)(3.30923,2.63135e-05)(3.49308,7.07174e-05)(3.67692,0.000154043)(3.86077,0.000309183)(4.04461,0.000552035)(4.22846,0.000871085)(4.4123,0.00126031)(4.59615,0.00170599)(4.78,0.00213632)(4.96384,0.00242413)(5.14769,0.00258749)(5.33154,0.00273276)(5.51538,0.0029049)(5.69923,0.00321518)(5.88307,0.00365538)(6.06692,0.00413615)(6.25077,0.0047589)(6.43461,0.00554447)(6.61846,0.00640678)(6.8023,0.00727512)(6.98615,0.0081643)(7.17,0.00919162)(7.35384,0.0102085)(7.53769,0.011675)(7.72154,0.0131156)(7.90538,0.014081)(8.08923,0.0147997)(8.27307,0.0150343)(8.45692,0.0149576)(8.64077,0.0148841)(8.82461,0.0147953)(9.00846,0.0146308)(9.1923,0.0142904)(9.37615,0.0141183)(9.56,0.0137641)(9.74384,0.0136742)(9.92769,0.0132543)(10.1115,0.0127598)(10.2954,0.0124786)(10.4792,0.0120433)(10.6631,0.0116585)(10.8469,0.0113351)(11.0308,0.0110045)(11.2146,0.0106312)(11.3985,0.0102935)(11.5823,0.00999747)(11.7661,0.00966143)(11.95,0.00922725)(12.1338,0.00890163)(12.3177,0.00860615)(12.5015,0.00827558)(12.6854,0.00786224)(12.8692,0.00754593)(13.0531,0.00723511)(13.2369,0.00690509)(13.4208,0.00660194)(13.6046,0.00635744)(13.7885,0.00611733)(13.9723,0.00587338)(14.1561,0.00560806)(14.34,0.00535698)(14.5238,0.00514922)(14.7077,0.00496283)(14.8915,0.00476274)(15.0754,0.00455168)(15.2592,0.00437352)(15.4431,0.0042129)(15.6269,0.0040583)(15.8108,0.00389494)(15.9946,0.00373158)(16.1785,0.00358521)(16.3623,0.00344816)(16.5461,0.00331769)(16.73,0.00317845)(16.9138,0.0030573)(17.0977,0.00295862)(17.2815,0.00286104)(17.4654,0.00275634)(17.6492,0.00266314)(17.8331,0.00257817)(18.0169,0.00248388)(18.2008,0.00239836)(18.3846,0.00232655)(18.5685,0.00225145)(18.7523,0.00218073)(18.9361,0.00211823)(19.12,0.00204642)(19.3038,0.00197022)(19.4877,0.00190718)(19.6715,0.00185345)(19.8554,0.0017926)};
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.25,6.22584e-05)(0.125,2.42033e-05)(0.0625,2.70793e-06)(0.03125,9.23535e-08)};
 
+\addplot[color=red,dashed,mark=square*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.25,5.32822e-05)(0.125,1.5792e-05)(0.0625,9.458e-07)(0.03125,3.05056e-08)};
+
+\logLogSlopeTriangleFlip{0.275}{0.15}{0.3}{5}{black}
 %\addplot[color=red, dashed,semithick, mark options={fill=markercolor}]
 
-\legend{Affine, Curved}
-\end{axis}
+\legend{Affine, Curved} %Affine
+\end{loglogaxis}
 \end{tikzpicture}
 }
-\caption{Evolution of the kinetic energy dissipation rate over time on affine and curvilinear meshes.  }
+\caption{Evolution of the kinetic energy dissipation rate over time on affine and curvilinear meshes, as well as dependence of average entropy over the domain $\int_{\Omega} U(\bm{u})$ at time $T = 20$ for an entropy conservative formulation.  }
 \label{fig:tg}
 \end{figure}
 
@@ -1938,9 +1938,11 @@ coordinates{(0,-0)(0.183846,-9.31935e-06)(0.367692,-9.86755e-06)(0.551538,-1.809
 
 \section{Conclusions}
 
-This work describes how to extend entropy conservative and entropy stable DG ``modal'' discretizations to curvilinear meshes using both weighted and weight-adjusted mass matrices.   Assuming that the geometric terms satisfy a discrete geometric conservation law, the presented schemes allow for the use of over-integration while satisfying a semi-discrete entropy equality or inequality on curved meshes.  Numerical results show the presented schemes achieve optimal rates of convergence for smooth solutions on both two and three dimensional affine and curvilinear meshes while remaining robust in the presence of under-resolved solutions and shocks.  
+This work describes how to extend entropy conservative and entropy stable DG ``modal'' discretizations to curvilinear meshes using both weighted and weight-adjusted mass matrices.   Assuming that the geometric terms satisfy a discrete geometric conservation law, the presented schemes allow for the use of over-integration while satisfying a semi-discrete entropy equality or inequality on curved meshes.  Numerical results show the presented schemes achieve optimal rates of convergence for smooth solutions on both two and three dimensional affine and curvilinear meshes while remaining robust in the presence of under-resolved solutions such as shocks and turbulence.  
 
 Several outstanding computational questions remain to be answered.  First, the use of weight-adjusted mass matrices is motivated by the low storage requirements and their efficient application on GPUs.  However, to guarantee discrete entropy stability, the computation of a weight-adjusted projection is necessary, which adds additional computational cost compared to the affine case.  Furthermore, numerical results suggest that, while computing the entropy-projected conservative variables $\tilde{\bm{u}}$ using the weight-adjusted projection is necessary to ensure a semi-discrete conservation of entropy, the difference between using a weight-adjusted projection and regular projection may be negligible in practice.  The necessity of the weight-adjusted projection in computing $\tilde{\bm{u}}$ should be examined further.  Secondly, on triangular and tetrahedral meshes, the proposed schemes involve more computational work than under-integrated collocation-style SBP schemes \cite{hicken2016multidimensional, chen2017entropy, crean2018entropy}.  A careful computational comparison of the presented schemes with existing methods should be done to weigh the benefits of improved accuracy with additional computational costs.  
+
+Finally, we note that while this work has focused on triangular and tetrahedral elements, the approaches outlined here are applicable to more arbitrary pairings of approximations spaces and quadratures.  For example, similar techniques can be used to construct entropy stable B-spline or Galerkin difference discretizations on curved meshes \cite{banks2016galerkin, chan2018multi}.  
 
 \section{Acknowledgements}
 
