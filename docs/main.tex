@@ -1854,7 +1854,7 @@ Our last numerical experiment investigates the behavior of entropy stable DG sch
 u &= \sin(x_1)\cos(x_2)\cos(x_3),\\
 v &= -\cos(x_1)\sin(x_2)\cos(x_3),\\ 
 w &= 0,\\
-p &= \frac{100}{\gamma} + \frac{1}{16} \LRp{\cos(2x) + \cos(2y)}\LRp{2+\cos(2z)}.
+p &= \frac{100}{\gamma} + \frac{1}{16} \LRp{\cos(2x_1) + \cos(2x_2)}\LRp{2+\cos(2x_3)}.
 \end{align*}
 The Taylor--Green vortex is used to study the transition and decay of turbulence \cite{debonis2013solutions}.  In the absence of viscosity, the Taylor--Green vortex develops smaller and smaller scales, implying that for sufficiently large times, the solution contains under-resolved features.  We study the evolution of the kinetic energy $\kappa(t)$ 
 \[
@@ -1862,7 +1862,7 @@ The Taylor--Green vortex is used to study the transition and decay of turbulence
 \]
 as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which we approximate by differencing $\kappa(t)$.  Figure~\ref{fig:tg} shows the evolution of $\kappa(t)$ over time for both affine and curvilinear meshes with $h = \pi/8$ and $N = 3$.  We also use a curved coarse mesh with element size $h = \pi$ test the convergence of the average entropy for a non-dissipative entropy conservative formulation as the timestep decreases.  In both cases, the mesh is defined by constructing nodal positions $\tilde{\bm{u}}$ from warpings of affine nodal positions $\bm{x}$ as follows 
 \[
-\tilde{\bm{x}} = \bm{x} + .125 \sin(x)\sin(y)\sin(z).
+\tilde{\bm{x}} = \bm{x} + .125 \sin(x_1)\sin(x_2)\sin(x_3).
 \]
 The kinetic energy is plotted at 100 equally spaced times between $[0,20]$.  The simulation is stable and does not blow up despite the lack of filtering, limiting, or artificial viscosity.  The results are qualitatively similar to those reported in the literature, with the kinetic energy dissipation rate increasing around $t = 4$ and peaking with a value of roughly $0.014$ before $t = 9$ \cite{debonis2013solutions, gassner2016split}.  We also observe that, for an entropy conservative formulation, the average entropy appears to converge at a rate of $O(dt^{5})$ for a 4th order time-stepping method.  The same phenomena was also observed in \cite{chan2017discretely, crean2018entropy}.  
 
