@@ -16,6 +16,8 @@
 #define EXPDF expf
 #endif
 
+//#define TESTING
+
 // helpful functions
 #define avg(a, b) .5f * (a + b)
 #define pfun(rho, u, v, w, E)                                                  \
@@ -40,6 +42,20 @@
 // occa function
 dfloat logmean(dfloat aL, dfloat aR)
 {
+#ifdef TESTING
+  const dfloat xi = aL / aR;
+  const dfloat f = (xi - 1.f) / (xi + 1.f);
+  const dfloat u = f * f;
+  const dfloat u2 = u * u;
+
+  if (fabs(u) < 1.fe-4)
+  {
+    dfloat F = (105.f + 35.f * u + 21.f * u2 + 15.f * u2 * u);
+    return 52.5f * (aL + aR) / F;
+  } else {
+    return (aL + aR) / (LOGDF(xi) * f);
+  }
+#else
   const dfloat xi = aL / aR;
   const dfloat f = (xi - 1.f) / (xi + 1.f);
   const dfloat u = f * f;
@@ -51,18 +67,29 @@ dfloat logmean(dfloat aL, dfloat aR)
     F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f;
   }
   return (aL + aR) / (2.f * F);
+#endif
 }
 
 void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat rhow, dfloat E, dfloat &V1,
         dfloat &V2, dfloat &V3, dfloat &V4, dfloat &V5)
 {
 
+#ifndef TESTING
+  const dfloat rhoe = rhoeU(rho, rhou, rhov, rhow, E);
+  const dfloat invrhoe = 1/rhoe;
+  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, rhow, E))) * invrhoe;
+  V2 = rhou * invrhoe;
+  V3 = rhov * invrhoe;
+  V4 = rhow * invrhoe;
+  V5 = (-rho) * invrhoe;
+#else
   const dfloat rhoe = rhoeU(rho, rhou, rhov, rhow, E);
   V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, rhow, E))) / rhoe;
   V2 = rhou / rhoe;
   V3 = rhov / rhoe;
   V4 = rhow / rhoe;
   V5 = (-rho) / rhoe;
+#endif
 }
 
 void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4, dfloat V5, dfloat &rho,
@@ -117,6 +144,7 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   FxS[4] = f4aux * uavg;
   FyS[4] = f4aux * vavg;
   FzS[4] = f4aux * wavg;
+
 }
 
 //  =============== RK kernels ===============

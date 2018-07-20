@@ -371,7 +371,7 @@ geo_elem_data *build_geofacs_2D(ref_elem_data *ref_data,
 #endif
 
 
-#if 1
+#if 0
   // add curvilinear perturbation to [0,20] x [-5,5]
   MatrixXd xx = x.array()/20.0;
   MatrixXd yy = (y.array()+5.0)/10.0;
@@ -514,7 +514,7 @@ geo_elem_data *build_geofacs_3D(ref_elem_data *ref_data,
 
 #endif
 
-#if 1
+#if 0
   printf("Adding curvilinear perturbation for TG vortex\n");
   // add curvilinear perturbation to [-pi,pi]^3
   MatrixXd xx = x.array();

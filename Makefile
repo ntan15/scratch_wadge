@@ -4,8 +4,10 @@ CXX = mpicxx
 F77 = mpif77
 FC = mpif90
 
-CFLAGS = --std=gnu11 -g
-CXXFLAGS = -std=gnu++11 -g
+#CFLAGS = --std=gnu11 -g
+#CXXFLAGS = -std=gnu++11 -g
+CFLAGS = -std=c++11 -g
+CXXFLAGS = -std=c++11 -g
 
 # below are flags that work with clang and gcc
 CFLAGS += -Wconversion -Wno-sign-conversion \
@@ -50,11 +52,13 @@ UNAME_S := $(shell uname -s)
 
 # Lua flags
 CPPFLAGS += -Ilua/src
-LDFLAGS += -Llua/src
-LDLIBS += -llua -lm
+#LDFLAGS += -Llua/src
+LDFLAGS += -L/usr/lib/x86_64-linux-gnu
+#LDLIBS += -llua -lm
+LDLIBS += -llua5.3 -lm 
 
 # occa flags
-CPPFLAGS += -Iocca/include
+CPPFLAGS += -Iocca/include -I/usr/include
 LDFLAGS += -Locca/lib
 LDLIBS += -locca
 ifeq ($(UNAME_S),Linux)
@@ -63,7 +67,7 @@ endif
 
 .PHONY: all clean debug realclean
 
-all: eulertri eulertet
+all: eulertri eulertet eulertet_default
 
 debug:
 	$(MAKE) DEBUG=1
@@ -97,6 +101,10 @@ eulertet.o: CPPFLAGS+=-DELEM_TYPE=1
 eulertet.o: euler.c operators_c.h $(DEPS_HEADERS)  | $(TPLS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
+eulertet_default.o: CPPFLAGS+=-DELEM_TYPE=1
+eulertet_default.o: Default_euler.c operators_c.h $(DEPS_HEADERS)  | $(TPLS)
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+
 operators_c.o: CPPFLAGS+=-Ieigen
 operators_c.o: operators_c.cpp operators_c.h operators.h $(DEPS_HEADERS) | $(TPLS)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
@@ -110,4 +118,7 @@ eulertri: asd.o eulertri.o operators.o operators_c.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 eulertet: asd.o eulertet.o operators.o operators_c.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+eulertet_default: asd.o eulertet_default.o operators.o operators_c.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@

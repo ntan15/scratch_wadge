@@ -1,6 +1,15 @@
 
-if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare2.msh"
-elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTGCoarse.msh"
+if     ELEM_TYPE == 0 then meshname = "meshes/periodicSquare3.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube0.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube1.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube2.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCube3.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeCoarse.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTGCoarse.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTG1.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTG2.msh"
+elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeTG3.msh"
+--elseif ELEM_TYPE == 1 then meshname = "meshes/periodicCubeWithPeriodicSection.msh"
 else
   print("Unknown element type")
 end
@@ -24,11 +33,12 @@ app = {
     --           -cl-fast-relaxed-math"
 
     -- CUDA
-     info = string.format("mode = CUDA , deviceID = 2"),
+     info = string.format("mode = CUDA , deviceID = 0"),
+     flags = "--compiler-options -O3 --ftz=true --fmad=true"
     -- flags = "--compiler-options -O3 --ftz=true --prec-div=false \z
-    --                            --prec-sqrt=false --use_fast_math \z
-    --                            --fmad=true"
-    -- flags = "-g",
+                                --prec-sqrt=false --use_fast_math \z
+                                --fmad=true"
+     --flags = "-g"
   },
   kernel = {
     KblkV = 1,
@@ -38,14 +48,14 @@ app = {
   mesh = {
     filename = meshname,
     start_level = 1,
-    N = 2,
-    M = 4,
+    N = 3,
+    M = 6,
     sfc_partition = true
   },
   physical={
-    FinalTime = 5.0,
+    FinalTime = 0.1,
     CFL = .25,
-    tau = 0.0,
+    tau = 1.0,
   },
   output = {
     datadir = "data",

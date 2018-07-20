@@ -23,6 +23,9 @@
 #include "asd.h"
 #include "operators_c.h"
 #include "types.h"
+
+#include <time.h>
+
 // }}}
 
 // {{{ Config Macros
@@ -35,6 +38,9 @@
 // {{{ Unit Macros
 #define GiB (1024 * 1024 * 1024)
 // }}}
+
+#define TESTING
+//#define COALESC
 
 // {{{ Number Types
 static uintglo_t strtouglo_or_abort(const char *str)
@@ -2637,6 +2643,15 @@ typedef struct app
 
   occaMemory Q, Qf, rhsQf, rhsQ, resQ;
 
+  //Testing
+#ifdef TESTING
+  occaMemory rhoLog;
+  occaMemory betaLog;
+  occaMemory storage;
+  occaMemory store_pNq;
+  occaMemory store_pNfqNfaces;
+#endif
+
   occaKernelInfo info;
 
   occaKernel vol;
@@ -2644,6 +2659,11 @@ typedef struct app
   occaKernel update;
   occaKernel test;
   occaKernel aux;
+#ifdef TESTING
+  occaKernel logmean;
+  occaKernel vol_sub1;
+  occaKernel vol_sub2;
+#endif
 } app_t;
 
 // containers for U,V and coordinates
@@ -2847,6 +2867,15 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   app->Qf = device_malloc(app->device,
                           sizeof(dfloat_t) * Nfq * Nfaces * NFIELDS * E, NULL);
 
+  // Testing
+#ifdef TESTING
+  app->rhoLog = device_malloc(app->device, sizeof(dfloat_t) * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * E, NULL);
+  app->betaLog = device_malloc(app->device, sizeof(dfloat_t) * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * E, NULL);
+  app->storage = device_malloc(app->device, sizeof(dfloat_t) * Nq * Nfq * Nfaces * NFIELDS * app->prefs->kernel_KblkV * E, NULL);
+  app->store_pNq = device_malloc(app->device, sizeof(dfloat_t) * NFIELDS * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * E, NULL);
+  app->store_pNfqNfaces = device_malloc(app->device, sizeof(dfloat_t) * NFIELDS * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * E, NULL);
+#endif
+
   // Fill info for kernels
   occaKernelInfo info = occaCreateKernelInfo();
   occaKernelInfoAddDefine(info, "uintloc_t", occaString(occa_uintloc_name));
@@ -2889,6 +2918,22 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
   occaKernelInfoAddDefine(info, "p_Nfq", occaUInt(Nfq));
   occaKernelInfoAddDefine(info, "p_Nfp", occaUInt(Nfp));
 
+//==================================================================
+// Testing
+//==================================================================
+  const int pT = (1 + ((T-1) >> 5)) * 32;
+  const int pNfaces = (1 + ((Nfaces-1) >> 5)) * 32;
+  const int pNq = (1 + ((Nq-1) >> 5)) * 32;
+  const int pNfqNfaces = (1 + (((Nfq * Nfaces)-1) >> 5)) * 32;
+  const int pSum = pT + pNfaces + pNq + pNfqNfaces;
+  occaKernelInfoAddDefine(info, "pT32", occaUInt(pT));
+  occaKernelInfoAddDefine(info, "pNfaces32", occaUInt(pNfaces));
+  occaKernelInfoAddDefine(info, "pNq32", occaUInt(pNq));
+  occaKernelInfoAddDefine(info, "pNfqNfaces32", occaUInt(pNfqNfaces));
+  occaKernelInfoAddDefine(info, "pSum32", occaUInt(pSum));
+  occaKernelInfoAddDefine(info, "E_test", occaUInt(E));
+//==================================================================
+
   // Add rank to the kernels as a workaround for occa cache issues of
   // having multiple processes trying to use the same kernel source.
   occaKernelInfoAddDefine(info, "p_RANK", occaInt(app->prefs->rank));
@@ -2920,15 +2965,31 @@ static app_t *app_new(const char *prefs_filename, MPI_Comm comm)
                                               "test_kernel_2d", info);
 #else
   printf("building 3D kernels\n");
-  //app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl", "euler_vol_3d", info);
-  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_vol_3d_curved", info);
+  
+#ifdef TESTING
+  app->vol_sub1 = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl", "euler_vol_3d_part1", info);
 
-  //app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_update_3d", info);
-  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved", info);
+  app->vol_sub2 = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl", "euler_vol_3d_part2", info);
 
-  //app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_surf_3d", info);
+  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_vol_3d_testing", info);
+
+  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved_testing", info);
+
   app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_surf_3d", info);
 
+  app->logmean = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_logmean_testing", info);
+#else
+  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_vol_3d", info);
+
+  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_update_3d_curved", info);
+
+  app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl","euler_surf_3d", info);
+#endif
+/*  
+  app->vol = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl", "euler_vol_3d", info);
+  app->update = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_update_3d", info);
+  app->surf = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3Daffine.okl","euler_surf_3d", info);
+*/
   app->test = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
                                               "test_kernel", info);
   app->aux = occaDeviceBuildKernelFromSource(app->device, "okl/Euler3D.okl",
@@ -3244,10 +3305,12 @@ void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t E = p / gm1 + .5 * (rho) * (u * u + v * v);
 
   // const sol for testing
-  //rho = 1.0;
-  //rhou = 2.0;
-  //rhov = 5.0;
-  //E = 1.0 + .5f * (rhou * rhou + rhov * rhov) / rho;
+  
+  rho = 1.0;
+  rhou = 2.0;
+  rhov = 5.0;
+  E = 1.0 + .5f * (rhou * rhou + rhov * rhov) / rho;
+  
 
   U->U1 = rho;
   U->U2 = rhou;
@@ -3285,16 +3348,17 @@ void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   dfloat_t E = p0 / gm1 * (1.0 + POWDF(tmp, gamma)) +
                .5 * (rhou * rhou + rhov * rhov + rhow * rhow) / rho;
 
-  /*
-  // for testing
+  // const sol for testing
+  
   rho = 1.0;
   rhou = 2.0;
   rhov = 3.0;
   rhow = 4.0;
   E = 1.0 + .5*(rhou*rhou+rhov*rhov+rhow*rhow)/rho;
-  */
+  
 
   // more testing: entropy RHS
+  /*
   dfloat_t du = EXPDF(-4.0*((x-5.0)*(x-5.0) + (y-10.0)*(y-10.0) + (z-5.0)*(z-5.0)));
   rho = 1.0 + du;
   dfloat_t u = du;
@@ -3303,6 +3367,7 @@ void euler_vortex(app_t *app, coord X, dfloat_t t, euler_fields *U)
   rhow = 0.0;
   dfloat_t p = 1.0;
   E = p/gm1 + .5*rho*(u*u);
+  */
 
   U->U1 = rho;
   U->U2 = rhou;
@@ -3562,6 +3627,32 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
 #else
 
 
+#ifdef TESTING
+//  occaKernelRun(app->logmean, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
+//                app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
+//                app->Q, app->Qf, app->rhsQ, app->rhsQf, app->rhoLog, app->betaLog, app->storage);
+
+  occaKernelRun(app->vol_sub1, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
+                app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
+                app->Q, app->Qf, app->rhsQ, app->rhsQf, app->rhoLog, app->betaLog, app->storage, app->store_pNq, app->store_pNfqNfaces);
+
+  occaKernelRun(app->vol_sub2, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
+                app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
+                app->Q, app->Qf, app->rhsQ, app->rhsQf, app->rhoLog, app->betaLog, app->storage, app->store_pNq, app->store_pNfqNfaces);
+
+/*
+  occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
+                app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
+                app->Q, app->Qf, app->rhsQ, app->rhsQf, app->rhoLog, app->betaLog, app->storage);
+*/
+  occaKernelRun(app->surf, occaInt(app->hm->E), app->fgeo, app->mapPq,
+                app->VqLq, app->Qf, app->rhsQf, app->rhsQ);
+
+  occaKernelRun(app->update, occaInt(app->hm->E), app->Jq, app->VqPq, app->VfPq,
+                occaDfloat((dfloat_t)rka), occaDfloat((dfloat_t)rkb),
+                occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q,
+                app->Qf, app->rhoLog, app->betaLog);
+#else
   occaKernelRun(app->vol, occaInt(app->hm->E), app->vgeo, app->vfgeo, app->nrJ, app->nsJ,
                 app->ntJ, app->Drq, app->Dsq, app->Dtq, app->Drstq, app->VqLq, app->VfPq,
                 app->Q, app->Qf, app->rhsQ, app->rhsQf);
@@ -3573,6 +3664,7 @@ static void rk_step(app_t *app, double rka, double rkb, double dt)
                 occaDfloat((dfloat_t)rka), occaDfloat((dfloat_t)rkb),
                 occaDfloat((dfloat_t)dt), app->rhsQ, app->resQ, app->Q,
                 app->Qf);
+#endif
 
 #endif
 }
@@ -3677,6 +3769,14 @@ static void app_free(app_t *app)
   occaMemoryFree(app->Qf);
   occaMemoryFree(app->rhsQ);
   occaMemoryFree(app->resQ);
+
+#ifdef TESTING
+  occaMemoryFree(app->rhoLog);
+  occaMemoryFree(app->betaLog);
+  occaMemoryFree(app->storage);
+  occaMemoryFree(app->store_pNq);
+  occaMemoryFree(app->store_pNfqNfaces);
+#endif
 
   // free info
   occaKernelInfoFree(app->info);
@@ -3832,6 +3932,25 @@ int main(int argc, char *argv[])
   dfloat_t *resQ =
       (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * NFIELDS * K);
 
+#ifdef TESTING
+  dfloat_t *rhoLog = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * K);
+  dfloat_t *betaLog = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * K);
+  dfloat_t *storage = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * K * NFIELDS);
+  dfloat_t *store_pNq = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * NFIELDS * Nq * Nfq * Nfaces * app->prefs->kernel_KblkV * K);
+  dfloat_t *store_pNfqNfaces = (dfloat_t *)asd_malloc_aligned(sizeof(dfloat_t) * NFIELDS * Nfq * Nfaces * Nq * app->prefs->kernel_KblkV * K);
+  for (int i=0; i<NFIELDS*K*Nq*Nfq*Nfaces*app->prefs->kernel_KblkV; ++i) {
+    storage[i] = 0.0f;
+  }
+  for (int i=0; i<K*Nq*Nfq*Nfaces*app->prefs->kernel_KblkV; ++i) {
+    rhoLog[i] = 0.0f;
+    betaLog[i] = 0.0f;
+  }
+  for(int i=0; i<K*NFIELDS*Nq*Nfq*Nfaces*app->prefs->kernel_KblkV; ++i) {
+    store_pNq[i] = 0.0f;
+    store_pNfqNfaces[i] = 0.0f;
+  }
+#endif
+
   for (unsigned int i = 0; i < K * NFIELDS * Nq; ++i)
   {
     resQ[i] = 0.0;
@@ -3849,8 +3968,8 @@ int main(int argc, char *argv[])
 
       // vortex solution, start at time t = 0
       euler_fields U;
-      //euler_vortex(app, X, 0.0, &U);
-      euler_Taylor_Green(app,X,&U);
+      euler_vortex(app, X, 0.0, &U);
+      //euler_Taylor_Green(app,X,&U);
 
       Q[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
       Q[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
@@ -3937,6 +4056,29 @@ int main(int argc, char *argv[])
 #endif
       UV(app, V, &U);
 
+#ifdef COALESC
+      Qvq[i*NFIELDS + e * Nq * NFIELDS] = U.U1;
+      Qvq[1 + i*NFIELDS + e * Nq * NFIELDS] = U.U2;
+      Qvq[2 + i*NFIELDS + e * Nq * NFIELDS] = U.U3;
+      Qvq[3 + i*NFIELDS + e * Nq * NFIELDS] = U.U4;
+      Qvq[4 + i*NFIELDS + e * Nq * NFIELDS] = U.U5;
+#else
+      Qvq[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
+      Qvq[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
+      Qvq[i + 2 * Nq + e * Nq * NFIELDS] = U.U3;
+      Qvq[i + 3 * Nq + e * Nq * NFIELDS] = U.U4;
+      Qvq[i + 4 * Nq + e * Nq * NFIELDS] = U.U5;
+#endif
+/*
+#ifdef COALESC
+      Qvq[i*NFIELDS + e * Nq * NFIELDS] = U.U1;
+      Qvq[1 + i*NFIELDS + e * Nq * NFIELDS] = U.U2;
+      Qvq[2 + i*NFIELDS + e * Nq * NFIELDS] = U.U3;
+      Qvq[3 + i*NFIELDS + e * Nq * NFIELDS] = U.U4;
+#if VDIM == 3      
+      Qvq[4 + i*NFIELDS + e * Nq * NFIELDS] = U.U5;
+#endif      
+#else
       Qvq[i + 0 * Nq + e * Nq * NFIELDS] = U.U1;
       Qvq[i + 1 * Nq + e * Nq * NFIELDS] = U.U2;
       Qvq[i + 2 * Nq + e * Nq * NFIELDS] = U.U3;
@@ -3944,6 +4086,8 @@ int main(int argc, char *argv[])
 #if VDIM == 3
       Qvq[i + 4 * Nq + e * Nq * NFIELDS] = U.U5;
 #endif
+#endif
+*/
     }
 
     // project entropy vars, eval at face qpts
@@ -3977,6 +4121,7 @@ int main(int argc, char *argv[])
       V.U5 = V5;
 #endif
       UV(app, V, &U);
+      
       Qvf[i + 0 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U1;
       Qvf[i + 1 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U2;
       Qvf[i + 2 * Nfq * Nfaces + e * Nfq * Nfaces * NFIELDS] = U.U3;
@@ -4013,6 +4158,13 @@ int main(int argc, char *argv[])
 
   // copy mem to device
   printf("Copying to device\n");
+#ifdef TESTING
+  occaCopyPtrToMem(app->rhoLog, rhoLog, K*Nq*Nfq*Nfaces*app->prefs->kernel_KblkV*sizeof(dfloat_t), occaNoOffset);
+  occaCopyPtrToMem(app->betaLog, betaLog, K*Nq*Nfq*Nfaces*app->prefs->kernel_KblkV*sizeof(dfloat_t), occaNoOffset);
+  occaCopyPtrToMem(app->storage, storage, K*Nq*Nfq*Nfaces*app->prefs->kernel_KblkV*NFIELDS*sizeof(dfloat_t), occaNoOffset);
+  occaCopyPtrToMem(app->store_pNq, store_pNq, K*Nq*Nfq*Nfaces*app->prefs->kernel_KblkV*sizeof(dfloat_t), occaNoOffset);
+  occaCopyPtrToMem(app->store_pNfqNfaces, store_pNfqNfaces, K*Nfq*Nfaces*Nq*app->prefs->kernel_KblkV*sizeof(dfloat_t), occaNoOffset);
+#endif
   occaCopyPtrToMem(app->Q, Q, Nq * NFIELDS * K * sizeof(dfloat_t),
                    occaNoOffset);
   occaCopyPtrToMem(app->rhsQ, Qvq, Nq * NFIELDS * K * sizeof(dfloat_t),
@@ -4053,8 +4205,13 @@ int main(int argc, char *argv[])
 #else
 
   printf("Running...\n");
+struct timespec start, end;
+clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
   rk_run(app, dt, FinalTime);
+clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
   printf("Done with simulation. \n");
+
+printf("Elapsed Time: %f seconds\n", (float) ((1000000000.0*(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec)/1000000000.0));
 
 #endif
 
@@ -4067,7 +4224,7 @@ int main(int argc, char *argv[])
   //#if 0
   //#endif
 
-#if 0
+#if 1
   printf("Computing L2 error\n");
   dfloat_t err = 0.0;
   for (uintloc_t e = 0; e < K; ++e)
